@@ -1,0 +1,105 @@
+season_code,match_code,round,home_team,away_team,kickoff_at,venue,status,group
+WC2026,M001,GROUP_STAGE,Mexico,South Africa,2026-06-12 02:00:00,"Mexico City, Mexico",DRAFT,Group A
+WC2026,M002,GROUP_STAGE,South Korea,Czech Republic,2026-06-12 09:00:00,"Zapopan, Mexico",DRAFT,Group A
+WC2026,M003,GROUP_STAGE,Canada,Bosnia & Herzegovina,2026-06-13 02:00:00,"Toronto, Canada",DRAFT,Group B
+WC2026,M004,GROUP_STAGE,USA,Paraguay,2026-06-13 08:00:00,"Los Angeles, USA",DRAFT,Group D
+WC2026,M005,GROUP_STAGE,Qatar,Switzerland,2026-06-14 02:00:00,"Santa Clara, USA",DRAFT,Group B
+WC2026,M006,GROUP_STAGE,Brazil,Morocco,2026-06-14 05:00:00,"New Jersey, USA",DRAFT,Group C
+WC2026,M007,GROUP_STAGE,Haiti,Scotland,2026-06-14 08:00:00,"Foxborough, USA",DRAFT,Group C
+WC2026,M008,GROUP_STAGE,Australia,Turkey,2026-06-14 11:00:00,"Vancouver, Canada",DRAFT,Group D
+WC2026,M009,GROUP_STAGE,Germany,Curacao,2026-06-15 00:00:00,"Houston, USA",DRAFT,Group E
+WC2026,M010,GROUP_STAGE,Netherlands,Japan,2026-06-15 03:00:00,"Arlington, USA",DRAFT,Group F
+WC2026,M011,GROUP_STAGE,Ivory Coast,Ecuador,2026-06-15 06:00:00,"Philadelphia, USA",DRAFT,Group E
+WC2026,M012,GROUP_STAGE,Sweden,Tunisia,2026-06-15 09:00:00,"Guadalupe, Mexico",DRAFT,Group F
+WC2026,M013,GROUP_STAGE,Spain,Cape Verde,2026-06-15 23:00:00,"Atlanta, USA",DRAFT,Group H
+WC2026,M014,GROUP_STAGE,Belgium,Egypt,2026-06-16 02:00:00,"Seattle, USA",DRAFT,Group G
+WC2026,M015,GROUP_STAGE,Saudi Arabia,Uruguay,2026-06-16 05:00:00,"Miami, USA",DRAFT,Group H
+WC2026,M016,GROUP_STAGE,Iran,New Zealand,2026-06-16 08:00:00,"Los Angeles, USA",DRAFT,Group G
+WC2026,M017,GROUP_STAGE,France,Senegal,2026-06-17 02:00:00,"New Jersey, USA",DRAFT,Group I
+WC2026,M018,GROUP_STAGE,Iraq,Norway,2026-06-17 05:00:00,"Foxborough, USA",DRAFT,Group I
+WC2026,M019,GROUP_STAGE,Argentina,Algeria,2026-06-17 08:00:00,"Kansas City, USA",DRAFT,Group J
+WC2026,M020,GROUP_STAGE,Austria,Jordan,2026-06-17 11:00:00,"Santa Clara, USA",DRAFT,Group J
+WC2026,M021,GROUP_STAGE,Portugal,DR Congo,2026-06-18 00:00:00,"Houston, USA",DRAFT,Group K
+WC2026,M022,GROUP_STAGE,England,Croatia,2026-06-18 03:00:00,"Arlington, USA",DRAFT,Group L
+WC2026,M023,GROUP_STAGE,Ghana,Panama,2026-06-18 06:00:00,"Toronto, Canada",DRAFT,Group L
+WC2026,M024,GROUP_STAGE,Uzbekistan,Colombia,2026-06-18 09:00:00,"Mexico City, Mexico",DRAFT,Group K
+WC2026,M025,GROUP_STAGE,Czech Republic,South Africa,2026-06-18 23:00:00,"Atlanta, USA",DRAFT,Group A
+WC2026,M026,GROUP_STAGE,Switzerland,Bosnia & Herzegovina,2026-06-19 02:00:00,"Los Angeles, USA",DRAFT,Group B
+WC2026,M027,GROUP_STAGE,Canada,Qatar,2026-06-19 05:00:00,"Vancouver, Canada",DRAFT,Group B
+WC2026,M028,GROUP_STAGE,Mexico,South Korea,2026-06-19 08:00:00,"Zapopan, Mexico",DRAFT,Group A
+WC2026,M029,GROUP_STAGE,USA,Australia,2026-06-20 02:00:00,"Seattle, USA",DRAFT,Group D
+WC2026,M030,GROUP_STAGE,Scotland,Morocco,2026-06-20 05:00:00,"Foxborough, USA",DRAFT,Group C
+WC2026,M031,GROUP_STAGE,Brazil,Haiti,2026-06-20 07:30:00,"Philadelphia, USA",DRAFT,Group C
+WC2026,M032,GROUP_STAGE,Turkey,Paraguay,2026-06-20 10:00:00,"Santa Clara, USA",DRAFT,Group D
+WC2026,M033,GROUP_STAGE,Netherlands,Sweden,2026-06-21 00:00:00,"Houston, USA",DRAFT,Group F
+WC2026,M034,GROUP_STAGE,Germany,Ivory Coast,2026-06-21 03:00:00,"Toronto, Canada",DRAFT,Group E
+WC2026,M035,GROUP_STAGE,Ecuador,Curacao,2026-06-21 07:00:00,"Kansas City, USA",DRAFT,Group E
+WC2026,M036,GROUP_STAGE,Tunisia,Japan,2026-06-21 11:00:00,"Guadalupe, Mexico",DRAFT,Group F
+WC2026,M037,GROUP_STAGE,Spain,Saudi Arabia,2026-06-21 23:00:00,"Atlanta, USA",DRAFT,Group H
+WC2026,M038,GROUP_STAGE,Belgium,Iran,2026-06-22 02:00:00,"Los Angeles, USA",DRAFT,Group G
+WC2026,M039,GROUP_STAGE,Uruguay,Cape Verde,2026-06-22 05:00:00,"Miami, USA",DRAFT,Group H
+WC2026,M040,GROUP_STAGE,New Zealand,Egypt,2026-06-22 08:00:00,"Vancouver, Canada",DRAFT,Group G
+WC2026,M041,GROUP_STAGE,Argentina,Austria,2026-06-23 00:00:00,"Arlington, USA",DRAFT,Group J
+WC2026,M042,GROUP_STAGE,France,Iraq,2026-06-23 04:00:00,"Philadelphia, USA",DRAFT,Group I
+WC2026,M043,GROUP_STAGE,Norway,Senegal,2026-06-23 07:00:00,"Toronto, Canada",DRAFT,Group I
+WC2026,M044,GROUP_STAGE,Jordan,Algeria,2026-06-23 10:00:00,"Santa Clara, USA",DRAFT,Group J
+WC2026,M045,GROUP_STAGE,Portugal,Uzbekistan,2026-06-24 00:00:00,"Houston, USA",DRAFT,Group K
+WC2026,M046,GROUP_STAGE,England,Ghana,2026-06-24 03:00:00,"Foxborough, USA",DRAFT,Group L
+WC2026,M047,GROUP_STAGE,Panama,Croatia,2026-06-24 06:00:00,"Foxborough, USA",DRAFT,Group L
+WC2026,M048,GROUP_STAGE,Colombia,DR Congo,2026-06-24 09:00:00,"Zapopan, Mexico",DRAFT,Group K
+WC2026,M049,GROUP_STAGE,Switzerland,Canada,2026-06-25 02:00:00,"Vancouver, Canada",DRAFT,Group B
+WC2026,M050,GROUP_STAGE,Bosnia & Herzegovina,Qatar,2026-06-25 02:00:00,"Seattle, USA",DRAFT,Group B
+WC2026,M051,GROUP_STAGE,Morocco,Haiti,2026-06-25 05:00:00,"Atlanta, USA",DRAFT,Group C
+WC2026,M052,GROUP_STAGE,Scotland,Brazil,2026-06-25 05:00:00,"Miami, USA",DRAFT,Group C
+WC2026,M053,GROUP_STAGE,South Africa,South Korea,2026-06-25 08:00:00,"Guadalupe, Mexico",DRAFT,Group A
+WC2026,M054,GROUP_STAGE,Czech Republic,Mexico,2026-06-25 08:00:00,"Mexico City, Mexico",DRAFT,Group A
+WC2026,M055,GROUP_STAGE,Curacao,Ivory Coast,2026-06-26 03:00:00,"Philadelphia, USA",DRAFT,Group E
+WC2026,M056,GROUP_STAGE,Ecuador,Germany,2026-06-26 03:00:00,"New Jersey, USA",DRAFT,Group E
+WC2026,M057,GROUP_STAGE,Tunisia,Netherlands,2026-06-26 06:00:00,"Kansas City, USA",DRAFT,Group F
+WC2026,M058,GROUP_STAGE,Japan,Sweden,2026-06-26 06:00:00,"Arlington, USA",DRAFT,Group F
+WC2026,M059,GROUP_STAGE,Turkey,USA,2026-06-26 09:00:00,"Los Angeles, USA",DRAFT,Group D
+WC2026,M060,GROUP_STAGE,Paraguay,Australia,2026-06-26 09:00:00,"Santa Clara, USA",DRAFT,Group D
+WC2026,M061,GROUP_STAGE,Norway,France,2026-06-27 02:00:00,"Foxborough, USA",DRAFT,Group I
+WC2026,M062,GROUP_STAGE,Senegal,Iraq,2026-06-27 02:00:00,"Toronto, Canada",DRAFT,Group I
+WC2026,M063,GROUP_STAGE,Cape Verde,Saudi Arabia,2026-06-27 07:00:00,"Houston, USA",DRAFT,Group H
+WC2026,M064,GROUP_STAGE,Uruguay,Spain,2026-06-27 07:00:00,"Zapopan, Mexico",DRAFT,Group H
+WC2026,M065,GROUP_STAGE,New Zealand,Belgium,2026-06-27 10:00:00,"Vancouver, Canada",DRAFT,Group G
+WC2026,M066,GROUP_STAGE,Egypt,Iran,2026-06-27 10:00:00,"Seattle, USA",DRAFT,Group G
+WC2026,M067,GROUP_STAGE,Panama,England,2026-06-28 04:00:00,"New Jersey, USA",DRAFT,Group L
+WC2026,M068,GROUP_STAGE,Croatia,Ghana,2026-06-28 04:00:00,"Philadelphia, USA",DRAFT,Group L
+WC2026,M069,GROUP_STAGE,Colombia,Portugal,2026-06-28 06:30:00,"Miami, USA",DRAFT,Group K
+WC2026,M070,GROUP_STAGE,DR Congo,Uzbekistan,2026-06-28 06:30:00,"Atlanta, USA",DRAFT,Group K
+WC2026,M071,GROUP_STAGE,Algeria,Austria,2026-06-28 09:00:00,"Kansas City, USA",DRAFT,Group J
+WC2026,M072,GROUP_STAGE,Jordan,Argentina,2026-06-28 09:00:00,"Arlington, USA",DRAFT,Group J
+WC2026,M073,ROUND_OF_32,Group A runners-up,Group B runners-up,2026-06-29 02:00:00,"Los Angeles, USA",DRAFT,
+WC2026,M074,ROUND_OF_32,Group C winners,Group F runners-up,2026-06-30 00:00:00,"Houston, USA",DRAFT,
+WC2026,M075,ROUND_OF_32,Group E winners,Group A/B/C/D/F third place,2026-06-30 03:30:00,"Foxborough, USA",DRAFT,
+WC2026,M076,ROUND_OF_32,Group F winners,Group C runners-up,2026-06-30 08:00:00,"Guadalupe, Mexico",DRAFT,
+WC2026,M077,ROUND_OF_32,Group E runners-up,Group I runners-up,2026-07-01 00:00:00,"Arlington, USA",DRAFT,
+WC2026,M078,ROUND_OF_32,Group I winners,Group C/D/F/G/H third place,2026-07-01 04:00:00,"New Jersey, USA",DRAFT,
+WC2026,M079,ROUND_OF_32,Group A winners,Group C/E/F/H/I third place,2026-07-01 08:00:00,"Mexico City, Mexico",DRAFT,
+WC2026,M080,ROUND_OF_32,Group L winners,Group E/H/I/J/K third place,2026-07-01 23:00:00,"Atlanta, USA",DRAFT,
+WC2026,M081,ROUND_OF_32,Group G winners,Group A/E/H/I/J third place,2026-07-02 03:00:00,"Seattle, USA",DRAFT,
+WC2026,M082,ROUND_OF_32,Group D winners,Group B/E/F/I/J third place,2026-07-02 07:00:00,"Santa Clara, USA",DRAFT,
+WC2026,M083,ROUND_OF_32,Group H winners,Group J runners-up,2026-07-03 02:00:00,"Los Angeles, USA",DRAFT,
+WC2026,M084,ROUND_OF_32,Group K runners-up,Group L runners-up,2026-07-03 06:00:00,"Toronto, Canada",DRAFT,
+WC2026,M085,ROUND_OF_32,Group B winners,Group E/F/G/I/J third place,2026-07-03 10:00:00,"Vancouver, Canada",DRAFT,
+WC2026,M086,ROUND_OF_32,Group D runners-up,Group G runners-up,2026-07-04 01:00:00,"Arlington, USA",DRAFT,
+WC2026,M087,ROUND_OF_32,Group J winners,Group H runners-up,2026-07-04 05:00:00,"Miami, USA",DRAFT,
+WC2026,M088,ROUND_OF_32,Group K winners,Group D/E/I/J/L third place,2026-07-04 08:30:00,"Kansas City, USA",DRAFT,
+WC2026,M089,ROUND_OF_16,Match 73 winners,Match 75 winners,2026-07-05 00:00:00,"Houston, USA",DRAFT,
+WC2026,M090,ROUND_OF_16,Match 74 winners,Match 77 winners,2026-07-05 04:00:00,"Philadelphia, USA",DRAFT,
+WC2026,M091,ROUND_OF_16,Match 76 winners,Match 78 winners,2026-07-06 03:00:00,"New Jersey, USA",DRAFT,
+WC2026,M092,ROUND_OF_16,Match 79 winners,Match 80 winners,2026-07-06 07:00:00,"Mexico City, Mexico",DRAFT,
+WC2026,M093,ROUND_OF_16,Match 83 winners,Match 84 winners,2026-07-07 02:00:00,"Arlington, USA",DRAFT,
+WC2026,M094,ROUND_OF_16,Match 81 winners,Match 82 winners,2026-07-07 07:00:00,"Seattle, USA",DRAFT,
+WC2026,M095,ROUND_OF_16,Match 86 winners,Match 88 winners,2026-07-07 23:00:00,"Atlanta, USA",DRAFT,
+WC2026,M096,ROUND_OF_16,Match 85 winners,Match 87 winners,2026-07-08 03:00:00,"Vancouver, Canada",DRAFT,
+WC2026,M097,QUARTER_FINAL,Match 89 winners,Match 90 winners,2026-07-10 03:00:00,"Foxborough, USA",DRAFT,
+WC2026,M098,QUARTER_FINAL,Match 93 winners,Match 94 winners,2026-07-11 02:00:00,"Los Angeles, USA",DRAFT,
+WC2026,M099,QUARTER_FINAL,Match 91 winners,Match 92 winners,2026-07-12 04:00:00,"Miami, USA",DRAFT,
+WC2026,M100,QUARTER_FINAL,Match 95 winners,Match 96 winners,2026-07-12 08:00:00,"Kansas City, USA",DRAFT,
+WC2026,M101,SEMI_FINAL,Match 97 winners,Match 98 winners,2026-07-15 02:00:00,"Arlington, USA",DRAFT,
+WC2026,M102,SEMI_FINAL,Match 99 winners,Match 100 winners,2026-07-16 02:00:00,"Atlanta, USA",DRAFT,
+WC2026,M103,THIRD_PLACE_PLAYOFF,Match 101 losers,Match 102 losers,2026-07-19 04:00:00,"Miami, USA",DRAFT,
+WC2026,M104,FINAL,Match 101 winners,Match 102 winners,2026-07-20 02:00:00,"New Jersey, USA",DRAFT,

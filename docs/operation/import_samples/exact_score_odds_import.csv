@@ -1,0 +1,3 @@
+match_code,period_type,score_home,score_away,profit_rate,label,status
+M001,FULL_TIME,0,0,6.00,0-0 ăn 6.00,ACTIVE
+M001,FULL_TIME,2,1,7.00,2-1 ăn 7.00,ACTIVE

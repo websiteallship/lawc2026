@@ -1,0 +1,3 @@
+match_code,period_type,selection_side,line_value,profit_rate,label,status
+M001,FULL_TIME,HOME,-0.5,0.90,Home -0.5 ăn 0.90,ACTIVE
+M001,FULL_TIME,AWAY,0.5,0.90,Away +0.5 ăn 0.90,ACTIVE

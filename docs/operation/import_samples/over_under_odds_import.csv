@@ -1,0 +1,3 @@
+match_code,period_type,selection_side,line_value,profit_rate,label,status
+M001,FULL_TIME,OVER,2.5,0.90,Tài 2.5 ăn 0.90,ACTIVE
+M001,FULL_TIME,UNDER,2.5,0.90,Xỉu 2.5 ăn 0.90,ACTIVE
