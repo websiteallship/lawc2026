@@ -12,6 +12,13 @@ class MarketOutcome extends Model
 {
     use HasFactory, LogsActivity;
 
+    /**
+     * Update the parent market's timestamp.
+     *
+     * @var array
+     */
+    protected $touches = ['market'];
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
