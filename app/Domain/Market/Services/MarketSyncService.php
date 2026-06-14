@@ -91,6 +91,9 @@ class MarketSyncService
                         ]
                     );
                 }
+
+                // Cập nhật timestamp của market để hiển thị cho user biết là đã đồng bộ
+                $market->touch();
             }
         });
     }
