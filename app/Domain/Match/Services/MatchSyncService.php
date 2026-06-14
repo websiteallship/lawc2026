@@ -52,17 +52,7 @@ class MatchSyncService
                     ])
                     ->first();
 
-                if (! $match) {
-                    $match = FootballMatch::where(function ($q) use ($apiMatch) {
-                            $q->where('home_team', 'LIKE', '%'.$this->normalizeName($apiMatch->homeTeamName).'%')
-                                ->orWhere('away_team', 'LIKE', '%'.$this->normalizeName($apiMatch->awayTeamName).'%');
-                        })
-                        ->whereBetween('kickoff_at', [
-                            $apiMatch->kickoffAt->copy()->subHours(48),
-                            $apiMatch->kickoffAt->copy()->addHours(48),
-                        ])
-                        ->first();
-                }
+
 
                 if ($match) {
                     $match->api_id = $apiMatch->apiId;
@@ -169,17 +159,7 @@ class MatchSyncService
                     ])
                     ->first();
 
-                if (! $match) {
-                    $match = FootballMatch::where(function ($q) use ($apiMatch) {
-                            $q->where('home_team', 'LIKE', '%'.$this->normalizeName($apiMatch->homeTeamName).'%')
-                                ->orWhere('away_team', 'LIKE', '%'.$this->normalizeName($apiMatch->awayTeamName).'%');
-                        })
-                        ->whereBetween('kickoff_at', [
-                            $apiMatch->kickoffAt->copy()->subHours(48),
-                            $apiMatch->kickoffAt->copy()->addHours(48),
-                        ])
-                        ->first();
-                }
+
 
                 if ($match) {
                     $match->api_id = $apiMatch->apiId;

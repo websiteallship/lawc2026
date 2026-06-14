@@ -239,8 +239,7 @@ class FootballMatchResource extends Resource
                             foreach ($oddsList as $dto) {
                                 if (
                                     (string)$record->api_id === (string)$dto->fixtureId || 
-                                    str_contains($record->home_team, $dto->homeTeam) || 
-                                    str_contains($record->away_team, $dto->awayTeam)
+                                    (str_contains($record->home_team, $dto->homeTeam) && str_contains($record->away_team, $dto->awayTeam))
                                 ) {
                                     $syncService->syncOddsForMatch($record, $dto);
                                     $found = true;

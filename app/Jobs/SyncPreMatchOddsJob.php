@@ -39,7 +39,7 @@ class SyncPreMatchOddsJob implements ShouldQueue
                 if (! $match) {
                     $match = FootballMatch::where(function ($q) use ($dto) {
                             $q->where('home_team', 'like', "%{$dto->homeTeam}%")
-                                ->orWhere('away_team', 'like', "%{$dto->awayTeam}%");
+                                ->where('away_team', 'like', "%{$dto->awayTeam}%");
                         })
                         ->whereBetween('kickoff_at', [now()->subDays(2), now()->addDays(2)])
                         ->first();

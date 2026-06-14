@@ -38,7 +38,7 @@ class FetchLiveOddsListener implements ShouldQueue
             $oddsList = $this->oddsService->fetchDailyOdds($date);
 
             foreach ($oddsList as $dto) {
-                if (str_contains($match->home_team, $dto->homeTeam) || str_contains($match->away_team, $dto->awayTeam)) {
+                if (str_contains($match->home_team, $dto->homeTeam) && str_contains($match->away_team, $dto->awayTeam)) {
                     $this->syncService->syncOddsForMatch($match, $dto);
 
                     $fetchStatus[] = $milestone;
