@@ -3,6 +3,7 @@
 use App\Jobs\SyncLiveMatchScoresJob;
 use App\Jobs\SyncPreMatchOddsJob;
 use App\Jobs\SyncScheduledMatchesJob;
+use App\Jobs\SyncAllMatchDetailsJob;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -45,16 +46,17 @@ if ($apiSettings?->is_auto_sync_enabled ?? true) {
     };
 }
 
-// ===================== API RAPIDAPI ODDS =====================
-// Kéo tỷ lệ Pre-match
+// ===================== API RAPIDAPI ODDS & DETAILS =====================
+// Kéo tỷ lệ Pre-match và sự kiện trận đấu
 if ($apiSettings?->is_rapidapi_auto_sync_enabled ?? false) {
     $oddsEvent = Schedule::job(new SyncPreMatchOddsJob);
+    $detailsEvent = Schedule::job(new SyncAllMatchDetailsJob);
     match ((int) ($apiSettings?->rapidapi_auto_sync_interval_minutes ?? 60)) {
-        5 => $oddsEvent->everyFiveMinutes(),
-        15 => $oddsEvent->everyFifteenMinutes(),
-        30 => $oddsEvent->everyThirtyMinutes(),
-        60 => $oddsEvent->hourly(),
-        default => $oddsEvent->hourly(),
+        5 => [$oddsEvent->everyFiveMinutes(), $detailsEvent->everyFiveMinutes()],
+        15 => [$oddsEvent->everyFifteenMinutes(), $detailsEvent->everyFifteenMinutes()],
+        30 => [$oddsEvent->everyThirtyMinutes(), $detailsEvent->everyThirtyMinutes()],
+        60 => [$oddsEvent->hourly(), $detailsEvent->hourly()],
+        default => [$oddsEvent->hourly(), $detailsEvent->hourly()],
     };
 }
 

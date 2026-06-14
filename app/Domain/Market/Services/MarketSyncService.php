@@ -131,10 +131,19 @@ class MarketSyncService
     {
         if ($marketType === 'ASIAN_HANDICAP') {
             if (preg_match('/^(Home|Away)\s+([+-]?\d+(\.\d+)?)$/i', $value, $matches)) {
-                $normalizedLine = $this->normalizeLine((float) $matches[2], 'ASIAN_HANDICAP');
+                $selectionSide = strtoupper($matches[1]);
+                $rawLine = (float) $matches[2];
+                
+                // API thường trả về market line cho cả 2 (VD: Home -1.25, Away -1.25)
+                // Cần đảo dấu cho Away (thành +1.25)
+                if ($selectionSide === 'AWAY') {
+                    $rawLine = -$rawLine;
+                }
+
+                $normalizedLine = $this->normalizeLine($rawLine, 'ASIAN_HANDICAP');
 
                 return $normalizedLine !== null ? [
-                    'selection_side' => strtoupper($matches[1]),
+                    'selection_side' => $selectionSide,
                     'line_value' => $normalizedLine,
                 ] : null;
             }

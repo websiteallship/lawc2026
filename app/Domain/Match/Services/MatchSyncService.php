@@ -46,6 +46,10 @@ class MatchSyncService
                         $q->where('home_team', 'LIKE', '%'.$this->normalizeName($apiMatch->homeTeamName).'%')
                           ->where('away_team', 'LIKE', '%'.$this->normalizeName($apiMatch->awayTeamName).'%');
                     })
+                    ->whereBetween('kickoff_at', [
+                        $apiMatch->kickoffAt->copy()->subHours(48),
+                        $apiMatch->kickoffAt->copy()->addHours(48),
+                    ])
                     ->first();
 
                 if (! $match) {
@@ -54,8 +58,8 @@ class MatchSyncService
                                 ->orWhere('away_team', 'LIKE', '%'.$this->normalizeName($apiMatch->awayTeamName).'%');
                         })
                         ->whereBetween('kickoff_at', [
-                            $apiMatch->kickoffAt->copy()->subHours(24),
-                            $apiMatch->kickoffAt->copy()->addHours(24),
+                            $apiMatch->kickoffAt->copy()->subHours(48),
+                            $apiMatch->kickoffAt->copy()->addHours(48),
                         ])
                         ->first();
                 }
@@ -159,6 +163,10 @@ class MatchSyncService
                         $q->where('home_team', 'LIKE', '%'.$this->normalizeName($apiMatch->homeTeamName).'%')
                           ->where('away_team', 'LIKE', '%'.$this->normalizeName($apiMatch->awayTeamName).'%');
                     })
+                    ->whereBetween('kickoff_at', [
+                        $apiMatch->kickoffAt->copy()->subHours(48),
+                        $apiMatch->kickoffAt->copy()->addHours(48),
+                    ])
                     ->first();
 
                 if (! $match) {
@@ -167,8 +175,8 @@ class MatchSyncService
                                 ->orWhere('away_team', 'LIKE', '%'.$this->normalizeName($apiMatch->awayTeamName).'%');
                         })
                         ->whereBetween('kickoff_at', [
-                            $apiMatch->kickoffAt->copy()->subHours(24),
-                            $apiMatch->kickoffAt->copy()->addHours(24),
+                            $apiMatch->kickoffAt->copy()->subHours(48),
+                            $apiMatch->kickoffAt->copy()->addHours(48),
                         ])
                         ->first();
                 }

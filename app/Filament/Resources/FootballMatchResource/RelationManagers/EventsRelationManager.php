@@ -68,7 +68,7 @@ class EventsRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                \Filament\Tables\Actions\Action::make('syncApi')
+                \Filament\Actions\Action::make('syncApi')
                     ->label('Đồng bộ từ API')
                     ->icon('heroicon-o-arrow-path')
                     ->color('success')

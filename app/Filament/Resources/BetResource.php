@@ -138,7 +138,7 @@ class BetResource extends Resource
                     ]),
                 Tables\Filters\SelectFilter::make('user_id')
                     ->label('Người chơi')
-                    ->options(User::where('role', 'PLAYER')->pluck('name', 'id'))
+                    ->options(User::role('player')->pluck('name', 'id'))
                     ->searchable(),
                 Tables\Filters\SelectFilter::make('market_match_id')
                     ->label('Trận đấu')

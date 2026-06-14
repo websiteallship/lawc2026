@@ -160,7 +160,7 @@ class SeasonResource extends Resource
                             $count = 0;
                             foreach ($records as $season) {
                                 // Find all players
-                                $players = User::where('role', 'PLAYER')->where('status', 'ACTIVE')->get();
+                                $players = User::role('player')->where('status', 'ACTIVE')->get();
                                 foreach ($players as $player) {
                                     // createWallet uses firstOrCreate and will grant if it was recently created
                                     $wallet = $walletService->createWallet($player, $season);

@@ -273,11 +273,11 @@ class ManageApiSettings extends SettingsPage
                     ->modalDescription('Hành động này sẽ kéo các sự kiện (bàn thắng, thẻ phạt, thay người) cho toàn bộ trận đấu trong hệ thống. Hệ thống sẽ gom nhóm 20 trận/request để tiết kiệm tối đa API Quota. Quá trình có thể mất vài giây.')
                     ->action(function () {
                         try {
-                            \Illuminate\Support\Facades\Bus::dispatch(new \App\Jobs\SyncAllMatchDetailsJob());
+                            \Illuminate\Support\Facades\Bus::dispatchSync(new \App\Jobs\SyncAllMatchDetailsJob());
                             
                             Notification::make()
-                                ->title('Đã đưa vào hàng đợi')
-                                ->body('Hệ thống đang tiến hành kéo chi tiết trận đấu ngầm để tiết kiệm request.')
+                                ->title('Hoàn tất')
+                                ->body('Đã kéo thành công chi tiết các trận đấu.')
                                 ->success()
                                 ->send();
                         } catch (\Exception $e) {
