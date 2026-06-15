@@ -23,7 +23,7 @@ class MatchListPage extends Page
 
     protected string $view = 'filament.player.pages.match-list';
 
-    public string $activeTab = 'all'; // all, live, open, upcoming, finished
+    public string $activeTab = 'open'; // all, live, open, upcoming, finished
 
     public string $activeStage = 'all';
 
