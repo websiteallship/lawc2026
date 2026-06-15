@@ -26,6 +26,10 @@ class PlayerCombinedStatsWidget extends BaseWidget
     {
         $user = Auth::user();
         
+        if (!$user) {
+            return [];
+        }
+
         return \Illuminate\Support\Facades\Cache::remember("player_combined_stats_{$user->id}", 900, function () use ($user) {
             // 1. Wallet Stats
             $activeSeason = Season::where('status', 'active')->first();
