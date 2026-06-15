@@ -64,11 +64,18 @@ class UserResource extends Resource
                     ->unique(ignoreRecord: true),
                 Forms\Components\Select::make('role')
                     ->label('Vai trò')
-                    ->options([
-                        'super_admin' => 'Quản trị viên',
-                        'operator' => 'Operator',
-                        'player' => 'Người chơi',
-                    ])
+                    ->options(function () {
+                        $options = [
+                            'player' => 'Người chơi',
+                        ];
+                        if (auth()->user()?->hasRole('super_admin')) {
+                            $options['operator'] = 'Operator';
+                            $options['super_admin'] = 'Quản trị viên';
+                        } elseif (auth()->user()?->hasRole('operator')) {
+                            $options['operator'] = 'Operator';
+                        }
+                        return $options;
+                    })
                     ->default('player')
                     ->required()
                     ->afterStateHydrated(function (Forms\Components\Select $component, ?User $record) {
@@ -186,6 +193,7 @@ class UserResource extends Resource
                 EditAction::make(),
 
                 Action::make('grant_leaves')
+                    ->visible(fn (User $record): bool => !auth()->user()?->hasRole('operator') || $record->id === auth()->id() || $record->hasRole('player'))
                     ->label('Cấp Lá')
                     ->icon('heroicon-o-plus-circle')
                     ->color('success')
@@ -219,6 +227,7 @@ class UserResource extends Resource
                     ->requiresConfirmation(),
 
                 Action::make('deduct_leaves')
+                    ->visible(fn (User $record): bool => !auth()->user()?->hasRole('operator') || $record->id === auth()->id() || $record->hasRole('player'))
                     ->label('Trừ Lá')
                     ->icon('heroicon-o-minus-circle')
                     ->color('danger')
@@ -254,6 +263,7 @@ class UserResource extends Resource
                     ->requiresConfirmation(),
 
                 Action::make('toggle_status')
+                    ->visible(fn (User $record): bool => !auth()->user()?->hasRole('operator') || $record->id === auth()->id() || $record->hasRole('player'))
                     ->label(fn (User $record): string => $record->status === 'ACTIVE' ? 'Khóa tài khoản' : 'Mở khóa')
                     ->icon(fn (User $record): string => $record->status === 'ACTIVE' ? 'heroicon-o-lock-closed' : 'heroicon-o-lock-open')
                     ->color(fn (User $record): string => $record->status === 'ACTIVE' ? 'danger' : 'success')
@@ -265,6 +275,7 @@ class UserResource extends Resource
                     ->requiresConfirmation(),
 
                 Action::make('reset_password')
+                    ->visible(fn (User $record): bool => !auth()->user()?->hasRole('operator') || $record->id === auth()->id() || $record->hasRole('player'))
                     ->label('Reset Mật khẩu')
                     ->icon('heroicon-o-key')
                     ->color('warning')
@@ -289,6 +300,7 @@ class UserResource extends Resource
                     ->requiresConfirmation(),
 
                 Action::make('require_reaccept_rules')
+                    ->visible(fn (User $record): bool => (!auth()->user()?->hasRole('operator') || $record->id === auth()->id() || $record->hasRole('player')) && ! is_null($record->accepted_rules_at))
                     ->label('Yêu cầu đồng ý lại Rules')
                     ->icon('heroicon-o-document-text')
                     ->color('warning')
@@ -300,7 +312,6 @@ class UserResource extends Resource
                             ->success()
                             ->send();
                     })
-                    ->visible(fn (User $record): bool => ! is_null($record->accepted_rules_at))
                     ->requiresConfirmation(),
             ])
             ->bulkActions([
@@ -311,18 +322,35 @@ class UserResource extends Resource
                         ->icon('heroicon-o-document-text')
                         ->color('warning')
                         ->action(function (Collection $records): void {
-                            foreach ($records as $record) {
+                            $allowedRecords = $records->filter(function ($record) {
+                                return !auth()->user()?->hasRole('operator') || $record->id === auth()->id() || $record->hasRole('player');
+                            });
+                            
+                            foreach ($allowedRecords as $record) {
                                 $record->update(['accepted_rules_at' => null]);
                             }
                             Notification::make()
                                 ->title('Thành công')
-                                ->body('Đã yêu cầu '.$records->count().' người dùng phải đồng ý lại thể lệ.')
+                                ->body('Đã yêu cầu '.$allowedRecords->count().' người dùng phải đồng ý lại thể lệ.')
                                 ->success()
                                 ->send();
                         })
                         ->requiresConfirmation(),
                 ]),
             ]);
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        
+        if (auth()->check() && auth()->user()->hasRole('operator')) {
+            $query->whereDoesntHave('roles', function ($q) {
+                $q->where('name', 'super_admin');
+            });
+        }
+        
+        return $query;
     }
 
     public static function getRelations(): array

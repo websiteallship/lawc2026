@@ -14,8 +14,11 @@ class UserPolicy
         return $authUser->can('ViewAny:User');
     }
 
-    public function view(AuthUser $authUser): bool
+    public function view(AuthUser $authUser, \App\Models\User $model): bool
     {
+        if ($authUser->hasRole('operator') && $model->hasRole('super_admin')) {
+            return false;
+        }
         return $authUser->can('View:User');
     }
 
@@ -24,13 +27,23 @@ class UserPolicy
         return $authUser->can('Create:User');
     }
 
-    public function update(AuthUser $authUser): bool
+    public function update(AuthUser $authUser, \App\Models\User $model): bool
     {
+        if ($authUser->hasRole('operator')) {
+            if ($model->id !== $authUser->id && !$model->hasRole('player')) {
+                return false;
+            }
+        }
         return $authUser->can('Update:User');
     }
 
-    public function delete(AuthUser $authUser): bool
+    public function delete(AuthUser $authUser, \App\Models\User $model): bool
     {
+        if ($authUser->hasRole('operator')) {
+            if ($model->id !== $authUser->id && !$model->hasRole('player')) {
+                return false;
+            }
+        }
         return $authUser->can('Delete:User');
     }
 

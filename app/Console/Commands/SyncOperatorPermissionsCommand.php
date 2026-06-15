@@ -43,6 +43,13 @@ class SyncOperatorPermissionsCommand extends Command
             'Create:Market',
             'Update:Market',
             
+            // Users
+            'ViewAny:User',
+            'View:User',
+            'Create:User',
+            'Update:User',
+            'Delete:User',
+            
             // Bets
             'ViewAny:Bet',
             'View:Bet',
@@ -63,6 +70,7 @@ class SyncOperatorPermissionsCommand extends Command
 
             // Leaderboard
             'ViewAny:Leaderboard',
+
         ];
 
         // Ensure these permissions exist, in case Shield hasn't generated them
