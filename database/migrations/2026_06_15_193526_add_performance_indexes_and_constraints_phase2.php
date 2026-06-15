@@ -12,17 +12,24 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('user_achievements', function (Blueprint $table) {
-            $table->unique(['user_id', 'achievement_id'], 'user_achievement_unique');
-        });
+        try {
+            Schema::table('user_achievements', function (Blueprint $table) {
+                $table->unique(['user_id', 'achievement_id'], 'user_achievement_unique');
+            });
+        } catch (\Exception $e) {}
 
         if (DB::getDriverName() !== 'sqlite') {
-            Schema::table('bets', function (Blueprint $table) {
-                $table->index(['user_id', 'status', 'market_type_snapshot'], 'bets_user_status_market_index');
-            });
-            Schema::table('markets', function (Blueprint $table) {
-                $table->index(['status', 'close_at'], 'markets_status_close_at_index');
-            });
+            try {
+                Schema::table('bets', function (Blueprint $table) {
+                    $table->index(['user_id', 'status', 'market_type_snapshot'], 'bets_user_status_market_index');
+                });
+            } catch (\Exception $e) {}
+
+            try {
+                Schema::table('markets', function (Blueprint $table) {
+                    $table->index(['status', 'close_at'], 'markets_status_close_at_index');
+                });
+            } catch (\Exception $e) {}
         }
     }
 
