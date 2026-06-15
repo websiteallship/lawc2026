@@ -33,10 +33,18 @@ class MatchSyncService
      */
     public function syncSchedules(): void
     {
-        $apiMatches = $this->apiService->fetchCompetitionMatches();
+        $provider = $this->apiSettings->live_score_provider ?? 'rapidapi_fallback_footballdata';
+        
+        if ($provider === 'football_data') {
+            $apiMatches = $this->apiService->fetchCompetitionMatches();
+        } else {
+            $apiMatches = $this->rapidApiService->fetchAllMatches();
+        }
 
         foreach ($apiMatches as $apiMatch) {
-            $status = $this->apiService->mapApiStatusToDomain($apiMatch->status);
+            // For RapidAPI, status is mapped inside RapidApiMatchService, 
+            // but we might need to map it if using FootballDataApiService
+            $status = $provider === 'football_data' ? $this->apiService->mapApiStatusToDomain($apiMatch->status) : $apiMatch->status;
 
             $match = FootballMatch::where('api_id', $apiMatch->apiId)->first();
 
@@ -45,12 +53,7 @@ class MatchSyncService
                 $match = FootballMatch::where(function ($q) use ($apiMatch) {
                         $q->where('home_team', 'LIKE', '%'.$this->normalizeName($apiMatch->homeTeamName).'%')
                           ->where('away_team', 'LIKE', '%'.$this->normalizeName($apiMatch->awayTeamName).'%');
-                    })
-                    ->whereBetween('kickoff_at', [
-                        $apiMatch->kickoffAt->copy()->subHours(48),
-                        $apiMatch->kickoffAt->copy()->addHours(48),
-                    ])
-                    ->first();
+                    })->first();
 
 
 
@@ -152,12 +155,7 @@ class MatchSyncService
                 $match = FootballMatch::where(function ($q) use ($apiMatch) {
                         $q->where('home_team', 'LIKE', '%'.$this->normalizeName($apiMatch->homeTeamName).'%')
                           ->where('away_team', 'LIKE', '%'.$this->normalizeName($apiMatch->awayTeamName).'%');
-                    })
-                    ->whereBetween('kickoff_at', [
-                        $apiMatch->kickoffAt->copy()->subHours(48),
-                        $apiMatch->kickoffAt->copy()->addHours(48),
-                    ])
-                    ->first();
+                    })->first();
 
 
 
@@ -248,6 +246,8 @@ class MatchSyncService
         }
         $match->home_score = $apiMatch->getCurrentHomeScore() ?? $match->home_score;
         $match->away_score = $apiMatch->getCurrentAwayScore() ?? $match->away_score;
+        $match->detailed_status = $apiMatch->detailedStatus;
+        $match->elapsed_minutes = $apiMatch->elapsed;
 
         // Cập nhật lại giờ bắt đầu nếu có sự thay đổi từ API (Ví dụ: bị dời lại 15 phút)
         if ($match->kickoff_at->notEqualTo($apiMatch->kickoffAt)) {
@@ -399,6 +399,9 @@ class MatchSyncService
     {
         $name = str_ireplace(['Czechia'], 'Czech', $name);
         $name = str_ireplace(['Türkiye', 'Turkiye'], 'Turkey', $name);
+        $name = str_ireplace(['Curaçao'], 'Curacao', $name);
+        $name = str_ireplace(['Cape Verde Islands'], 'Cape Verde', $name);
+        $name = str_ireplace(['Congo DR'], 'DR Congo', $name);
         return trim(str_ireplace(['FC', 'Team', 'National', 'Republic'], '', $name));
     }
 

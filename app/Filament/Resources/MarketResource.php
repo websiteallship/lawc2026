@@ -379,6 +379,18 @@ class MarketResource extends Resource
                 Tables\Columns\TextColumn::make('bets_count')
                     ->label('Số vé')
                     ->counts('bets'),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label('Tạo lúc')
+                    ->dateTime('d/m/Y H:i:s')
+                    ->timezone('Asia/Ho_Chi_Minh')
+                    ->sortable()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('updated_at')
+                    ->label('Cập nhật lúc')
+                    ->dateTime('d/m/Y H:i:s')
+                    ->timezone('Asia/Ho_Chi_Minh')
+                    ->sortable()
+                    ->toggleable(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')

@@ -95,7 +95,7 @@
                         @elseif($match->status === 'LIVE')
                             <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-bold tracking-wide bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400 border border-red-200 dark:border-red-800 shadow-sm animate-pulse">
                                 <span class="w-2 h-2 rounded-full bg-red-600 dark:bg-red-500"></span>
-                                LIVE
+                                LIVE {{ $match->elapsed_minutes ? $match->elapsed_minutes . "'" : '' }}
                             </span>
                         @elseif($match->kickoff_at > now())
                             <span class="px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">Sắp diễn ra</span>
@@ -338,9 +338,20 @@
         <div class="space-y-6">
             @forelse($marketsByType as $type => $markets)
                 <x-filament::card>
-                    <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100 border-b border-gray-100 dark:border-gray-700 pb-3 mb-4 flex items-center gap-2">
-                        <div class="w-1.5 h-5 bg-emerald-500 rounded-full"></div>
-                        {{ $typeNames[$type] ?? $type }}
+                    <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100 border-b border-gray-100 dark:border-gray-700 pb-3 mb-4 flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex items-center gap-2">
+                            <div class="w-1.5 h-5 bg-emerald-500 rounded-full"></div>
+                            <span>{{ $typeNames[$type] ?? $type }}</span>
+                        </div>
+                        @if($lastUpdated = $markets->max('updated_at'))
+                            @php
+                                $parsedTime = \Carbon\Carbon::parse($lastUpdated);
+                            @endphp
+                            <div class="text-xs font-medium text-red-600 dark:text-red-400 flex items-center gap-1.5 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-md">
+                                <x-filament::icon icon="heroicon-m-clock" class="w-3.5 h-3.5" />
+                                <span>Cập nhật: {{ $parsedTime->diffForHumans() }} ({{ $parsedTime->format('H:i d/m') }})</span>
+                            </div>
+                        @endif
                     </h3>
 
                     <div class="grid grid-cols-1 @if($type !== 'EXACT_SCORE') md:grid-cols-2 @endif gap-4">

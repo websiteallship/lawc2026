@@ -34,7 +34,9 @@ class MarketSyncService
                 $openAt = now();
                 $closeAt = $match->kickoff_at;
 
-                if ($periodType === 'EXTRA_TIME') {
+                if ($periodType === 'SECOND_HALF') {
+                    $closeAt = $match->kickoff_at->clone()->addMinutes(90);
+                } elseif ($periodType === 'EXTRA_TIME') {
                     $status = 'DRAFT'; // Sẽ mở khi hòa 90 phút
                     $openAt = $match->kickoff_at->clone()->addMinutes(105); // Tạm tính
                     $closeAt = $match->kickoff_at->clone()->addMinutes(120);

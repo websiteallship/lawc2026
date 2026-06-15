@@ -21,6 +21,7 @@ class ApiMatchDto
         public readonly array $substitutions = [],
         public readonly bool $hasEventsData = true,
         public readonly string $detailedStatus = '',
+        public readonly ?int $elapsed = null,
     ) {}
 
     public static function fromArray(array $data): self
@@ -40,6 +41,7 @@ class ApiMatchDto
             substitutions: $data['substitutions'] ?? [],
             hasEventsData: true,
             detailedStatus: $data['status'] ?? '',
+            elapsed: null, // Football-Data API may not provide elapsed directly
         );
     }
 
@@ -137,6 +139,7 @@ class ApiMatchDto
             substitutions: $substitutions,
             hasEventsData: array_key_exists('events', $data),
             detailedStatus: $statusShort,
+            elapsed: $fixture['status']['elapsed'] ?? null,
         );
     }
 }
