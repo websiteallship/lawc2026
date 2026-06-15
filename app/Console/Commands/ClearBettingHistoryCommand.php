@@ -42,24 +42,42 @@ class ClearBettingHistoryCommand extends Command
         try {
             DB::beginTransaction();
 
-            // Find all bets that are NOT PENDING
-            $betsToDelete = Bet::where('status', '!=', 'PENDING')->pluck('id')->toArray();
-            
-            if (empty($betsToDelete)) {
-                $this->info('No settled/historical bets found to delete.');
-                DB::rollBack();
-                return;
-            }
-
-            $this->info('Found ' . count($betsToDelete) . ' historical bets to delete.');
-
-            // Delete wallet ledgers associated with these bets
-            $deletedLedgers = WalletLedger::whereIn('bet_id', $betsToDelete)->forceDelete();
-            $this->info("Permanently deleted {$deletedLedgers} associated wallet ledger records.");
-
             // Delete the bets
-            $deletedBets = Bet::whereIn('id', $betsToDelete)->forceDelete();
+            $deletedBets = Bet::where('status', '!=', 'PENDING')->forceDelete();
             $this->info("Permanently deleted {$deletedBets} bet records.");
+
+            // Find valid PENDING bet IDs
+            $pendingBetIds = Bet::where('status', 'PENDING')->pluck('id')->toArray();
+
+            // Delete ALL ledgers EXCEPT "Lá khởi đầu mùa giải" and PENDING bet_placed ledgers
+            $deletedLedgers = WalletLedger::where(function($query) use ($pendingBetIds) {
+                $query->whereNotIn('bet_id', $pendingBetIds)
+                      ->orWhereNull('bet_id');
+            })
+            ->where('reason', '!=', 'Lá khởi đầu mùa giải')
+            ->forceDelete();
+
+            $this->info("Permanently deleted {$deletedLedgers} wallet ledger records.");
+
+            // Recalculate wallet balances based on remaining ledgers
+            $wallets = \App\Models\Wallet::all();
+            foreach ($wallets as $wallet) {
+                $available = $wallet->ledgers()->sum('amount_available') ?? 0;
+                $locked = $wallet->ledgers()->sum('amount_locked') ?? 0;
+                
+                // Recalculate stats
+                // Total staked is the sum of ABS(amount_available) for BET_PLACED ledgers
+                $totalStaked = abs($wallet->ledgers()->where('type', 'BET_PLACED')->sum('amount_available') ?? 0);
+                
+                $wallet->update([
+                    'available_balance' => $available,
+                    'locked_balance' => $locked,
+                    'total_staked' => $totalStaked,
+                    'total_payout' => 0,
+                    'net_profit' => -$totalStaked,
+                ]);
+            }
+            $this->info("Recalculated all wallet balances successfully.");
 
             DB::commit();
 
