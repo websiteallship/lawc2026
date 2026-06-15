@@ -81,7 +81,11 @@
                                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style="background-color: #ffffff !important;"></span>
                                     <span class="relative inline-flex rounded-full h-2.5 w-2.5" style="background-color: #ffffff !important;"></span>
                                 </span>
-                                LIVE {{ $match->elapsed_minutes ? $match->elapsed_minutes . "'" : '' }}
+                                @if($match->detailed_status === 'HT')
+                                    HT
+                                @else
+                                    LIVE {{ $match->elapsed_minutes ? $match->elapsed_minutes . "'" : '' }}
+                                @endif
                             </span>
                         @elseif($match->markets_count > 0)
                             <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">

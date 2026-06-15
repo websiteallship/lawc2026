@@ -95,7 +95,11 @@
                         @elseif($match->status === 'LIVE')
                             <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-bold tracking-wide bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400 border border-red-200 dark:border-red-800 shadow-sm animate-pulse">
                                 <span class="w-2 h-2 rounded-full bg-red-600 dark:bg-red-500"></span>
-                                LIVE {{ $match->elapsed_minutes ? $match->elapsed_minutes . "'" : '' }}
+                                @if($match->detailed_status === 'HT')
+                                    Nghỉ giữa hiệp
+                                @else
+                                    LIVE {{ $match->elapsed_minutes ? $match->elapsed_minutes . "'" : '' }}
+                                @endif
                             </span>
                         @elseif($match->kickoff_at > now())
                             <span class="px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">Sắp diễn ra</span>
