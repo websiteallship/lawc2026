@@ -20,7 +20,7 @@ class AdminTopPlayersChart extends ChartWidget
 
         $wallets = Wallet::with('user')
             ->when($activeSeason, fn ($query) => $query->where('season_id', $activeSeason->id))
-            ->orderByDesc('total_balance')
+            ->orderByRaw('(available_balance + locked_balance) DESC')
             ->take(10)
             ->get();
 
