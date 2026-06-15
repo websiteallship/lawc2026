@@ -11,7 +11,10 @@ class UserGuidePage extends Page
     protected static ?string $title = 'Thể lệ & Hướng dẫn';
     protected static ?int $navigationSort = 90;
     
-    protected static string | \BackedEnum | null $navigationGroup = 'Hướng dẫn & Thể lệ';
+    public static function getNavigationGroup(): ?string
+    {
+        return 'Hướng dẫn & Thể lệ';
+    }
     
     protected string $view = 'filament.player.pages.user-guide-page';
 }

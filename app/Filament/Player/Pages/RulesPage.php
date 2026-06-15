@@ -17,7 +17,10 @@ class RulesPage extends Page
 
     protected static ?int $navigationSort = 80;
 
-    protected static string | \BackedEnum | null $navigationGroup = 'Hướng dẫn & Thể lệ';
+    public static function getNavigationGroup(): ?string
+    {
+        return 'Hướng dẫn & Thể lệ';
+    }
 
     protected string $view = 'filament.player.pages.rules';
 }
