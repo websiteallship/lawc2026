@@ -81,8 +81,15 @@
                                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style="background-color: #ffffff !important;"></span>
                                     <span class="relative inline-flex rounded-full h-2.5 w-2.5" style="background-color: #ffffff !important;"></span>
                                 </span>
-                                @if($match->detailed_status === 'HT')
-                                    HT
+                                @if(in_array($match->detailed_status, ['HT', 'BT', 'P', 'SUSP', 'INT']))
+                                    {{ match($match->detailed_status) {
+                                        'HT' => 'HT',
+                                        'BT' => 'BT',
+                                        'P' => 'PEN',
+                                        'SUSP' => 'PAUSE',
+                                        'INT' => 'PAUSE',
+                                        default => $match->detailed_status
+                                    } }}
                                 @else
                                     LIVE {{ $match->elapsed_minutes ? $match->elapsed_minutes . "'" : '' }}
                                 @endif

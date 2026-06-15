@@ -95,8 +95,15 @@
                         @elseif($match->status === 'LIVE')
                             <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-bold tracking-wide bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400 border border-red-200 dark:border-red-800 shadow-sm animate-pulse">
                                 <span class="w-2 h-2 rounded-full bg-red-600 dark:bg-red-500"></span>
-                                @if($match->detailed_status === 'HT')
-                                    Nghỉ giữa hiệp
+                                @if(in_array($match->detailed_status, ['HT', 'BT', 'P', 'SUSP', 'INT']))
+                                    {{ match($match->detailed_status) {
+                                        'HT' => 'Nghỉ giữa hiệp',
+                                        'BT' => 'Nghỉ hiệp phụ',
+                                        'P' => 'Đá luân lưu',
+                                        'SUSP' => 'Tạm dừng',
+                                        'INT' => 'Gián đoạn',
+                                        default => $match->detailed_status
+                                    } }}
                                 @else
                                     LIVE {{ $match->elapsed_minutes ? $match->elapsed_minutes . "'" : '' }}
                                 @endif
