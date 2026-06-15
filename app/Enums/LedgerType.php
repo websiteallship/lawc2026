@@ -34,6 +34,8 @@ enum LedgerType: string implements HasLabel, HasColor
             self::SETTLEMENT_CORRECTION => 'Điều chỉnh kết quả',
             self::SEASON_RESET => 'Reset mùa giải',
         };
+    }
+
     public function getLabel(): ?string
     {
         return $this->label();
