@@ -23,7 +23,7 @@ class WalletHistoryPage extends Page
 
     protected static ?int $navigationSort = 40;
 
-    protected static ?string $navigationGroup = 'Quản lý cá nhân';
+    protected static string | \BackedEnum | null $navigationGroup = 'Quản lý cá nhân';
 
     protected string $view = 'filament.player.pages.wallet-history';
 
