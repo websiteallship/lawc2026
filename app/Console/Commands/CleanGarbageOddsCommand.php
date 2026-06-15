@@ -33,7 +33,8 @@ class CleanGarbageOddsCommand extends Command
         foreach ($outcomes as $key => $lineOutcomes) {
             $hasBad = false;
             foreach ($lineOutcomes as $o) {
-                if ($o->profit_rate < 0.50) {
+                // Sửa lỗi: dùng decimal_odds thay vì profit_rate vì profit_rate ở code cũ bị lưu sai thành 1.00
+                if ($o->decimal_odds < 1.50) {
                     $hasBad = true;
                     break;
                 }
@@ -55,7 +56,7 @@ class CleanGarbageOddsCommand extends Command
         $this->info("\n2. Đang quét các vé cược (Bets) đã đặt vào kèo rác...");
 
         $bets = Bet::where('status', 'PENDING')
-            ->where('profit_rate_snapshot', '<', 0.50)
+            ->whereIn('outcome_id', $suspendIds)
             ->with(['wallet', 'user'])
             ->get();
 
