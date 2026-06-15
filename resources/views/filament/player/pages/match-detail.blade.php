@@ -395,7 +395,15 @@
                                     @endif
                                     
                                     <div class="z-10">
-                                        @if($market->status === 'LOCKED')
+                                        @if($market->status === 'SETTLED')
+                                            <span class="inline-flex items-center gap-1 text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 px-2 py-0.5 rounded-md">
+                                                <x-filament::icon icon="heroicon-m-check-circle" class="w-3.5 h-3.5" /> Quyết toán
+                                            </span>
+                                        @elseif($market->status === 'VOIDED')
+                                            <span class="inline-flex items-center gap-1 text-xs font-semibold bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400 px-2 py-0.5 rounded-md">
+                                                <x-filament::icon icon="heroicon-m-x-circle" class="w-3.5 h-3.5" /> Đã hủy
+                                            </span>
+                                        @elseif($market->status === 'LOCKED')
                                             <span class="inline-flex items-center gap-1 text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 px-2 py-0.5 rounded-md">
                                                 <x-filament::icon icon="heroicon-m-lock-closed" class="w-3.5 h-3.5" /> Đã đóng
                                             </span>
@@ -411,13 +419,13 @@
                                     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5 p-3">
                                         @foreach($market->outcomes as $outcome)
                                             <button 
-                                                @if($market->status !== 'LOCKED') wire:click="selectOutcome({{ $outcome->id }})" @endif
+                                                @if(in_array($market->status, ['OPEN'])) wire:click="selectOutcome({{ $outcome->id }})" @endif
                                                 @class([
                                                     'relative flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-200',
-                                                    'bg-gray-50 border-gray-200 dark:bg-gray-800/50 dark:border-gray-700 hover:border-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/20 dark:hover:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50' => $market->status !== 'LOCKED',
-                                                    'bg-gray-100 border-gray-200 dark:bg-gray-800 dark:border-gray-700 opacity-60 cursor-not-allowed' => $market->status === 'LOCKED',
+                                                    'bg-gray-50 border-gray-200 dark:bg-gray-800/50 dark:border-gray-700 hover:border-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/20 dark:hover:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50' => in_array($market->status, ['OPEN']),
+                                                    'bg-gray-100 border-gray-200 dark:bg-gray-800 dark:border-gray-700 opacity-60 cursor-not-allowed' => !in_array($market->status, ['OPEN']),
                                                 ])
-                                                @if($market->status === 'LOCKED') disabled @endif
+                                                @if(!in_array($market->status, ['OPEN'])) disabled @endif
                                             >
                                                 @php
                                                     $scoreParts = explode(':', str_replace('-', ':', $outcome->label));
@@ -484,8 +492,16 @@
                                                 </div>
                                                 
                                                 <div class="shrink-0 ml-2">
-                                                    @if($market->status === 'LOCKED')
+                                                    @if($market->status === 'SETTLED')
+                                                        <x-filament::button size="sm" color="info" disabled>
+                                                            Quyết toán
+                                                        </x-filament::button>
+                                                    @elseif($market->status === 'VOIDED')
                                                         <x-filament::button size="sm" color="gray" disabled>
+                                                            Đã hủy
+                                                        </x-filament::button>
+                                                    @elseif($market->status === 'LOCKED')
+                                                        <x-filament::button size="sm" color="warning" disabled>
                                                             Đã đóng
                                                         </x-filament::button>
                                                     @else

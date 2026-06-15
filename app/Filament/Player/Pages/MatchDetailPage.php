@@ -29,7 +29,7 @@ class MatchDetailPage extends Page
     public function mount(int $record): void
     {
         $this->match = FootballMatch::with(['season', 'events', 'periodResults', 'markets' => function ($q) {
-            $q->whereIn('status', ['OPEN', 'LOCKED'])->orderBy('display_order');
+            $q->whereIn('status', ['OPEN', 'LOCKED', 'SETTLED', 'VOIDED'])->orderBy('display_order');
         }, 'markets.outcomes' => function ($q) {
             $q->where('status', 'ACTIVE')->orderBy('display_order');
         }])->findOrFail($record);
@@ -42,7 +42,7 @@ class MatchDetailPage extends Page
         // Livewire rehydrates the model but loses nested relationships (markets.outcomes)
         if (! $this->match->relationLoaded('markets') || ($this->match->markets->isNotEmpty() && ! $this->match->markets->first()->relationLoaded('outcomes'))) {
             $this->match->load(['markets' => function ($q) {
-                $q->whereIn('status', ['OPEN', 'LOCKED'])->orderBy('display_order');
+                $q->whereIn('status', ['OPEN', 'LOCKED', 'SETTLED', 'VOIDED'])->orderBy('display_order');
             }, 'markets.outcomes' => function ($q) {
                 $q->where('status', 'ACTIVE')->orderBy('display_order');
             }]);
