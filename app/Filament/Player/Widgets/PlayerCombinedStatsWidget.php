@@ -41,13 +41,13 @@ class PlayerCombinedStatsWidget extends BaseWidget
             }
             $available = $wallet ? $wallet->available_balance : 0;
             $locked = $wallet ? $wallet->locked_balance : 0;
-            $netProfit = $wallet ? $wallet->net_profit : null;
 
             // 2. Pending Bets Stats
             $pendingBetCount = Bet::where('user_id', $user->id)->where('status', 'PENDING')->count();
 
-            // 3. User Statistics (Win Rate, ROI, Streak)
+            // 3. User Statistics (Win Rate, ROI, Streak, Net Profit)
             $stats = UserStatistic::where('user_id', $user->id)->first();
+            $netProfit = $stats ? $stats->net_profit : 0;
             $winRate = $stats ? $stats->win_rate : 0;
             $roi = $stats ? $stats->roi : 0;
             $currentStreak = $stats ? $stats->current_win_streak : 0;
