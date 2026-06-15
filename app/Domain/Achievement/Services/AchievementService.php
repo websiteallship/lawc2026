@@ -253,17 +253,30 @@ class AchievementService
             }
         }
 
-        // Trao thành tựu
-        UserAchievement::create([
-            'user_id' => $userId,
-            'achievement_id' => $achievement->id,
-            'awarded_at' => now(),
-        ]);
+        // Trao thành tựu sử dụng transaction và firstOrCreate để tránh Race Condition
+        try {
+            \Illuminate\Support\Facades\DB::transaction(function () use ($userId, $achievement) {
+                $created = UserAchievement::firstOrCreate([
+                    'user_id' => $userId,
+                    'achievement_id' => $achievement->id,
+                ], [
+                    'awarded_at' => now(),
+                ]);
 
-        $user = User::find($userId);
-        if ($user) {
-            app(\App\Domain\Notification\Services\NotificationService::class)
-                ->notifyAchievementUnlocked($user, $achievement);
+                // Nếu vừa mới được tạo ra (mới được thưởng)
+                if ($created->wasRecentlyCreated) {
+                    $user = User::find($userId);
+                    if ($user) {
+                        app(\App\Domain\Notification\Services\NotificationService::class)
+                            ->notifyAchievementUnlocked($user, $achievement);
+                    }
+                }
+            });
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Ignore unique constraint violations due to race conditions
+            if ($e->getCode() !== '23000' && $e->getCode() !== '23505') {
+                throw $e;
+            }
         }
     }
 }

@@ -4,8 +4,11 @@ namespace App\Providers;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Http\Client\Events\ResponseReceived;
+use App\Listeners\ApiQuotaListener;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -39,5 +42,10 @@ class AppServiceProvider extends ServiceProvider
         if (! $this->app->environment('production')) {
             Model::shouldBeStrict();
         }
+
+        Event::listen(
+            ResponseReceived::class,
+            ApiQuotaListener::class,
+        );
     }
 }

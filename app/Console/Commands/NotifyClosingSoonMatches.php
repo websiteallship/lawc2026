@@ -51,6 +51,9 @@ class NotifyClosingSoonMatches extends Command
 
         $notificationsSentCount = 0;
 
+        $payloads = [];
+        $now = now();
+
         foreach ($users as $user) {
             $unbetMatches = collect();
             
@@ -67,8 +70,50 @@ class NotifyClosingSoonMatches extends Command
 
             // Chỉ bắn thông báo nếu người dùng còn trận chưa bet
             if ($unbetMatches->isNotEmpty()) {
-                $notificationService->notifyMatchesClosingSoon($user, $unbetMatches);
+                if ($unbetMatches->count() === 1) {
+                    $match = $unbetMatches->first();
+                    $title = 'Trận đấu sắp đóng dự đoán';
+                    $body = "Trận đấu {$match->home_team} vs {$match->away_team} sắp diễn ra. Đặt cược ngay!";
+                    $url = '/player/match/' . $match->id;
+                } else {
+                    $count = $unbetMatches->count();
+                    $title = "Có {$count} trận đấu sắp đóng!";
+                    $body = "Có {$count} trận đấu sắp diễn ra. Hãy đưa ra dự đoán của bạn trước khi quá muộn.";
+                    $url = '/player/matches';
+                }
+
+                $payloads[] = [
+                    'id' => (string) \Illuminate\Support\Str::uuid(),
+                    'type' => \Filament\Notifications\DatabaseNotification::class,
+                    'notifiable_type' => get_class($user),
+                    'notifiable_id' => $user->id,
+                    'data' => json_encode([
+                        'title' => $title,
+                        'body' => $body,
+                        'icon' => 'heroicon-o-clock',
+                        'iconColor' => 'warning',
+                        'status' => 'warning',
+                        'actions' => [
+                            [
+                                'name' => 'view',
+                                'label' => 'Dự đoán ngay',
+                                'url' => $url,
+                                'shouldMarkAsRead' => true,
+                            ],
+                        ],
+                    ]),
+                    'read_at' => null,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+
                 $notificationsSentCount++;
+            }
+        }
+
+        if (!empty($payloads)) {
+            foreach (array_chunk($payloads, 500) as $chunk) {
+                \Illuminate\Support\Facades\DB::table('notifications')->insert($chunk);
             }
         }
 

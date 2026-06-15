@@ -7,7 +7,10 @@ use Filament\Widgets\Widget;
 
 class PlayerUpcomingMatchesWidget extends Widget
 {
-    protected int|string|array $columnSpan = 'full';
+    protected int|string|array $columnSpan = [
+        'default' => 'full',
+        'md' => 6,
+    ];
 
     protected string $view = 'filament.player.widgets.player-upcoming-matches-widget';
 

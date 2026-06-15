@@ -67,55 +67,55 @@ class CorrectionService
                 'reason' => 'CORRECTED: ' . $correction->reason,
             ]);
 
-            $settlementItems = SettlementItem::where('settlement_id', $settlement->id)
-                ->with(['bet', 'user', 'bet.wallet'])
-                ->lockForUpdate()
-                ->get();
-
             $totalPayoutDiff = 0;
 
-            foreach ($settlementItems as $item) {
-                $bet = $item->bet;
-                $oldGrossPayout = $item->gross_payout;
+            SettlementItem::where('settlement_id', $settlement->id)
+                ->with(['bet', 'user', 'bet.wallet'])
+                ->lockForUpdate()
+                ->chunkById(500, function ($settlementItems) use ($market, $matchResult, &$totalPayoutDiff, $correction) {
+                    foreach ($settlementItems as $item) {
+                        $bet = $item->bet;
+                        $oldGrossPayout = $item->gross_payout;
 
-                // Tính toán lại
-                $result = match ($market->market_type) {
-                    'EXACT_SCORE' => $this->exactScore->calculate($bet, $matchResult),
-                    'ASIAN_HANDICAP' => $this->asianHandicap->calculate($bet, $matchResult),
-                    'OVER_UNDER' => $this->overUnder->calculate($bet, $matchResult),
-                    default => throw new \Exception("Unsupported market type: {$market->market_type}"),
-                };
+                        // Tính toán lại
+                        $result = match ($market->market_type) {
+                            'EXACT_SCORE' => $this->exactScore->calculate($bet, $matchResult),
+                            'ASIAN_HANDICAP' => $this->asianHandicap->calculate($bet, $matchResult),
+                            'OVER_UNDER' => $this->overUnder->calculate($bet, $matchResult),
+                            default => throw new \Exception("Unsupported market type: {$market->market_type}"),
+                        };
 
-                $newGrossPayout = $result->grossPayout;
-                $adjustment = $newGrossPayout - $oldGrossPayout;
-                $totalPayoutDiff += $adjustment;
+                        $newGrossPayout = $result->grossPayout;
+                        $adjustment = $newGrossPayout - $oldGrossPayout;
+                        $totalPayoutDiff += $adjustment;
 
-                // Update Wallet (Lock wallet first)
-                $wallet = Wallet::lockForUpdate()->findOrFail($bet->wallet_id);
-                if ($adjustment !== 0) {
-                    $this->walletService->correctSettlement(
-                        $wallet,
-                        $bet,
-                        $adjustment,
-                        "Điều chỉnh kết quả vé cược #{$bet->public_code}: {$correction->reason}"
-                    );
-                }
+                        // Update Wallet (Lock wallet first)
+                        $wallet = Wallet::lockForUpdate()->findOrFail($bet->wallet_id);
+                        if ($adjustment !== 0) {
+                            $this->walletService->correctSettlement(
+                                $wallet,
+                                $bet,
+                                $adjustment,
+                                "Điều chỉnh kết quả vé cược #{$bet->public_code}: {$correction->reason}"
+                            );
+                        }
 
-                // Cập nhật Bet
-                $bet->update([
-                    'status' => BetStatus::CORRECTED->value,
-                    'gross_payout' => $newGrossPayout,
-                    'net_result' => $result->netResult,
-                ]);
+                        // Cập nhật Bet
+                        $bet->update([
+                            'status' => BetStatus::CORRECTED->value,
+                            'gross_payout' => $newGrossPayout,
+                            'net_result' => $result->netResult,
+                        ]);
 
-                // Cập nhật SettlementItem
-                $item->update([
-                    'result_status' => $result->status->value,
-                    'gross_payout' => $newGrossPayout,
-                    'net_result' => $result->netResult,
-                    'calculation_detail' => $result->calculationDetail,
-                ]);
-            }
+                        // Cập nhật SettlementItem
+                        $item->update([
+                            'result_status' => $result->status->value,
+                            'gross_payout' => $newGrossPayout,
+                            'net_result' => $result->netResult,
+                            'calculation_detail' => $result->calculationDetail,
+                        ]);
+                    }
+                });
 
             $settlement->update([
                 'total_payout' => $settlement->total_payout + $totalPayoutDiff,

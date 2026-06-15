@@ -21,4 +21,9 @@ class Mission extends Model
     {
         return $this->belongsTo(Achievement::class, 'reward_achievement_id');
     }
+
+    public function userMissions()
+    {
+        return $this->hasMany(UserMission::class);
+    }
 }

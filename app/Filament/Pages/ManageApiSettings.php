@@ -295,4 +295,11 @@ class ManageApiSettings extends SettingsPage
                 ->icon('heroicon-o-arrow-path'),
         ];
     }
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            \App\Filament\Widgets\ApiQuotaWidget::class,
+        ];
+    }
 }

@@ -216,3 +216,19 @@
   - Bổ sung bộ lọc tab "Đã điều chỉnh" (Corrected).
   - Việt hóa tự động (Home/Away/Over/Under -> Đội nhà, Đội khách, Tài, Xỉu) và gắn thêm tên đội tuyển chính xác vào phiếu cược.
 - **Testing**: Bổ sung `CorrectionServiceTest` cover hoàn toàn logic Settle lỗi -> Điều chỉnh kết quả -> Update Ví & Bet.
+
+## v1.9.0 (WP-9 - Dashboard Analytics & Pro-Max UI/UX) - Hoàn tất (Phase 2)
+- **Database**: Tạo migration bảng `user_statistics` để theo dõi và lưu trữ thống kê phân tích của từng người chơi.
+- **Domain Service**: Cập nhật `UserStatisticsService` tự động tính toán tổng hợp toàn bộ lịch sử cược (số vé thắng, thua, tỷ suất lợi nhuận ROI, Tỷ lệ thắng Win Rate, Chuỗi thắng) và xử lý triệt để logic đối với trạng thái `CORRECTED`.
+- **UI/UX (Player Panel)**: Cải tổ và nâng cấp toàn diện màn hình Player Dashboard với kiến trúc Grid layout 12 cột chuẩn Responsive:
+  - **`PlayerCombinedStatsWidget`**: Hiển thị thẻ thống kê cá nhân (Lá khả dụng, Đang khóa, Lãi ròng, Win Rate, ROI, Win Streak) tích hợp cơ chế tự động co giãn font-size để không vỡ layout trên thiết bị di động (`!text-lg sm:!text-xl md:!text-3xl`).
+  - **`PlayerProfitChartWidget`**: Vẽ biểu đồ đường (ApexCharts) hiển thị biến động "Lãi Ròng" đa chiều theo thời gian, thiết lập giới hạn chiều cao tối ưu không gian màn hình (`maxHeight='300px'`).
+  - **`PlayerMissionsWidget`**: Tái thiết kế bảng hiển thị với Thanh Tiến Độ (Progress Bar) tỷ lệ phần trăm động, gắn mác Hàng ngày/Tuần bằng Badge màu, và bổ sung cột phần thưởng (Reward Achievement) trực quan.
+  - **Layout Constraints**: Phân rã 2 cột bằng nhau (50-50) đối với `PlayerUpcomingMatchesWidget` và `PlayerRecentBadgesWidget` trên nền tảng Desktop, và trượt linh hoạt Stack 100% (`columnSpan = 'full'`) trên giao diện di động.
+
+## v1.10.0 (WP-10 - API Quota Management) - Hoàn tất (Phase 2)
+- **Domain Service**: Xây dựng `ApiQuotaService` tự động tracking header `x-ratelimit-requests-remaining` và `x-ratelimit-requests-limit` từ RapidAPI. Cache vào Redis để tối ưu tốc độ.
+- **Event Listener**: Bổ sung `ApiQuotaListener` lắng nghe `Illuminate\Http\Client\Events\ResponseReceived`, tự động update limit & remaining sau mọi truy vấn HTTP gửi đến API-Sports mà không ảnh hưởng logic lõi.
+- **Alert System**: Tự động bắn thông báo khẩn (`Database Notification`) cho Admin/SuperAdmin khi dung lượng quota chạm ngưỡng báo động <= 10%. Thiết lập cờ chống spam `api_quota_alert_sent` với TTL 24h.
+- **UI/UX (Admin Panel)**: Bổ sung `ApiQuotaWidget` vào trang `ManageApiSettings` (Cấu hình API). Tự động fallback số liệu `0 / 7,500` (dựa trên gói trả phí mặc định) nếu hệ thống chưa nhận được payload header mới. Trực quan hoá cảnh báo tiêu thụ bằng các mã màu trạng thái (Success, Warning, Danger).
+- **Testing**: Bổ sung `ApiQuotaServiceTest` bao phủ toàn bộ mock HTTP (`Http::fake()`), verify quá trình bóc xuất Headers và hành vi Alerting. Đạt 100% tỷ lệ pass Unit Tests.
