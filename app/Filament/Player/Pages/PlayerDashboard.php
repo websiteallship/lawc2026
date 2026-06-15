@@ -19,7 +19,7 @@ class PlayerDashboard extends Page
 
     protected static ?string $title = 'Dashboard';
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 10;
 
     protected string $view = 'filament.player.pages.player-dashboard-empty';
 

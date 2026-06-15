@@ -32,7 +32,7 @@ class MissionsPage extends Page
 
     public static function getNavigationSort(): ?int
     {
-        return 4;
+        return 50;
     }
 
     protected string $view = 'filament.player.pages.missions-page';

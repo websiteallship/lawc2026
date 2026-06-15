@@ -18,7 +18,7 @@ class LeaderboardPage extends Page
 
     protected static ?string $title = 'Bảng xếp hạng';
 
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 70;
 
     protected string $view = 'filament.player.pages.leaderboard';
 

@@ -9,7 +9,7 @@ class UserGuidePage extends Page
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-information-circle';
     protected static ?string $navigationLabel = 'Hướng dẫn';
     protected static ?string $title = 'Thể lệ & Hướng dẫn';
-    protected static ?int $navigationSort = 10;
+    protected static ?int $navigationSort = 90;
     
     protected string $view = 'filament.player.pages.user-guide-page';
 }

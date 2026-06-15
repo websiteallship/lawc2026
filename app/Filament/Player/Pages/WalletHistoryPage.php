@@ -21,7 +21,7 @@ class WalletHistoryPage extends Page
 
     protected static ?string $title = 'Ví lá của tôi';
 
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 40;
 
     protected string $view = 'filament.player.pages.wallet-history';
 

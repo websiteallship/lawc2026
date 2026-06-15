@@ -22,7 +22,7 @@ class MyBetsPage extends Page
 
     protected static ?string $title = 'Phiếu dự đoán của tôi';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 30;
 
     protected string $view = 'filament.player.pages.my-bets-page';
 
