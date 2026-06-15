@@ -19,7 +19,7 @@ class CleanGarbageOddsCommand extends Command
         $this->info("1. Đang quét các tỷ lệ cược (Outcomes) rác...");
 
         $outcomes = MarketOutcome::with('market')
-            ->where('status', 'ACTIVE')
+            ->whereIn('status', ['ACTIVE', 'SUSPENDED'])
             ->whereHas('market', function($q) {
                 $q->whereIn('market_type', ['ASIAN_HANDICAP', 'OVER_UNDER']);
             })
@@ -33,7 +33,6 @@ class CleanGarbageOddsCommand extends Command
         foreach ($outcomes as $key => $lineOutcomes) {
             $hasBad = false;
             foreach ($lineOutcomes as $o) {
-                // Sửa lỗi: dùng decimal_odds thay vì profit_rate vì profit_rate ở code cũ bị lưu sai thành 1.00
                 if ($o->decimal_odds < 1.50) {
                     $hasBad = true;
                     break;
