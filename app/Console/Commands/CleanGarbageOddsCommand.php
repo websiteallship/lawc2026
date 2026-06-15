@@ -19,7 +19,7 @@ class CleanGarbageOddsCommand extends Command
         $this->info("1. Đang quét các tỷ lệ cược (Outcomes) rác...");
 
         $outcomes = MarketOutcome::with('market')
-            ->whereIn('status', ['ACTIVE', 'SUSPENDED'])
+            ->where('status', 'ACTIVE')
             ->whereHas('market', function($q) {
                 $q->whereIn('market_type', ['ASIAN_HANDICAP', 'OVER_UNDER']);
             })
@@ -33,7 +33,7 @@ class CleanGarbageOddsCommand extends Command
         foreach ($outcomes as $key => $lineOutcomes) {
             $hasBad = false;
             foreach ($lineOutcomes as $o) {
-                if ($o->decimal_odds < 1.50) {
+                if ($o->profit_rate < 0.50) {
                     $hasBad = true;
                     break;
                 }
@@ -55,7 +55,7 @@ class CleanGarbageOddsCommand extends Command
         $this->info("\n2. Đang quét các vé cược (Bets) đã đặt vào kèo rác...");
 
         $bets = Bet::where('status', 'PENDING')
-            ->whereIn('outcome_id', $suspendIds)
+            ->where('profit_rate_snapshot', '<', 0.50)
             ->with(['wallet', 'user'])
             ->get();
 

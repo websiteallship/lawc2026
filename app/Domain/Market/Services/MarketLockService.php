@@ -4,14 +4,17 @@ namespace App\Domain\Market\Services;
 
 use App\Domain\Audit\Services\AuditLogService;
 use App\Domain\Market\Exceptions\InvalidMarketTransitionException;
+use App\Enums\BetStatus;
 use App\Enums\MarketStatus;
 use App\Models\Market;
 use Illuminate\Support\Facades\DB;
+use App\Domain\Wallet\Services\WalletService;
 
 class MarketLockService
 {
     public function __construct(
         private readonly AuditLogService $auditLog,
+        private readonly WalletService $walletService,
     ) {}
 
     /**
@@ -59,6 +62,17 @@ class MarketLockService
             } elseif ($newStatus === MarketStatus::VOIDED) {
                 $updates['voided_at'] = $now;
                 $updates['void_reason'] = $reason;
+
+                $pendingBets = $market->bets()->where('status', 'PENDING')->get();
+                foreach ($pendingBets as $bet) {
+                    $wallet = \App\Models\Wallet::lockForUpdate()->findOrFail($bet->wallet_id);
+                    $bet->status = BetStatus::VOIDED;
+                    $bet->voided_at = $now;
+                    $bet->metadata = array_merge($bet->metadata ?? [], ['void_reason' => $reason ?? 'Kèo bị hủy']);
+                    $bet->save();
+                    
+                    $this->walletService->voidBet($wallet, $bet);
+                }
             }
 
             $market->update($updates);

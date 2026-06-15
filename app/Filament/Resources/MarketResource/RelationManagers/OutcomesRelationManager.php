@@ -71,6 +71,7 @@ class OutcomesRelationManager extends RelationManager
                 ->options([
                     'ACTIVE' => 'Đang mở',
                     'INACTIVE' => 'Tắt',
+                    'SUSPENDED' => 'Tạm ngưng',
                 ])
                 ->required()
                 ->default('ACTIVE'),
@@ -100,8 +101,31 @@ class OutcomesRelationManager extends RelationManager
                 CreateAction::make(),
             ])
             ->actions([
-                EditAction::make(),
-                DeleteAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->after(function (\App\Models\MarketOutcome $record) {
+                        if (in_array($record->status, ['INACTIVE', 'SUSPENDED'])) {
+                            $pendingBets = \App\Models\Bet::where('outcome_id', $record->id)
+                                ->where('status', 'PENDING')
+                                ->get();
+                                
+                            if ($pendingBets->isNotEmpty()) {
+                                $walletService = app(\App\Domain\Wallet\Services\WalletService::class);
+                                foreach ($pendingBets as $bet) {
+                                    $wallet = \App\Models\Wallet::lockForUpdate()->findOrFail($bet->wallet_id);
+                                    $bet->status = \App\Enums\BetStatus::VOIDED;
+                                    $bet->voided_at = now();
+                                    $bet->metadata = array_merge($bet->metadata ?? [], ['void_reason' => 'Tỷ lệ cược bị tắt/tạm ngưng bởi admin']);
+                                    $bet->save();
+                                    $walletService->voidBet($wallet, $bet);
+                                }
+                                \Filament\Notifications\Notification::make()
+                                    ->title("Đã hủy và hoàn tiền {$pendingBets->count()} vé cược của kèo này")
+                                    ->warning()
+                                    ->send();
+                            }
+                        }
+                    }),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 BulkActionGroup::make([
