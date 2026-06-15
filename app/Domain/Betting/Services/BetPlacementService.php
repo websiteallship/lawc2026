@@ -126,7 +126,17 @@ class BetPlacementService
 
             // ---- Bước 11: Snapshot tất cả giá trị cần lưu ----
             $profitRate = (float) $outcome->profit_rate;
-            $displayOdds = "{$outcome->label} ăn ".number_format($profitRate, 2);
+            $label = $outcome->label;
+            if (str_starts_with(strtolower($label), 'over ')) {
+                $label = preg_replace('/^over /i', 'Tài ', $label);
+            } elseif (str_starts_with(strtolower($label), 'under ')) {
+                $label = preg_replace('/^under /i', 'Xỉu ', $label);
+            } elseif (strtolower($label) === 'over') {
+                $label = 'Tài';
+            } elseif (strtolower($label) === 'under') {
+                $label = 'Xỉu';
+            }
+            $displayOdds = "{$label} ăn ".number_format($profitRate, 2);
 
             // ---- Bước 12: Tạo Bet PENDING ----
             $bet = Bet::create([
@@ -140,7 +150,7 @@ class BetPlacementService
                 'stake' => $input->stake,
                 'profit_rate_snapshot' => $profitRate,
                 'line_snapshot' => $outcome->line_value,
-                'label_snapshot' => $outcome->label,
+                'label_snapshot' => $label,
                 'display_odds_snapshot' => $displayOdds,
                 'close_at_snapshot' => $market->close_at,
                 'market_type_snapshot' => $market->market_type,

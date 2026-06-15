@@ -53,4 +53,50 @@ class Bet extends Model
     {
         return $this->belongsTo(MarketOutcome::class, 'outcome_id');
     }
+
+    public function getLabelSnapshotAttribute($value): ?string
+    {
+        if (is_null($value)) {
+            return null;
+        }
+
+        $lower = strtolower($value);
+        if (str_starts_with($lower, 'over ')) {
+            return preg_replace('/^over /i', 'Tài ', $value);
+        }
+        if (str_starts_with($lower, 'under ')) {
+            return preg_replace('/^under /i', 'Xỉu ', $value);
+        }
+        if ($lower === 'over') {
+            return 'Tài';
+        }
+        if ($lower === 'under') {
+            return 'Xỉu';
+        }
+
+        return $value;
+    }
+
+    public function getDisplayOddsSnapshotAttribute($value): ?string
+    {
+        if (is_null($value)) {
+            return null;
+        }
+
+        $lower = strtolower($value);
+        if (str_starts_with($lower, 'over ')) {
+            return preg_replace('/^over /i', 'Tài ', $value);
+        }
+        if (str_starts_with($lower, 'under ')) {
+            return preg_replace('/^under /i', 'Xỉu ', $value);
+        }
+        if (str_starts_with($lower, 'over')) {
+            return preg_replace('/^over/i', 'Tài', $value);
+        }
+        if (str_starts_with($lower, 'under')) {
+            return preg_replace('/^under/i', 'Xỉu', $value);
+        }
+
+        return $value;
+    }
 }

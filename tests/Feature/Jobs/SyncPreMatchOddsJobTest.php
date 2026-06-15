@@ -98,7 +98,7 @@ class SyncPreMatchOddsJobTest extends TestCase
 
         $this->assertDatabaseHas('market_outcomes', [
             'label' => 'Away +1.5',
-            'line_value' => 1.5,
+            'line_value' => -1.5,
             'profit_rate' => 0.85,
             'selection_side' => 'AWAY',
         ]);

@@ -43,6 +43,16 @@
                                     } elseif ($displayName === 'Đội Khách' || $outcome->selection_side === 'AWAY') {
                                         $displayName = $market->match->away_team;
                                     }
+
+                                    if (str_starts_with(strtolower($displayName), 'over ')) {
+                                        $displayName = preg_replace('/^over /i', 'Tài ', $displayName);
+                                    } elseif (str_starts_with(strtolower($displayName), 'under ')) {
+                                        $displayName = preg_replace('/^under /i', 'Xỉu ', $displayName);
+                                    } elseif (strtolower($displayName) === 'over') {
+                                        $displayName = 'Tài';
+                                    } elseif (strtolower($displayName) === 'under') {
+                                        $displayName = 'Xỉu';
+                                    }
                                     
                                     $displayLine = null;
                                     if (in_array($market->market_type, ['ASIAN_HANDICAP', 'OVER_UNDER']) && !is_null($outcome->line_value)) {
