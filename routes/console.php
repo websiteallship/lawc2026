@@ -16,6 +16,9 @@ Artisan::command('inspire', function () {
 // Khóa market hết giờ mỗi phút
 Schedule::command('markets:lock-expired')->everyMinute();
 
+// Thông báo nhắc nhở các trận sắp đóng
+Schedule::command('notify:closing-soon')->everyMinute();
+
 // ===================== MATCH AUTO-UPDATE =====================
 // Cập nhật trạng thái trận đấu (SCHEDULED -> LIVE -> FINISHED) mỗi phút
 Schedule::command('matches:update-status')->everyMinute();
@@ -67,6 +70,12 @@ Schedule::command('backup:run --only-db')->dailyAt('02:00');
 // Dọn backup cũ mỗi tuần (giữ theo strategy trong config/backup.php)
 Schedule::command('backup:clean')->weekly();
 
-// ===================== LEADERBOARD SNAPSHOT =====================
+// ===================== LEADERBOARD SNAPSHOT & NOTIFY =====================
 // Snapshot leaderboard WC2026 mỗi giờ (thay đổi season_code tuỳ môi trường)
 Schedule::command('snapshot:leaderboard WC2026')->hourly();
+
+// Thông báo bảng xếp hạng hằng ngày lúc 8:00 sáng
+Schedule::command('notify:leaderboard --type=daily')->dailyAt('08:00');
+
+// Thông báo bảng xếp hạng hằng tuần vào sáng thứ 2 lúc 8:00 sáng
+Schedule::command('notify:leaderboard --type=weekly')->weeklyOn(1, '08:00');

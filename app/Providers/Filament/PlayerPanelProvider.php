@@ -34,6 +34,10 @@ class PlayerPanelProvider extends PanelProvider
                 fn (): string => Blade::render('@livewire(\'player-balance-header\')')
             )
             ->renderHook(
+                PanelsRenderHook::USER_MENU_BEFORE,
+                fn (): string => Blade::render('@livewire(\'player.achievement-badge\')')
+            )
+            ->renderHook(
                 PanelsRenderHook::FOOTER,
                 fn (): string => '
                     <div style="text-align: center; width: 100%; padding: 24px 16px; border-top: 1px solid rgba(128, 128, 128, 0.2); font-family: inherit; font-size: 0.75rem; line-height: 1.5; opacity: 0.7; margin-top: 20px;">
@@ -45,6 +49,7 @@ class PlayerPanelProvider extends PanelProvider
             ->viteTheme('resources/css/filament/player/theme.css')
             ->login()
             ->profile(\App\Filament\Pages\Auth\EditProfile::class, isSimple: false)
+            ->databaseNotifications()
             ->colors([
                 'primary' => Color::Emerald,
             ])

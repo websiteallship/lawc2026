@@ -44,6 +44,11 @@ class Bet extends Model
         return $this->belongsTo(Wallet::class);
     }
 
+    public function match(): BelongsTo
+    {
+        return $this->belongsTo(FootballMatch::class, 'match_id');
+    }
+
     public function market(): BelongsTo
     {
         return $this->belongsTo(Market::class);

@@ -1,5 +1,5 @@
 <x-filament-panels::page>
-    <div class="space-y-4">
+    <div class="space-y-4" x-data="{ openModal: null }">
         <x-filament::card>
             @if(count($rankings) === 0)
                 <p class="text-center text-gray-400 py-4">Chưa có dữ liệu xếp hạng. Hãy là người đầu tiên đặt dự đoán!</p>
@@ -17,7 +17,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($rankings as $row)
+                            @foreach($rankings as $index => $row)
                                 <tr class="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
                                     <td class="py-3 pr-4">
                                         @if($row['rank'] === 1) <x-filament::icon icon="heroicon-s-trophy" class="h-5 w-5 text-yellow-400" />
@@ -27,9 +27,13 @@
                                         @endif
                                     </td>
                                     <td class="py-3 pr-4">
-                                        <div class="flex items-center gap-2">
+                                        <div class="flex items-center gap-2 cursor-pointer hover:opacity-80 transition"
+                                             @click="openModal = {{ $index }}">
                                             <span class="text-2xl" title="Avatar">{{ $row['avatar'] }}</span>
                                             <span class="font-medium text-gray-700 dark:text-gray-200">{{ $row['name'] }}</span>
+                                            <span class="ml-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-500/20 shadow-sm shrink-0">
+                                                LV {{ $row['level'] }}
+                                            </span>
                                         </div>
                                     </td>
                                     <td class="py-3 pr-4 text-right
@@ -46,6 +50,148 @@
                                         {{ $row['bets_count'] }}
                                     </td>
                                 </tr>
+
+                                <!-- Alpine Modal for this specific user -->
+                                <template x-teleport="body">
+                                    <div x-show="openModal === {{ $index }}" 
+                                         style="display: none;" 
+                                         class="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+                                        
+                                        <!-- Backdrop -->
+                                        <div class="fixed inset-0 bg-gray-950/50 backdrop-blur-sm transition-opacity" 
+                                             x-show="openModal === {{ $index }}"
+                                             x-transition.opacity
+                                             @click="openModal = null"></div>
+                                             
+                                        <!-- Modal Panel -->
+                                        <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-lg border border-gray-200 dark:border-gray-800 flex flex-col max-h-[85vh] relative z-10"
+                                             x-data="{ activeAchIndex: 0 }"
+                                             x-show="openModal === {{ $index }}"
+                                             x-transition:enter="transition ease-out duration-200"
+                                             x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                                             x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                                             x-transition:leave="transition ease-in duration-100"
+                                             x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                                             x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                                             @click.stop>
+                                             
+                                            <!-- Header -->
+                                            <div class="p-5 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-gray-900 rounded-t-2xl">
+                                                <div class="flex items-center gap-3">
+                                                    <span class="text-4xl leading-none drop-shadow-sm">{{ $row['avatar'] }}</span>
+                                                    <div>
+                                                        <h3 class="text-lg font-extrabold text-gray-900 dark:text-white leading-tight">{{ $row['name'] }}</h3>
+                                                        <div class="flex items-center gap-2 mt-1">
+                                                            <span class="px-2 py-0.5 rounded-md text-[10px] font-black bg-primary-500 text-white shadow-sm tracking-wider">
+                                                                LV {{ $row['level'] }}
+                                                            </span>
+                                                            <span class="text-[10px] font-bold text-gray-500">{{ count($row['achievements']) }} Huy Hiệu</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <button @click="openModal = null" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition bg-white dark:bg-gray-800 rounded-full p-1.5 shadow-sm border border-gray-200 dark:border-gray-700">
+                                                    <x-filament::icon icon="heroicon-o-x-mark" class="w-5 h-5" />
+                                                </button>
+                                            </div>
+                                            
+                                            <!-- Body / Achievements Cabinet -->
+                                            <div class="p-5 overflow-y-auto flex-1 flex flex-col">
+                                                @if(count($row['achievements']) === 0)
+                                                    <div class="py-10 flex flex-col items-center justify-center text-center">
+                                                        <x-filament::icon icon="heroicon-o-face-frown" class="w-12 h-12 text-gray-300 dark:text-gray-600 mb-3" />
+                                                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Người chơi này chưa đạt thành tựu nào.</p>
+                                                    </div>
+                                                @else
+                                                    <!-- Grid Cabinet -->
+                                                    <div class="grid grid-cols-4 sm:grid-cols-5 gap-2 max-h-[220px] overflow-y-auto p-2 bg-gray-50 dark:bg-gray-950 rounded-xl border border-gray-100 dark:border-gray-800/80 shadow-inner">
+                                                        @foreach($row['achievements'] as $achIndex => $ach)
+                                                            @php
+                                                                $colorClass = match($ach['color']) {
+                                                                    'primary' => 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-500/10 border-primary-200 dark:border-primary-500/20',
+                                                                    'success' => 'text-success-600 dark:text-success-400 bg-success-50 dark:bg-success-500/10 border-success-200 dark:border-success-500/20',
+                                                                    'warning' => 'text-warning-600 dark:text-warning-400 bg-warning-50 dark:bg-warning-500/10 border-warning-200 dark:border-warning-500/20',
+                                                                    'danger' => 'text-danger-600 dark:text-danger-400 bg-danger-50 dark:bg-danger-500/10 border-danger-200 dark:border-danger-500/20',
+                                                                    'info' => 'text-info-600 dark:text-info-400 bg-info-50 dark:bg-info-500/10 border-info-200 dark:border-info-500/20',
+                                                                    'indigo' => 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 border-indigo-200 dark:border-indigo-500/20',
+                                                                    'fuchsia' => 'text-fuchsia-600 dark:text-fuchsia-400 bg-fuchsia-50 dark:bg-fuchsia-500/10 border-fuchsia-200 dark:border-fuchsia-500/20',
+                                                                    default => 'text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700',
+                                                                };
+                                                                $iconColorClass = match($ach['color']) {
+                                                                    'primary' => 'text-primary-500',
+                                                                    'success' => 'text-success-500',
+                                                                    'warning' => 'text-warning-500',
+                                                                    'danger' => 'text-danger-500',
+                                                                    'info' => 'text-info-500',
+                                                                    'indigo' => 'text-indigo-500',
+                                                                    'fuchsia' => 'text-fuchsia-500',
+                                                                    default => 'text-gray-500',
+                                                                };
+                                                            @endphp
+                                                            <button @click="activeAchIndex = {{ $achIndex }}"
+                                                                    :class="activeAchIndex === {{ $achIndex }} ? 'ring-2 ring-primary-500 bg-white dark:bg-gray-900 border-primary-500 dark:border-primary-500' : 'opacity-80 hover:opacity-100'"
+                                                                    class="aspect-square rounded-xl border {{ $colorClass }} flex flex-col items-center justify-center p-1.5 transition hover:scale-105 relative shadow-sm">
+                                                                <x-filament::icon :icon="$ach['icon']" class="w-7 h-7 {{ $iconColorClass }}" />
+                                                                <span class="text-[9px] font-semibold mt-1 truncate w-full text-center">{{ $ach['name'] }}</span>
+                                                                @if($ach['is_main'])
+                                                                    <span class="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-500 text-[8px] font-black text-white shadow-sm ring-1 ring-white">★</span>
+                                                                @endif
+                                                            </button>
+                                                        @endforeach
+                                                    </div>
+
+                                                    <!-- Details Panel -->
+                                                    <div class="mt-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-950 border border-gray-100 dark:border-gray-800 flex flex-col min-h-[110px] relative overflow-hidden">
+                                                        @foreach($row['achievements'] as $achIndex => $ach)
+                                                            @php
+                                                                $colorClass = match($ach['color']) {
+                                                                    'primary' => 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-500/10 border-primary-200 dark:border-primary-500/20',
+                                                                    'success' => 'text-success-600 dark:text-success-400 bg-success-50 dark:bg-success-500/10 border-success-200 dark:border-success-500/20',
+                                                                    'warning' => 'text-warning-600 dark:text-warning-400 bg-warning-50 dark:bg-warning-500/10 border-warning-200 dark:border-warning-500/20',
+                                                                    'danger' => 'text-danger-600 dark:text-danger-400 bg-danger-50 dark:bg-danger-500/10 border-danger-200 dark:border-danger-500/20',
+                                                                    'info' => 'text-info-600 dark:text-info-400 bg-info-50 dark:bg-info-500/10 border-info-200 dark:border-info-500/20',
+                                                                    'indigo' => 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 border-indigo-200 dark:border-indigo-500/20',
+                                                                    'fuchsia' => 'text-fuchsia-600 dark:text-fuchsia-400 bg-fuchsia-50 dark:bg-fuchsia-500/10 border-fuchsia-200 dark:border-fuchsia-500/20',
+                                                                    default => 'text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700',
+                                                                };
+                                                                $iconColorClass = match($ach['color']) {
+                                                                    'primary' => 'text-primary-500',
+                                                                    'success' => 'text-success-500',
+                                                                    'warning' => 'text-warning-500',
+                                                                    'danger' => 'text-danger-500',
+                                                                    'info' => 'text-info-500',
+                                                                    'indigo' => 'text-indigo-500',
+                                                                    'fuchsia' => 'text-fuchsia-500',
+                                                                    default => 'text-gray-500',
+                                                                };
+                                                            @endphp
+                                                            <div x-show="activeAchIndex === {{ $achIndex }}" 
+                                                                 class="flex items-center gap-4 w-full" 
+                                                                 x-transition:enter="transition ease-out duration-200"
+                                                                 x-transition:enter-start="opacity-0 translate-y-1"
+                                                                 x-transition:enter-end="opacity-100 translate-y-0"
+                                                                 style="display: none;">
+                                                                <div class="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm">
+                                                                    <x-filament::icon :icon="$ach['icon']" class="w-8 h-8 {{ $iconColorClass }}" />
+                                                                </div>
+                                                                <div class="flex-1 min-w-0">
+                                                                    <div class="flex items-center gap-2">
+                                                                        <h4 class="text-sm font-extrabold text-gray-900 dark:text-white truncate">{{ $ach['name'] }}</h4>
+                                                                        @if($ach['is_main'])
+                                                                            <span class="px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider bg-amber-500 text-white shadow-sm">Cấp chính</span>
+                                                                        @else
+                                                                            <span class="px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider bg-gray-200 dark:bg-gray-800 text-gray-500 dark:text-gray-400 shadow-sm">Phụ</span>
+                                                                        @endif
+                                                                    </div>
+                                                                    <p class="text-xs mt-1 text-gray-600 dark:text-gray-400 leading-relaxed">{{ $ach['description'] }}</p>
+                                                                </div>
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
                             @endforeach
                         </tbody>
                     </table>

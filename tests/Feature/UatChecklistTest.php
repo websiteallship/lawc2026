@@ -47,6 +47,8 @@ class UatChecklistTest extends TestCase
 
         $this->season = Season::factory()->create();
         $this->user = User::factory()->create(['status' => 'ACTIVE']);
+        $playerRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'player', 'guard_name' => 'web']);
+        $this->user->assignRole($playerRole);
         
         $this->wallet = Wallet::create([
             'user_id' => $this->user->id,

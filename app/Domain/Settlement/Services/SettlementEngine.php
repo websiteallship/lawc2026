@@ -73,7 +73,8 @@ class SettlementEngine
         ?User $executedBy = null,
         string $reason = ''
     ): Settlement {
-        $settlement = DB::transaction(function () use ($market, $matchResult, $executedBy, $reason) {
+        $bets = collect();
+        $settlement = DB::transaction(function () use ($market, $matchResult, $executedBy, $reason, &$bets) {
             // Lock market row
             $market = Market::lockForUpdate()->findOrFail($market->id);
 
@@ -143,6 +144,9 @@ class SettlementEngine
                     'settled_at' => now(),
                 ]);
 
+                // Gửi thông báo kết quả vé cược
+                app(\App\Domain\Notification\Services\NotificationService::class)->notifyBetSettled($bet->wallet->user, $bet);
+
                 // Tạo SettlementItem
                 SettlementItem::create([
                     'settlement_id' => $settlement->id,
@@ -185,6 +189,12 @@ class SettlementEngine
             $settlement->total_payout,
             $executedBy,
         );
+
+        // Lấy danh sách user_id unique từ các bet để check thành tựu
+        $userIds = $bets->pluck('user_id')->unique();
+        foreach ($userIds as $userId) {
+            event(new \App\Events\SettlementCompleted($userId));
+        }
 
         return $settlement;
     }

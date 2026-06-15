@@ -1,0 +1,271 @@
+<?php
+
+namespace Database\Seeders;
+
+use App\Models\Achievement;
+use Illuminate\Database\Seeder;
+
+class AchievementSeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     */
+    public function run(): void
+    {
+        $achievements = [
+            [
+                'level' => 1,
+                'code' => 'LV1_APPRENTICE',
+                'name' => 'Kẻ Tập Sự',
+                'description' => 'Tham gia dự đoán lần đầu tiên.',
+                'target_value' => 1,
+                'icon' => 'heroicon-o-user',
+                'color' => 'gray',
+                'is_repeatable' => false,
+            ],
+            [
+                'level' => 2,
+                'code' => 'LV2_LUCKY_HUNTER',
+                'name' => 'Thợ Săn May Mắn',
+                'description' => 'Đạt tổng 5 vé thắng (ăn đủ hoặc ăn nửa).',
+                'target_value' => 5,
+                'icon' => 'heroicon-o-sparkles',
+                'color' => 'info',
+                'is_repeatable' => false,
+            ],
+            [
+                'level' => 3,
+                'code' => 'LV3_DECODER',
+                'name' => 'Người Giải Mã',
+                'description' => 'Đoán trúng chính xác tỉ số 1 trận đấu.',
+                'target_value' => 1,
+                'icon' => 'heroicon-o-key',
+                'color' => 'success',
+                'is_repeatable' => false,
+            ],
+            [
+                'level' => 4,
+                'code' => 'LV4_EXPERT',
+                'name' => 'Chuyên Gia Dự Đoán',
+                'description' => 'Thắng liên tiếp 3 dự đoán.',
+                'target_value' => 3,
+                'icon' => 'heroicon-o-academic-cap',
+                'color' => 'primary',
+                'is_repeatable' => false,
+            ],
+            [
+                'level' => 5,
+                'code' => 'LV5_PROPHET',
+                'name' => 'Nhà Tiên Tri',
+                'description' => 'Đạt tổng 20 vé thắng và tham gia đủ 3 loại kèo (Chấp, T/X, Tỉ số).',
+                'target_value' => 20,
+                'icon' => 'heroicon-o-eye',
+                'color' => 'indigo',
+                'is_repeatable' => false,
+            ],
+            [
+                'level' => 6,
+                'code' => 'LV6_FUTURE_ENVOY',
+                'name' => 'Sứ Giả Tương Lai',
+                'description' => 'Đạt tổng 50 vé thắng với tỉ suất sinh lời (ROI) dương.',
+                'target_value' => 50,
+                'icon' => 'heroicon-o-rocket-launch',
+                'color' => 'fuchsia',
+                'is_repeatable' => false,
+            ],
+            [
+                'level' => 7,
+                'code' => 'LV7_LORD_OF_DESTINY',
+                'name' => 'Chúa Tể Vận Mệnh',
+                'description' => 'Đoán đúng chính xác tỉ số 5 trận đấu.',
+                'target_value' => 5,
+                'icon' => 'heroicon-s-star',
+                'color' => 'warning',
+                'is_repeatable' => false,
+            ],
+            [
+                'level' => 8,
+                'code' => 'LV8_COSMIC',
+                'name' => 'Đẳng Cấp Vũ Trụ',
+                'description' => 'Thắng liên tiếp 7 dự đoán.',
+                'target_value' => 7,
+                'icon' => 'heroicon-s-globe-alt',
+                'color' => 'danger',
+                'is_repeatable' => false,
+            ],
+            [
+                'level' => 9,
+                'code' => 'LV9_OMNISCIENT',
+                'name' => 'Đấng Toàn Tri',
+                'description' => 'Đạt tổng 100 vé thắng hoặc vào Top 3 Bảng xếp hạng chung cuộc.',
+                'target_value' => 100,
+                'icon' => 'heroicon-s-trophy',
+                'color' => 'success',
+                'is_repeatable' => false,
+            ],
+            // --- SIDE QUESTS (HUY HIỆU PHỤ) ---
+            // 1. Nhóm Chuỗi Thắng
+            [
+                'level' => null,
+                'code' => 'WIN_STREAK_3',
+                'name' => 'Bàn Tay Vàng',
+                'description' => 'Đoán trúng 3 lần liên tiếp.',
+                'target_value' => 3,
+                'icon' => 'heroicon-o-hand-raised',
+                'color' => 'danger',
+                'is_repeatable' => true,
+            ],
+            [
+                'level' => null,
+                'code' => 'WIN_STREAK_5',
+                'name' => 'Phong Độ Hủy Diệt',
+                'description' => 'Đoán trúng 5 lần liên tiếp.',
+                'target_value' => 5,
+                'icon' => 'heroicon-s-fire',
+                'color' => 'danger',
+                'is_repeatable' => false,
+            ],
+            [
+                'level' => null,
+                'code' => 'WIN_STREAK_10',
+                'name' => 'Độc Cô Cầu Bại',
+                'description' => 'Đoán trúng 10 lần liên tiếp.',
+                'target_value' => 10,
+                'icon' => 'heroicon-s-sparkles',
+                'color' => 'warning',
+                'is_repeatable' => false,
+            ],
+            // 2. Nhóm Easy Quests (Thay thế Contrarian)
+            [
+                'level' => null,
+                'code' => 'EARLY_BIRD',
+                'name' => 'Chim Sớm',
+                'description' => 'Chốt dự đoán trước giờ bóng lăn 10 lần liên tiếp.',
+                'target_value' => 10,
+                'icon' => 'heroicon-o-sun',
+                'color' => 'primary',
+                'is_repeatable' => false,
+            ],
+            [
+                'level' => null,
+                'code' => 'NIGHT_OWL',
+                'name' => 'Cú Đêm',
+                'description' => 'Đặt cược trong khung giờ từ 0h đến 5h sáng ở 7 đêm (không cần liên tiếp).',
+                'target_value' => 7,
+                'icon' => 'heroicon-o-moon',
+                'color' => 'indigo',
+                'is_repeatable' => false,
+            ],
+            [
+                'level' => null,
+                'code' => 'MULTI_MARKET',
+                'name' => 'Kẻ Đa Hệ',
+                'description' => 'Trải nghiệm tham gia đầy đủ 3 loại kèo (Châu Á, Tài Xỉu, Tỉ Số).',
+                'target_value' => 3,
+                'icon' => 'heroicon-o-puzzle-piece',
+                'color' => 'success',
+                'is_repeatable' => false,
+            ],
+            // 3. Nhóm Accuracy
+            [
+                'level' => null,
+                'code' => 'ACCURACY_SNIPER',
+                'name' => 'Xạ Thủ Tỉa',
+                'description' => 'Win-rate trên 80% (yêu cầu tối thiểu 50 dự đoán).',
+                'target_value' => 50,
+                'icon' => 'heroicon-o-viewfinder-circle',
+                'color' => 'danger',
+                'is_repeatable' => false,
+            ],
+            [
+                'level' => null,
+                'code' => 'ACCURACY_MATH',
+                'name' => 'Nhà Toán Học',
+                'description' => 'Dự đoán chính xác tuyệt đối tỉ số 3 lần.',
+                'target_value' => 3,
+                'icon' => 'heroicon-o-calculator',
+                'color' => 'info',
+                'is_repeatable' => false,
+            ],
+            [
+                'level' => null,
+                'code' => 'BIG_WINNER',
+                'name' => 'Bắt Cược Đậm',
+                'description' => 'Thắng một kèo có tỷ lệ ăn từ 5.0 trở lên.',
+                'target_value' => 1,
+                'icon' => 'heroicon-o-currency-dollar',
+                'color' => 'warning',
+                'is_repeatable' => true,
+            ],
+            // 4. Nhóm Fun & Bad Luck
+            [
+                'level' => null,
+                'code' => 'BAD_LUCK_5',
+                'name' => 'Bàn Tay Thối',
+                'description' => 'Đoán sai 5 lần liên tiếp.',
+                'target_value' => 5,
+                'icon' => 'heroicon-o-hand-thumb-down',
+                'color' => 'gray',
+                'is_repeatable' => true,
+            ],
+            [
+                'level' => null,
+                'code' => 'BAD_LUCK_NARROW',
+                'name' => 'Cay Cú',
+                'description' => 'Thua nửa tiền (Thua nửa) 3 lần.',
+                'target_value' => 3,
+                'icon' => 'heroicon-o-face-frown',
+                'color' => 'warning',
+                'is_repeatable' => false,
+            ],
+            [
+                'level' => null,
+                'code' => 'BAD_LUCK_DRAW',
+                'name' => 'Chuyên Gia Cầu Hòa',
+                'description' => 'Kết quả kèo bị HÒA TIỀN (Push) 5 lần.',
+                'target_value' => 5,
+                'icon' => 'heroicon-o-scale',
+                'color' => 'gray',
+                'is_repeatable' => false,
+            ],
+            // 5. Nhóm Dedication
+            [
+                'level' => null,
+                'code' => 'DEDICATION_7_DAYS',
+                'name' => 'Kẻ Điểm Danh',
+                'description' => 'Tham gia dự đoán 7 ngày liên tiếp.',
+                'target_value' => 7,
+                'icon' => 'heroicon-o-calendar-days',
+                'color' => 'success',
+                'is_repeatable' => false,
+            ],
+            [
+                'level' => null,
+                'code' => 'DEDICATION_100_BETS',
+                'name' => 'Lão Tướng',
+                'description' => 'Đạt cột mốc tổng 100 lần đưa ra dự đoán.',
+                'target_value' => 100,
+                'icon' => 'heroicon-o-shield-check',
+                'color' => 'warning',
+                'is_repeatable' => false,
+            ],
+            [
+                'level' => null,
+                'code' => 'HIGH_ROLLER',
+                'name' => 'Tay Chơi Khô Máu',
+                'description' => 'Mạnh tay đặt cược một mã dự đoán từ 5,000,000 lá trở lên.',
+                'target_value' => 1,
+                'icon' => 'heroicon-o-banknotes',
+                'color' => 'danger',
+                'is_repeatable' => false,
+            ],
+        ];
+
+        foreach ($achievements as $achievement) {
+            Achievement::updateOrCreate(
+                ['code' => $achievement['code']],
+                $achievement
+            );
+        }
+    }
+}

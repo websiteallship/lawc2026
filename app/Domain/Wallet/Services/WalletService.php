@@ -60,6 +60,8 @@ class WalletService
 
             $this->auditLog->logWalletChange('WALLET_GRANTED', $wallet, $amount, $reason, $actor);
 
+            app(\App\Domain\Notification\Services\NotificationService::class)->notifyWalletGranted($wallet->user, $ledger);
+
             return $ledger;
         });
     }

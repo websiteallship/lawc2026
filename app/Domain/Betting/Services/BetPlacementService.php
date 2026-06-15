@@ -164,6 +164,8 @@ class BetPlacementService
             // wallet đã lockForUpdate — gọi trực tiếp, không mở transaction con
             $this->walletService->lockStake($wallet, $input->stake, $bet);
 
+            event(new \App\Events\BetPlaced($bet));
+
             // ---- Bước 14: Commit (tự động khi closure kết thúc) ----
             return $bet->fresh();
         });

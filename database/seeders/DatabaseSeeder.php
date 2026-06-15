@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             SuperAdminSeeder::class,
             PlayerTestingSeeder::class,
+            AchievementSeeder::class,
         ]);
     }
 }

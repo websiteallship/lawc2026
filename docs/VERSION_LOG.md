@@ -179,3 +179,22 @@
   - Xây dựng `SyncPreMatchOddsJobTest`, tự động sinh giả lập trận đấu (kickoff_at trước 12 tiếng) và mock payload `API-Football`.
   - Verify toàn vẹn luồng kéo Odds: tạo được `Market` (từ `OPEN`), tạo `MarketOutcome` với đầy đủ params chính xác (home/away, line_value, profit_rate).
   - Test xác nhận cờ `pre_match` được ghi vào `odds_fetch_status` trên `FootballMatch`.
+
+## v1.5.0 (WP-5 - Achievement Engine) - Hoàn tất (Phase 2)
+- **Database**: Tạo migration bảng `achievements` (`code`, `name`, `description`, `icon`, `color`, `is_repeatable`, `cooldown_period`, vv) và `user_achievements`.
+- **Domain Service**: Xây dựng `AchievementService::checkAndAward()` xử lý toàn bộ các huy hiệu chính và phụ. Đã tích hợp logic tính toán Streak, ROI, High Roller, v.v.
+- **Workflow**: Bắt event `BetPlaced`, `SettlementCompleted` -> Gọi service tính toán điều kiện -> Insert DB và trigger Notification (kèm popup Confetti).
+
+## v1.6.0 (WP-6 - Mission Engine) - Kế hoạch (Phase 2)
+- **Database**: Tạo migration bảng `missions` (`code`, `title`, `description`, `type`, `target_value`, `start_at`, `end_at`) và `user_missions` (`user_id`, `mission_id`, `current_value`, `is_completed`, `completed_at`).
+- **Domain Service**: Xây dựng `MissionService::trackProgress()` và `completeMission()` xử lý 5 nhiệm vụ: DAILY_ONE_BET, WEEKLY_ACTIVE_PLAYER, WEEKLY_MARKET_EXPLORER, SMART_STAKE, KNOCKOUT_PARTICIPANT.
+- **Workflow**: Queue bắt action events -> Gọi `trackProgress()` -> Increment `current_value` -> Hoàn thành (mark `is_completed`, không thưởng lá).
+
+## v1.7.0 (WP-7 - Notification System) - Hoàn tất (Phase 2)
+- **System**: Cấu hình Laravel Notifications (driver `database`). Fix lỗi định tuyến (từ đường dẫn tuyệt đối sang tương đối).
+- **Domain Service**: Xây dựng `NotificationService` tích hợp đầy đủ các hàm: `notifyMarketClosingSoon()`, `notifyBetSettled()`, `notifyAchievementUnlocked()`, `notifyWalletGranted()`, `notifyMarketVoided()`, `notifySettlementCorrected()`, `notifyLeaderboardUpdated()`.
+- **Workflow**: 
+  - Đã tích hợp `->markAsRead()` vào toàn bộ Action button.
+  - Tự động khóa & thông báo kèo sắp đóng bằng cronjob `notify:closing-soon` chạy mỗi phút (báo trước 30p).
+  - Tự động gửi thông báo Leaderboard bằng cronjob `notify:leaderboard` chạy hằng ngày và hằng tuần.
+  - Tích hợp Filament Database Notifications hiển thị realtime trên Header kèm hiệu ứng popup `canvas-confetti` cực mượt.

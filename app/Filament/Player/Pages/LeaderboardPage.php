@@ -71,6 +71,12 @@ class LeaderboardPage extends Page
                 ->whereIn('status', ['WON', 'HALF_WON'])
                 ->count();
 
+            $userAchievements = \App\Models\UserAchievement::where('user_id', $wallet->user_id)
+                ->join('achievements', 'user_achievements.achievement_id', '=', 'achievements.id')
+                ->select('achievements.*')
+                ->get();
+            $mainLevel = $userAchievements->whereNotNull('level')->max('level') ?: 0;
+            
             $winRate = $betsCount > 0
                 ? round(($wonCount / $betsCount) * 100, 1)
                 : 0;
@@ -119,6 +125,16 @@ class LeaderboardPage extends Page
                 'win_rate' => $winRate,
                 'bets_count' => $betsCount,
                 'available' => $wallet->available_balance,
+                'level' => $mainLevel,
+                'achievements' => $userAchievements->map(function ($ach) {
+                    return [
+                        'name' => $ach->name,
+                        'description' => $ach->description,
+                        'icon' => $ach->icon,
+                        'color' => $ach->color,
+                        'is_main' => !is_null($ach->level),
+                    ];
+                })->toArray(),
             ];
         })->toArray();
     }
