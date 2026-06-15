@@ -12,7 +12,7 @@ use App\Enums\BetStatus;
 class CleanGarbageOddsCommand extends Command
 {
     protected $signature = 'odds:clean-garbage';
-    protected $description = 'Ẩn các kèo rác (profit < 0.50) và Hủy (Void) hoàn tiền các vé đã cược vào kèo đó';
+    protected $description = 'Ẩn các kèo rác (profit < 0.30) và Hủy (Void) hoàn tiền các vé đã cược vào kèo đó';
 
     public function handle(WalletService $walletService)
     {
@@ -33,7 +33,7 @@ class CleanGarbageOddsCommand extends Command
         foreach ($outcomes as $key => $lineOutcomes) {
             $hasBad = false;
             foreach ($lineOutcomes as $o) {
-                if ($o->profit_rate < 0.50) {
+                if ($o->profit_rate < 0.30) {
                     $hasBad = true;
                     break;
                 }
@@ -55,7 +55,7 @@ class CleanGarbageOddsCommand extends Command
         $this->info("\n2. Đang quét các vé cược (Bets) đã đặt vào kèo rác...");
 
         $bets = Bet::where('status', 'PENDING')
-            ->where('profit_rate_snapshot', '<', 0.50)
+            ->where('profit_rate_snapshot', '<', 0.30)
             ->with(['wallet', 'user'])
             ->get();
 
@@ -72,7 +72,7 @@ class CleanGarbageOddsCommand extends Command
                 
                 $bet->status = BetStatus::VOIDED;
                 $bet->voided_at = now();
-                $bet->metadata = array_merge($bet->metadata ?? [], ['void_reason' => 'Hệ thống hủy kèo lỗi (Tỷ lệ < 0.50)']);
+                $bet->metadata = array_merge($bet->metadata ?? [], ['void_reason' => 'Hệ thống hủy kèo lỗi (Tỷ lệ < 0.30)']);
                 $bet->save();
 
                 $walletService->voidBet($wallet, $bet);

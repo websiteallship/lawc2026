@@ -108,10 +108,10 @@ class MarketSyncService
                             continue;
                         }
 
-                        // Filter out lines where ANY outcome has profit rate < 0.50
+                        // Filter out lines where ANY outcome has profit rate < 0.30
                         $isValidLine = true;
                         foreach ($outcomesForLine as $outcome) {
-                            if ($outcome['profit_rate'] < 0.50) {
+                            if ($outcome['profit_rate'] < 0.30) {
                                 $isValidLine = false;
                                 break;
                             }
