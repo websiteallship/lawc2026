@@ -492,15 +492,16 @@ class MatchSyncService
     {
         $statusShort = $apiMatch->detailedStatus;
         $isDraw = $apiMatch->getCurrentHomeScore() === $apiMatch->getCurrentAwayScore();
+        $elapsed = $apiMatch->elapsed ?? 0;
 
-        // 1. Kèo Hiệp 1 & Cả trận: Đóng khi trận đấu bắt đầu (1H)
-        if ($statusShort === '1H') {
-            $this->lockMarkets($match, ['FIRST_HALF', 'FULL_TIME'], 'Auto-locked due to 1H start');
+        // 1. Kèo Hiệp 1 & Cả trận: Đóng sau 10 phút (elapsed >= 10) hoặc khi đã qua hiệp 1
+        if (($statusShort === '1H' && $elapsed >= 10) || in_array($statusShort, ['HT', '2H', 'ET', 'BT', 'P', 'FT', 'AET', 'PEN'])) {
+            $this->lockMarkets($match, ['FIRST_HALF', 'FULL_TIME'], 'Auto-locked due to elapsed >= 10 or period ended');
         }
 
-        // 2. Kèo Hiệp 2: Đóng khi hiệp 2 bắt đầu (2H)
-        if ($statusShort === '2H') {
-            $this->lockMarkets($match, ['SECOND_HALF'], 'Auto-locked due to 2H start');
+        // 2. Kèo Hiệp 2: Đóng sau 10 phút của hiệp 2 (elapsed >= 55) hoặc khi đã qua hiệp 2
+        if (($statusShort === '2H' && $elapsed >= 55) || in_array($statusShort, ['ET', 'BT', 'P', 'FT', 'AET', 'PEN'])) {
+            $this->lockMarkets($match, ['SECOND_HALF'], 'Auto-locked due to 2H elapsed >= 55 or period ended');
         }
 
         // 3. Kèo Hiệp phụ (EXTRA_TIME): 
@@ -508,9 +509,9 @@ class MatchSyncService
         if (in_array($statusShort, ['FT', 'BT']) && $isDraw) {
             $this->openMarkets($match, ['EXTRA_TIME']);
         }
-        // ĐÓNG: Khi hiệp phụ bắt đầu (ET)
-        if ($statusShort === 'ET') {
-            $this->lockMarkets($match, ['EXTRA_TIME'], 'Auto-locked due to ET start');
+        // ĐÓNG: Sau 5 phút của hiệp phụ (elapsed >= 95) hoặc khi đã qua hiệp phụ
+        if (($statusShort === 'ET' && $elapsed >= 95) || in_array($statusShort, ['BT', 'P', 'FT', 'AET', 'PEN'])) {
+            $this->lockMarkets($match, ['EXTRA_TIME'], 'Auto-locked due to ET elapsed >= 95 or period ended');
         }
 
         // 4. Kèo Penalty (PENALTY):
@@ -518,9 +519,10 @@ class MatchSyncService
         if (in_array($statusShort, ['BT', 'AET']) && $isDraw) {
             $this->openMarkets($match, ['PENALTY']);
         }
-        // ĐÓNG: Khi penalty bắt đầu (P)
-        if ($statusShort === 'P') {
-            $this->lockMarkets($match, ['PENALTY'], 'Auto-locked due to Penalty start');
+        // ĐÓNG: Phút của Penalty không đếm bằng elapsed được, nên hệ thống sẽ tự khóa dựa vào cronjob close_at (mốc +150p)
+        // Tuy nhiên, ta vẫn khóa ngay lập tức nếu trận đấu đã báo kết thúc hoàn toàn.
+        if (in_array($statusShort, ['PEN', 'FT', 'AET'])) {
+            $this->lockMarkets($match, ['PENALTY'], 'Auto-locked due to match finished');
         }
     }
 
