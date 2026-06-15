@@ -6,7 +6,7 @@ use Filament\Pages\Page;
 
 class UserGuidePage extends Page
 {
-    protected static ?string $navigationIcon = 'heroicon-o-book-open';
+    protected static ?string $navigationIcon = 'heroicon-o-information-circle';
     protected static ?string $navigationLabel = 'Hướng dẫn';
     protected static ?string $title = 'Thể lệ & Hướng dẫn';
     protected static ?int $navigationSort = 10;
