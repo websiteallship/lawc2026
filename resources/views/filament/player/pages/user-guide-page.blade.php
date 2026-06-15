@@ -1,10 +1,10 @@
 <x-filament-panels::page>
     <div class="space-y-6">
         <!-- Banner/Header -->
-        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary-600 to-indigo-600 p-8 text-white shadow-lg dark:from-primary-700 dark:to-indigo-700">
+        <div class="relative overflow-hidden rounded-2xl p-8 text-white shadow-md" style="background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)">
             <div class="relative z-10 max-w-2xl">
-                <h1 class="text-3xl font-extrabold tracking-tight">Hướng Dẫn & Thể Lệ Chơi</h1>
-                <p class="mt-2 text-primary-100 text-lg">
+                <h1 class="text-3xl font-extrabold tracking-tight text-white">Hướng Dẫn & Thể Lệ Chơi</h1>
+                <p class="mt-2 text-indigo-100 text-lg">
                     Chào mừng bạn đến với <strong>Dự đoán Lá</strong>. Hệ thống dự đoán bóng đá nội bộ giải trí. Hãy nắm rõ quy tắc để có trải nghiệm tốt nhất!
                 </p>
             </div>
@@ -15,57 +15,57 @@
 
         <!-- 3 Cột Tổng Quan -->
         <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
-            <x-filament::card class="flex flex-col items-center text-center p-6">
-                <div class="rounded-full bg-primary-100 p-3 dark:bg-primary-950/50">
-                    <x-heroicon-o-currency-dollar class="w-8 h-8 text-primary-600 dark:text-primary-400" />
+            <div class="flex flex-col items-center text-center p-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm">
+                <div class="rounded-full p-3" style="background-color: rgba(79, 70, 229, 0.1)">
+                    <x-heroicon-o-currency-dollar class="w-8 h-8" style="color: #4f46e5" />
                 </div>
                 <h3 class="mt-4 text-lg font-bold text-gray-900 dark:text-white">Lá Là Điểm Ảo</h3>
                 <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
                     Mỗi người chơi bắt đầu mùa giải với số Lá mặc định (ví dụ 1,000 Lá). Dùng để tích lũy và đua TOP.
                 </p>
-            </x-filament::card>
+            </div>
 
-            <x-filament::card class="flex flex-col items-center text-center p-6">
-                <div class="rounded-full bg-danger-100 p-3 dark:bg-danger-950/50">
-                    <x-heroicon-o-shield-check class="w-8 h-8 text-danger-600 dark:text-danger-400" />
+            <div class="flex flex-col items-center text-center p-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm">
+                <div class="rounded-full p-3" style="background-color: rgba(239, 68, 68, 0.1)">
+                    <x-heroicon-o-shield-check class="w-8 h-8" style="color: #ef4444" />
                 </div>
                 <h3 class="mt-4 text-lg font-bold text-gray-900 dark:text-white">Nghiêm Cấm Quy Đổi</h3>
                 <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
                     Không có giá trị quy đổi tiền thật, không mua bán/chuyển nhượng Lá dưới mọi hình thức.
                 </p>
-            </x-filament::card>
+            </div>
 
-            <x-filament::card class="flex flex-col items-center text-center p-6">
-                <div class="rounded-full bg-success-100 p-3 dark:bg-success-950/50">
-                    <x-heroicon-o-trophy class="w-8 h-8 text-success-600 dark:text-success-400" />
+            <div class="flex flex-col items-center text-center p-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm">
+                <div class="rounded-full p-3" style="background-color: rgba(34, 197, 94, 0.1)">
+                    <x-heroicon-o-trophy class="w-8 h-8" style="color: #22c55e" />
                 </div>
                 <h3 class="mt-4 text-lg font-bold text-gray-900 dark:text-white">Đua Top Nhận Thưởng</h3>
                 <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
                     Vinh danh bảng xếp hạng cá nhân dựa trên tổng số Lá, tỷ lệ thắng và ROI đạt được.
                 </p>
-            </x-filament::card>
+            </div>
         </div>
 
-        <!-- Section chính dùng x-filament::tabs -->
+        <!-- Section chính -->
         <x-filament::card>
             <div x-data="{ activeTab: 'general' }" class="space-y-6">
                 <!-- Navigation Tabs -->
                 <div class="flex flex-wrap border-b border-gray-200 dark:border-gray-800 gap-2 pb-px">
                     <button 
                         @click="activeTab = 'general'"
-                        :class="activeTab === 'general' ? 'border-primary-500 text-primary-600 dark:text-primary-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'"
+                        :class="activeTab === 'general' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'"
                         class="border-b-2 px-4 py-2 text-sm font-semibold transition-all">
                         Quy Định Chung
                     </button>
                     <button 
                         @click="activeTab = 'odds'"
-                        :class="activeTab === 'odds' ? 'border-primary-500 text-primary-600 dark:text-primary-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'"
+                        :class="activeTab === 'odds' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'"
                         class="border-b-2 px-4 py-2 text-sm font-semibold transition-all">
                         Cách Chơi & Tính Kèo
                     </button>
                     <button 
                         @click="activeTab = 'terms'"
-                        :class="activeTab === 'terms' ? 'border-primary-500 text-primary-600 dark:text-primary-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'"
+                        :class="activeTab === 'terms' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'"
                         class="border-b-2 px-4 py-2 text-sm font-semibold transition-all">
                         Mốc Trận & Xử Lý Lỗi
                     </button>
@@ -77,8 +77,8 @@
                     <p>Hệ thống <strong>Dự đoán Lá</strong> hoạt động như một sân chơi giải trí nội bộ. Bạn được cấp tài khoản và mật khẩu trực tiếp từ Ban Tổ Chức (BTC) và tự quản lý số Lá khả dụng của mình.</p>
 
                     <h3>2. Cam kết pháp lý (Bắt buộc)</h3>
-                    <blockquote class="border-l-4 border-danger-500 bg-danger-50 p-4 dark:bg-danger-950/20 rounded-r-lg">
-                        <span class="font-bold text-danger-800 dark:text-danger-300">Tuyên bố miễn trừ trách nhiệm:</span><br>
+                    <blockquote class="border-l-4 p-4 rounded-r-lg" style="border-color: #ef4444; background-color: rgba(239, 68, 68, 0.05)">
+                        <span class="font-bold" style="color: #b91c1c">Tuyên bố miễn trừ trách nhiệm:</span><br>
                         "Tôi hiểu rằng Dự đoán Lá là game điểm ảo nội bộ. Lá không phải tiền, không có giá trị quy đổi thành tiền, hiện vật hoặc dịch vụ. Tôi không mua bán, chuyển nhượng hoặc dùng lá cho bất kỳ thỏa thuận lợi ích nào ngoài hệ thống."
                     </blockquote>
 
@@ -94,8 +94,8 @@
                 <div x-show="activeTab === 'odds'" class="space-y-6 prose dark:prose-invert max-w-none">
                     <h3>1. Dự đoán Tỉ số chính xác (Exact Score)</h3>
                     <p>Người chơi chọn tỉ số cụ thể sau khi kết thúc thời gian thi đấu chính thức (90 phút + bù giờ).</p>
-                    <div class="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg border border-gray-100 dark:border-gray-800">
-                        <span class="font-bold text-primary-600">Cách tính:</span> Nếu đúng, bạn nhận được: <br>
+                    <div class="p-4 rounded-lg border border-gray-100 dark:border-gray-800" style="background-color: rgba(79, 70, 229, 0.05)">
+                        <span class="font-bold" style="color: #4f46e5">Cách tính:</span> Nếu đúng, bạn nhận được: <br>
                         <code class="text-sm bg-gray-200 dark:bg-gray-800 px-2 py-1 rounded">Lá nhận = Số Lá đặt × (1 + Tỷ lệ ăn)</code><br>
                         <em>Ví dụ: Đặt 100 Lá vào tỉ số 2-1 (ăn 6.00). Thắng nhận 700 Lá (gồm 100 Lá vốn + 600 Lá thắng). Thua mất 100 Lá.</em>
                     </div>
