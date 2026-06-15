@@ -50,7 +50,7 @@ class WalletLedgersRelationManager extends RelationManager
             ])
             ->filters([])
             ->headerActions([
-                \Filament\Tables\Actions\ExportAction::make()
+                \Filament\Actions\ExportAction::make()
                     ->exporter(\App\Filament\Exports\WalletLedgerExporter::class),
             ])
             ->recordActions([])
