@@ -44,7 +44,29 @@ class PlayerPanelProvider extends PanelProvider
             )
             ->renderHook(
                 PanelsRenderHook::BODY_END,
-                fn (): string => Blade::render('@livewire(\'player.missions-mobile-widget\')')
+                fn (): string => Blade::render('
+                    @livewire(\'player.missions-mobile-widget\')
+                    @auth
+                    <div x-data="{
+                        timeout: 15 * 60 * 1000,
+                        lastActivity: Date.now(),
+                        init() {
+                            const reset = () => { this.lastActivity = Date.now(); };
+                            window.addEventListener(\'mousemove\', reset, { passive: true });
+                            window.addEventListener(\'keypress\', reset, { passive: true });
+                            window.addEventListener(\'scroll\', reset, { passive: true });
+                            window.addEventListener(\'click\', reset, { passive: true });
+                            window.addEventListener(\'touchstart\', reset, { passive: true });
+
+                            setInterval(() => {
+                                if (Date.now() - this.lastActivity > this.timeout) {
+                                    window.location.href = \'/player/afk-logout\';
+                                }
+                            }, 10000);
+                        }
+                    }"></div>
+                    @endauth
+                ')
             )
             ->renderHook(
                 PanelsRenderHook::FOOTER,

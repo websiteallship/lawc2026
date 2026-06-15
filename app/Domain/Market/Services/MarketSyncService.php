@@ -17,6 +17,10 @@ class MarketSyncService
 
     public function syncOddsForMatch(FootballMatch $match, OddsResponseDto $dto): void
     {
+        if (in_array($match->status, ['FINISHED', 'FT', 'AET', 'PEN', 'SETTLED', 'POSTPONED', 'CANCELLED'])) {
+            return;
+        }
+
         DB::transaction(function () use ($match, $dto) {
             foreach ($dto->markets as $marketDto) {
                 if (! in_array($marketDto->id, self::ALLOWED_BET_IDS)) {
@@ -76,6 +80,9 @@ class MarketSyncService
                     continue;
                 }
 
+                $validOutcomes = [];
+                $groupedLines = [];
+
                 foreach ($marketDto->outcomes as $outcomeDto) {
                     $parsed = $this->parseOutcomeValue($marketType, $outcomeDto->value);
                     if (! $parsed) {
@@ -83,9 +90,49 @@ class MarketSyncService
                     }
 
                     $profitRate = $this->calculateProfitRate($outcomeDto->odd);
+                    $parsed['original_dto'] = $outcomeDto;
+                    $parsed['profit_rate'] = $profitRate;
+
+                    if ($marketType === 'ASIAN_HANDICAP' || $marketType === 'OVER_UNDER') {
+                        $lineValue = (string) $parsed['line_value'];
+                        $groupedLines[$lineValue][] = $parsed;
+                    } else {
+                        $validOutcomes[] = $parsed;
+                    }
+                }
+
+                if ($marketType === 'ASIAN_HANDICAP' || $marketType === 'OVER_UNDER') {
+                    foreach ($groupedLines as $lineValue => $outcomesForLine) {
+                        // A line must have exactly 2 outcomes (Over/Under or Home/Away)
+                        if (count($outcomesForLine) !== 2) {
+                            continue;
+                        }
+
+                        // Filter out lines where ANY outcome has profit rate < 0.50
+                        $isValidLine = true;
+                        foreach ($outcomesForLine as $outcome) {
+                            if ($outcome['profit_rate'] < 0.50) {
+                                $isValidLine = false;
+                                break;
+                            }
+                        }
+
+                        if ($isValidLine) {
+                            foreach ($outcomesForLine as $outcome) {
+                                $validOutcomes[] = $outcome;
+                            }
+                        }
+                    }
+                }
+
+                $activeOutcomeIds = [];
+
+                foreach ($validOutcomes as $parsed) {
+                    $outcomeDto = $parsed['original_dto'];
+                    $profitRate = $parsed['profit_rate'];
 
                     // UpdateOrCreate theo Snapshot rule (đè profit_rate)
-                    MarketOutcome::updateOrCreate(
+                    $outcomeModel = MarketOutcome::updateOrCreate(
                         [
                             'market_id' => $market->id,
                             'selection_side' => $parsed['selection_side'] ?? null,
@@ -101,7 +148,14 @@ class MarketSyncService
                             'display_order' => 1,
                         ]
                     );
+
+                    $activeOutcomeIds[] = $outcomeModel->id;
                 }
+
+                // Suspend existing outcomes of this market that are no longer valid (e.g., odds dropped < 0.50)
+                MarketOutcome::where('market_id', $market->id)
+                    ->whereNotIn('id', $activeOutcomeIds)
+                    ->update(['status' => 'SUSPENDED']);
 
                 // Cập nhật timestamp của market để hiển thị cho user biết là đã đồng bộ
                 $market->touch();

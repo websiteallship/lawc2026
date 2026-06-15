@@ -354,7 +354,7 @@
                             <div class="w-1.5 h-5 bg-emerald-500 rounded-full"></div>
                             <span>{{ $typeNames[$type] ?? $type }}</span>
                         </div>
-                        @if($lastUpdated = $markets->max('updated_at'))
+                        @if(!in_array($match->status, ['FINISHED', 'SETTLED', 'POSTPONED', 'CANCELLED']) && $lastUpdated = $markets->max('updated_at'))
                             @php
                                 $parsedTime = \Carbon\Carbon::parse($lastUpdated);
                             @endphp
