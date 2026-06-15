@@ -42,7 +42,10 @@ class AcceptRulesPage extends Page
             return;
         }
 
-        Auth::user()->update(['accepted_rules_at' => now()]);
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $user->accepted_rules_at = now();
+        $user->save();
 
         Notification::make()
             ->title('Chào mừng bạn đến với World Cup 2026!')
