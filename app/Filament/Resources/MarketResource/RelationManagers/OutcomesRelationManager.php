@@ -101,7 +101,7 @@ class OutcomesRelationManager extends RelationManager
                 CreateAction::make(),
             ])
             ->actions([
-                Tables\Actions\EditAction::make()
+                EditAction::make()
                     ->after(function (\App\Models\MarketOutcome $record) {
                         if (in_array($record->status, ['INACTIVE', 'SUSPENDED'])) {
                             $pendingBets = \App\Models\Bet::where('outcome_id', $record->id)
@@ -125,7 +125,7 @@ class OutcomesRelationManager extends RelationManager
                             }
                         }
                     }),
-                Tables\Actions\DeleteAction::make(),
+                DeleteAction::make(),
             ])
             ->bulkActions([
                 BulkActionGroup::make([
