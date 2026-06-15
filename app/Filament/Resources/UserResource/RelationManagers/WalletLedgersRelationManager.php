@@ -34,8 +34,8 @@ class WalletLedgersRelationManager extends RelationManager
                     ->label('Biến động')
                     ->numeric()
                     ->sortable()
-                    ->color(fn (int $state): string => $state > 0 ? 'success' : ($state < 0 ? 'danger' : 'gray'))
-                    ->formatStateUsing(fn (int $state): string => $state > 0 ? '+'.number_format($state) : number_format($state)),
+                    ->color(fn ($state): string => (int)$state > 0 ? 'success' : ((int)$state < 0 ? 'danger' : 'gray'))
+                    ->formatStateUsing(fn ($state): string => (int)$state > 0 ? '+'.number_format((int)$state) : number_format((int)$state)),
                 TextColumn::make('balance_available_after')
                     ->label('Số dư sau GD')
                     ->numeric()

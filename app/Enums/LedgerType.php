@@ -2,7 +2,10 @@
 
 namespace App\Enums;
 
-enum LedgerType: string
+use Filament\Support\Contracts\HasLabel;
+use Filament\Support\Contracts\HasColor;
+
+enum LedgerType: string implements HasLabel, HasColor
 {
     case ADMIN_GRANT = 'ADMIN_GRANT';
     case ADMIN_DEDUCT = 'ADMIN_DEDUCT';
@@ -30,6 +33,26 @@ enum LedgerType: string
             self::BET_VOIDED => 'Hủy cược',
             self::SETTLEMENT_CORRECTION => 'Điều chỉnh kết quả',
             self::SEASON_RESET => 'Reset mùa giải',
+        };
+    public function getLabel(): ?string
+    {
+        return $this->label();
+    }
+
+    public function getColor(): string|array|null
+    {
+        return match ($this) {
+            self::ADMIN_GRANT => 'success',
+            self::ADMIN_DEDUCT => 'danger',
+            self::BET_PLACED => 'warning',
+            self::BET_WON => 'success',
+            self::BET_LOST => 'danger',
+            self::BET_PUSH => 'info',
+            self::BET_HALF_WON => 'success',
+            self::BET_HALF_LOST => 'danger',
+            self::BET_VOIDED => 'gray',
+            self::SETTLEMENT_CORRECTION => 'warning',
+            self::SEASON_RESET => 'danger',
         };
     }
 }
