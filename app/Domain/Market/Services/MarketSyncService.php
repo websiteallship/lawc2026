@@ -33,25 +33,26 @@ class MarketSyncService
                 $status = 'OPEN';
                 $openAt = now();
                 
-                // Mốc đóng kèo: Tính từ giờ đá (kickoff_at)
+                // Mốc đóng kèo CỨNG (Fallback): Chỉ dùng làm lưới an toàn nếu luồng Live bị sập.
+                // Do đó, mốc này phải set CỰC KỲ RỘNG để không vô tình chém nhầm kèo khi luồng Live đang hoạt động bình thường.
                 if ($periodType === 'FULL_TIME' || $periodType === 'FIRST_HALF') {
-                    // Cho phép cược thêm 10 phút tính từ lúc bắt đầu hiệp 1
-                    $closeAt = $match->kickoff_at->clone()->addMinutes(10);
+                    // Dự phòng: 60 phút sau khi lăn bóng (đã hết hiệp 1 và giữa giờ)
+                    $closeAt = $match->kickoff_at->clone()->addMinutes(60);
                 } elseif ($periodType === 'SECOND_HALF') {
-                    // Hiệp 2 bắt đầu vào khoảng phút 60 (45p + 15p nghỉ) -> +10p = 70p
-                    $closeAt = $match->kickoff_at->clone()->addMinutes(70);
+                    // Dự phòng: 110 phút sau khi lăn bóng (đã hết hiệp 2)
+                    $closeAt = $match->kickoff_at->clone()->addMinutes(110);
                 } elseif ($periodType === 'EXTRA_TIME') {
-                    $status = 'DRAFT'; // Sẽ mở khi hòa 90 phút
+                    $status = 'DRAFT';
                     $openAt = $match->kickoff_at->clone()->addMinutes(105);
-                    // Hiệp phụ bắt đầu khoảng phút 115 -> +5p = 120p
-                    $closeAt = $match->kickoff_at->clone()->addMinutes(120);
+                    // Dự phòng: 140 phút sau khi lăn bóng (đã hết hiệp phụ)
+                    $closeAt = $match->kickoff_at->clone()->addMinutes(140);
                 } elseif ($periodType === 'PENALTY') {
-                    $status = 'DRAFT'; // Sẽ mở khi hòa 120 phút
+                    $status = 'DRAFT';
                     $openAt = $match->kickoff_at->clone()->addMinutes(135);
-                    // Pen bắt đầu khoảng phút 145 -> +5p = 150p
-                    $closeAt = $match->kickoff_at->clone()->addMinutes(150);
+                    // Dự phòng: 180 phút sau khi lăn bóng (đã đá xong penalty)
+                    $closeAt = $match->kickoff_at->clone()->addMinutes(180);
                 } else {
-                    $closeAt = $match->kickoff_at;
+                    $closeAt = $match->kickoff_at->clone()->addMinutes(200);
                 }
 
                 // Tìm hoặc tạo kèo mới
