@@ -17,5 +17,7 @@ class RulesPage extends Page
 
     protected static ?int $navigationSort = 80;
 
+    protected static ?string $navigationGroup = 'Hướng dẫn & Thể lệ';
+
     protected string $view = 'filament.player.pages.rules';
 }

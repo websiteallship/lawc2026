@@ -24,6 +24,8 @@ class MyBetsPage extends Page
 
     protected static ?int $navigationSort = 30;
 
+    protected static ?string $navigationGroup = 'Quản lý cá nhân';
+
     protected string $view = 'filament.player.pages.my-bets-page';
 
     public string $activeTab = 'all';
