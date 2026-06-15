@@ -207,3 +207,12 @@
   - Tự động khóa & thông báo kèo sắp đóng bằng cronjob `notify:closing-soon` chạy mỗi phút (báo trước 30p).
   - Tự động gửi thông báo Leaderboard bằng cronjob `notify:leaderboard` chạy hằng ngày và hằng tuần.
   - Tích hợp Filament Database Notifications hiển thị realtime trên Header kèm hiệu ứng popup `canvas-confetti` cực mượt.
+
+## v1.8.0 (WP-8 - Settlement Correction Workflow) - Hoàn tất (Phase 2)
+- **Database**: Migration và Model `SettlementCorrection` để lưu lại kết quả cũ, kết quả mới và lý do sửa kết quả nhằm mục đích audit.
+- **Domain Service**: Cập nhật `CorrectionService` thực thi logic tái tính toán kết quả (Settle), gọi ngược lại `WalletService` để cập nhật chênh lệch cho Ví (Wallet) mà không làm mất trạng thái lịch sử. Ghi Wallet Ledger `SETTLEMENT_CORRECTION` và Audit Log rõ ràng.
+- **UI/UX (Admin)**: Bổ sung Action "Sửa kết quả" trên trang View Settlement, hiển thị trực quan thông tin chênh lệch trước khi Confirm.
+- **UI/UX (Player)**: Cập nhật giao diện trang Phiếu dự đoán (My Bets):
+  - Bổ sung bộ lọc tab "Đã điều chỉnh" (Corrected).
+  - Việt hóa tự động (Home/Away/Over/Under -> Đội nhà, Đội khách, Tài, Xỉu) và gắn thêm tên đội tuyển chính xác vào phiếu cược.
+- **Testing**: Bổ sung `CorrectionServiceTest` cover hoàn toàn logic Settle lỗi -> Điều chỉnh kết quả -> Update Ví & Bet.
