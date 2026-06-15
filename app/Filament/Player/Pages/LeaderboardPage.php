@@ -34,14 +34,33 @@ class LeaderboardPage extends Page
             return;
         }
 
-        // Lấy top rankings theo net_profit, yêu cầu tối thiểu 1 bet
-        $wallets = Wallet::with('user')
-            ->where('season_id', $activeSeason->id)
-            ->where('total_staked', '>', 0)
-            ->orderByDesc('net_profit')
-            ->orderByDesc('available_balance')
-            ->take(50)
+        // Lấy tất cả user có role 'player'
+        $users = \App\Models\User::whereHas('roles', function ($q) {
+                $q->where('name', 'player');
+            })
+            ->where('status', 'ACTIVE')
+            ->with(['wallets' => function ($q) use ($activeSeason) {
+                $q->where('season_id', $activeSeason->id);
+            }])
             ->get();
+
+        // Map sang dạng wallet-like array để tái sử dụng logic sort/display
+        $wallets = $users->map(function ($user) use ($activeSeason) {
+            $wallet = $user->wallets->first();
+            
+            return (object) [
+                'user_id' => $user->id,
+                'season_id' => $activeSeason->id,
+                'available_balance' => $wallet ? $wallet->available_balance : 0,
+                'net_profit' => $wallet ? $wallet->net_profit : 0,
+                'total_staked' => $wallet ? $wallet->total_staked : 0,
+                'user' => $user,
+            ];
+        })
+        ->sortByDesc('net_profit')
+        ->sortByDesc('available_balance')
+        ->take(50)
+        ->values();
 
         $this->rankings = $wallets->map(function ($wallet, $index) {
             $betsCount = Bet::where('user_id', $wallet->user_id)

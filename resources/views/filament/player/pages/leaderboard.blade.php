@@ -51,7 +51,7 @@
                     </table>
                 </div>
                 <p class="text-xs text-gray-400 mt-3 text-center">
-                    * ROI và Win% tính trên tất cả phiếu đã settle. Phải có ít nhất 1 phiếu để xuất hiện.
+                    * ROI và Win% tính trên tất cả phiếu đã settle.
                 </p>
             @endif
         </x-filament::card>

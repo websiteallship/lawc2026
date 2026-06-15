@@ -41,7 +41,10 @@ class LeaderboardServiceTest extends TestCase
 
     private function makeUser(string $name = 'User'): User
     {
-        return User::factory()->create(['name' => $name, 'status' => 'ACTIVE']);
+        $user = User::factory()->create(['name' => $name, 'status' => 'ACTIVE']);
+        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'player']);
+        $user->assignRole('player');
+        return $user;
     }
 
     private function makeWallet(User $user, int $balance = 0): Wallet

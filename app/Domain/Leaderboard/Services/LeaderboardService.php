@@ -31,12 +31,36 @@ class LeaderboardService
      */
     public function computeSeason(Season $season): Collection
     {
-        // Lấy tất cả wallet + user cho season
-        $wallets = Wallet::with('user')
-            ->where('season_id', $season->id)
+        // Lấy tất cả user có role 'player'
+        $users = \App\Models\User::whereHas('roles', function ($q) {
+                $q->where('name', 'player');
+            })
             ->where('status', 'ACTIVE')
-            ->get()
-            ->keyBy('user_id');
+            ->with(['wallets' => function ($q) use ($season) {
+                $q->where('season_id', $season->id);
+            }])
+            ->get();
+
+        if ($users->isEmpty()) {
+            return collect();
+        }
+
+        // Tạo pseudo-wallets để tận dụng lại logic bên dưới
+        $wallets = collect();
+        foreach ($users as $user) {
+            $wallet = $user->wallets->first();
+            
+            $pseudoWallet = new \stdClass();
+            $pseudoWallet->user_id = $user->id;
+            $pseudoWallet->user = $user;
+            $pseudoWallet->total_staked = $wallet ? $wallet->total_staked : 0;
+            $pseudoWallet->total_payout = $wallet ? $wallet->total_payout : 0;
+            $pseudoWallet->net_profit = $wallet ? $wallet->net_profit : 0;
+            $pseudoWallet->available_balance = $wallet ? $wallet->available_balance : 0;
+            $pseudoWallet->locked_balance = $wallet ? $wallet->locked_balance : 0;
+            
+            $wallets->put($user->id, $pseudoWallet);
+        }
 
         if ($wallets->isEmpty()) {
             return collect();
