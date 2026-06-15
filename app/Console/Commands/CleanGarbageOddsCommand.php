@@ -25,7 +25,7 @@ class CleanGarbageOddsCommand extends Command
             })
             ->get()
             ->groupBy(function($o) {
-                return $o->market_id . '_' . $o->line_value;
+                return $o->market_id . '_' . abs($o->line_value);
             });
 
         $suspendIds = [];

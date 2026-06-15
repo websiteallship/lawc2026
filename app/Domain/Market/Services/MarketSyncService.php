@@ -94,8 +94,8 @@ class MarketSyncService
                     $parsed['profit_rate'] = $profitRate;
 
                     if ($marketType === 'ASIAN_HANDICAP' || $marketType === 'OVER_UNDER') {
-                        $lineValue = (string) $parsed['line_value'];
-                        $groupedLines[$lineValue][] = $parsed;
+                        $lineValueKey = (string) abs($parsed['line_value']);
+                        $groupedLines[$lineValueKey][] = $parsed;
                     } else {
                         $validOutcomes[] = $parsed;
                     }
