@@ -185,10 +185,19 @@
 - **Domain Service**: Xây dựng `AchievementService::checkAndAward()` xử lý toàn bộ các huy hiệu chính và phụ. Đã tích hợp logic tính toán Streak, ROI, High Roller, v.v.
 - **Workflow**: Bắt event `BetPlaced`, `SettlementCompleted` -> Gọi service tính toán điều kiện -> Insert DB và trigger Notification (kèm popup Confetti).
 
-## v1.6.0 (WP-6 - Mission Engine) - Kế hoạch (Phase 2)
-- **Database**: Tạo migration bảng `missions` (`code`, `title`, `description`, `type`, `target_value`, `start_at`, `end_at`) và `user_missions` (`user_id`, `mission_id`, `current_value`, `is_completed`, `completed_at`).
-- **Domain Service**: Xây dựng `MissionService::trackProgress()` và `completeMission()` xử lý 5 nhiệm vụ: DAILY_ONE_BET, WEEKLY_ACTIVE_PLAYER, WEEKLY_MARKET_EXPLORER, SMART_STAKE, KNOCKOUT_PARTICIPANT.
-- **Workflow**: Queue bắt action events -> Gọi `trackProgress()` -> Increment `current_value` -> Hoàn thành (mark `is_completed`, không thưởng lá).
+## v1.6.0 (WP-6 - Mission Engine) - Hoàn tất (Phase 2)
+- **Hệ thống nhiệm vụ ngắn hạn**: Giúp người chơi tương tác đều đặn, văn minh (không thưởng `lá`, chỉ thưởng tiến độ hoặc badge để tránh lạm phát).
+- **Database**:
+  - Bảng `missions`: `code`, `title`, `description`, `type` (enum: daily, weekly, round, season), `target_value` (int), `start_at`, `end_at`, `reward_achievement_id` (nullable, FK tới achievements).
+  - Bảng `user_missions`: `user_id`, `mission_id`, `current_value`, `is_completed`, `completed_at`.
+- **MissionSeeder**: Khởi tạo danh sách nhiệm vụ từ dễ đến khó (DAILY_ONE_BET, WEEKLY_ACTIVE_PLAYER, WEEKLY_MARKET_EXPLORER, SMART_STAKE, KNOCKOUT_PARTICIPANT...).
+- **MissionService**: 
+  - `trackProgress(int $userId, string $action, int $value = 1, array $context = [])`: Xử lý tăng tiến độ nhiệm vụ dựa vào hành động.
+  - `evaluateDailyMissions()`, `evaluateWeeklyMissions()`: Đánh giá và reset tiến độ định kỳ.
+  - `completeMission(int $userId, int $missionId)`: Đóng gói tiến độ, nếu có `reward_achievement_id` thì trao trực tiếp Huy hiệu tương ứng.
+- **Jobs & Commands**: 
+  - `EvaluateMissionsJob` chạy bất đồng bộ sau khi cược hoặc mở thưởng để cập nhật tiến độ.
+  - Console command `app:evaluate-missions` và `missions:rotate-weekly` (xoay vòng ngẫu nhiên 5 nhiệm vụ tuần từ danh sách 10 nhiệm vụ cố định cho toàn bộ player).
 
 ## v1.7.0 (WP-7 - Notification System) - Hoàn tất (Phase 2)
 - **System**: Cấu hình Laravel Notifications (driver `database`). Fix lỗi định tuyến (từ đường dẫn tuyệt đối sang tương đối).

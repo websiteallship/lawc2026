@@ -11,6 +11,7 @@
         ];
     @endphp
     <div class="space-y-6">
+        @livewire('player.weekly-missions-widget')
         
         {{-- Bộ lọc Trạng thái --}}
         <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">

@@ -91,8 +91,29 @@
 
     <!-- Progress & Action button -->
     <div class="w-full mt-auto pt-2">
+        @php
+            $mission = isset($missions) ? $missions->where('reward_achievement_id', $achievement->id)->first() : null;
+            $missionProgress = $mission ? ($userMissions->get($mission->id) ?? null) : null;
+            $mCurrent = $missionProgress ? $missionProgress->current_value : 0;
+            $mTarget = $mission ? $mission->target_value : 1;
+            $mPercent = $mission ? min(100, $mTarget > 0 ? round(($mCurrent / $mTarget) * 100) : 0) : 0;
+        @endphp
+
         <!-- Progress bar shown when locked -->
-        @if(!$isUnlocked && $progress)
+        @if(!$isUnlocked && $mission)
+            <div class="space-y-1.5 mb-4 text-left">
+                <div class="flex justify-between text-[10px] font-bold text-gray-700 dark:text-gray-300">
+                    <span class="truncate pr-2">Nhiệm vụ: {{ $mission->title }}</span>
+                    <span>{{ $mCurrent }}/{{ $mTarget }}</span>
+                </div>
+                <div class="w-full bg-gray-100 dark:bg-gray-850 h-2 rounded-full overflow-hidden">
+                    <div class="bg-warning-500 h-full rounded-full transition-all duration-500" style="width: {{ $mPercent }}%"></div>
+                </div>
+                <a href="/player" class="mt-2 block w-full py-1.5 text-center rounded-lg text-xs font-bold bg-primary-50 text-primary-600 hover:bg-primary-100 dark:bg-primary-500/10 dark:text-primary-400 dark:hover:bg-primary-500/20 transition-colors">
+                    Thực hiện ngay
+                </a>
+            </div>
+        @elseif(!$isUnlocked && $progress)
             <div class="space-y-1.5 mb-4">
                 <div class="flex justify-between text-[10px] font-semibold text-gray-500 dark:text-gray-400">
                     <span>Tiến độ</span>

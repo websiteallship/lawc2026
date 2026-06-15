@@ -35,7 +35,16 @@ class PlayerPanelProvider extends PanelProvider
             )
             ->renderHook(
                 PanelsRenderHook::USER_MENU_BEFORE,
-                fn (): string => Blade::render('@livewire(\'player.achievement-badge\')')
+                fn (): string => Blade::render('
+                    <div class="flex items-center gap-3 mr-2">
+                        @livewire(\'player.missions-quick-view\')
+                        @livewire(\'player.achievement-badge\')
+                    </div>
+                ')
+            )
+            ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn (): string => Blade::render('@livewire(\'player.missions-mobile-widget\')')
             )
             ->renderHook(
                 PanelsRenderHook::FOOTER,

@@ -175,6 +175,22 @@
         </div>
     </div>
 
+    <!-- LINK TO MISSIONS PAGE (GAMIFICATION LINK) -->
+    <div class="mt-10 relative overflow-hidden rounded-2xl p-6 bg-gradient-to-r from-success-500/10 to-primary-500/10 dark:from-success-500/20 dark:to-primary-500/20 ring-1 ring-success-500/20 dark:ring-success-500/30 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div class="flex items-center gap-4">
+            <div class="p-3 rounded-xl bg-success-500 text-white shrink-0 shadow-md shadow-success-500/30">
+                <x-filament::icon icon="heroicon-s-clipboard-document-check" class="w-6 h-6" />
+            </div>
+            <div>
+                <h3 class="text-base font-bold text-gray-900 dark:text-white">Thử Thách Tuần Đang Diễn Ra</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Hoàn thành các nhiệm vụ đặc biệt của tuần này để bứt phá bảng xếp hạng và nhận Huy Hiệu tương ứng.</p>
+            </div>
+        </div>
+        <a href="{{ \App\Filament\Player\Pages\MissionsPage::getUrl() }}" class="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-success-600 hover:bg-success-500 shadow-sm transition-colors duration-200 shrink-0">
+            Xem danh sách nhiệm vụ
+        </a>
+    </div>
+
     <!-- MAIN PROGRESSION GRID -->
     <div class="mt-10">
         <h2 class="text-lg font-bold text-gray-950 dark:text-white mb-6 flex items-center gap-2">
@@ -187,7 +203,9 @@
                     'achievement' => $achievement, 
                     'userAchievements' => $userAchievements,
                     'progress' => $progressMap[$achievement->code] ?? null,
-                    'extraStats' => $extraStats
+                    'extraStats' => $extraStats,
+                    'missions' => $missions,
+                    'userMissions' => $userMissions
                 ])
             @endforeach
         </div>
@@ -206,7 +224,9 @@
                     'userAchievements' => $userAchievements, 
                     'compact' => true,
                     'progress' => $progressMap[$achievement->code] ?? null,
-                    'extraStats' => $extraStats
+                    'extraStats' => $extraStats,
+                    'missions' => $missions,
+                    'userMissions' => $userMissions
                 ])
             @endforeach
         </div>

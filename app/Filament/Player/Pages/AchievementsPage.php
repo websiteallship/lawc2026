@@ -28,7 +28,12 @@ class AchievementsPage extends Page
 
     public static function getNavigationGroup(): ?string
     {
-        return 'Cá Nhân';
+        return 'Nhiệm vụ & Danh hiệu';
+    }
+
+    public static function getNavigationSort(): ?int
+    {
+        return 3;
     }
 
 
@@ -180,6 +185,9 @@ class AchievementsPage extends Page
             $nextLevelPercent = min(100, $nextLevelTarget > 0 ? round(($nextLevelCurrent / $nextLevelTarget) * 100) : 0);
         }
 
+        $missions = \App\Models\Mission::where('is_active', true)->get();
+        $userMissions = \App\Models\UserMission::where('user_id', $user->id)->get()->keyBy('mission_id');
+
         return [
             'achievements' => $achievements,
             'userAchievements' => $userAchievements,
@@ -198,7 +206,9 @@ class AchievementsPage extends Page
                 'nextCurrent' => $nextLevelCurrent,
                 'nextTarget' => $nextLevelTarget,
             ],
-            'newAchievementsToShow' => $newAchievementsToShow
+            'newAchievementsToShow' => $newAchievementsToShow,
+            'missions' => $missions,
+            'userMissions' => $userMissions,
         ];
     }
 }

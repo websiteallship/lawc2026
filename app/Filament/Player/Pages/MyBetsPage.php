@@ -50,10 +50,11 @@ class MyBetsPage extends Page
                     BetStatus::PUSH,
                     BetStatus::HALF_WON,
                     BetStatus::HALF_LOST,
-                    BetStatus::CORRECTED,
                 ]);
             } elseif ($this->activeTab === 'voided') {
                 $query->where('status', BetStatus::VOIDED);
+            } elseif ($this->activeTab === 'corrected') {
+                $query->where('status', BetStatus::CORRECTED);
             }
         }
 

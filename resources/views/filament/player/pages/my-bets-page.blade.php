@@ -6,7 +6,8 @@
                 'all' => 'Tất cả',
                 'pending' => 'Chưa mở thưởng',
                 'settled' => 'Đã mở thưởng',
-                'voided' => 'Đã hoàn'
+                'voided' => 'Đã hoàn',
+                'corrected' => 'Đã điều chỉnh'
             ] as $key => $label)
                 <button wire:click="$set('activeTab', '{{ $key }}')"
                     @class([
@@ -95,7 +96,16 @@
                             } }}</span>
                         </p>
                         <p class="text-emerald-700 dark:text-emerald-400 font-black mt-1">
-                            {{ $bet->display_odds_snapshot }}
+                            @php
+                                $homeTeam = $bet->market?->match?->home_team ?? 'Đội nhà';
+                                $awayTeam = $bet->market?->match?->away_team ?? 'Đội khách';
+                                $displayOdds = str_replace(
+                                    ['Home', 'Away', 'Draw', 'Over', 'Under'],
+                                    ["Đội nhà ({$homeTeam})", "Đội khách ({$awayTeam})", 'Hòa', 'Tài', 'Xỉu'],
+                                    $bet->display_odds_snapshot
+                                );
+                            @endphp
+                            {{ $displayOdds }}
                         </p>
                     </div>
 
