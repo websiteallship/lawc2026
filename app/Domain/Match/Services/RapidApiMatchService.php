@@ -80,6 +80,39 @@ class RapidApiMatchService
     /**
      * @throws \Exception
      */
+    public function fetchMatchesByIds(array $apiIds): array
+    {
+        if (empty($apiIds)) {
+            return [];
+        }
+
+        $results = [];
+        // RapidAPI allows maximum 20 ids per request separated by dash
+        $chunks = array_chunk($apiIds, 20);
+
+        foreach ($chunks as $chunk) {
+            $response = Http::withHeaders($this->getHeaders())
+                ->retry(3, 1000)
+                ->timeout(10)
+                ->get("{$this->baseUrl}/fixtures", [
+                    'ids' => implode('-', $chunk),
+                ]);
+
+            if ($response->failed()) {
+                $this->handleApiError("fetchMatchesByIds", $response);
+            }
+
+            $matches = $response->json('response', []);
+            $dtos = array_map(fn ($data) => ApiMatchDto::fromRapidApiArray($data), $matches);
+            $results = array_merge($results, $dtos);
+        }
+
+        return $results;
+    }
+
+    /**
+     * @throws \Exception
+     */
     public function fetchMatchById(string $apiId): ?ApiMatchDto
     {
         $response = Http::withHeaders($this->getHeaders())

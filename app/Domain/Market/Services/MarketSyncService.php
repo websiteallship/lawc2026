@@ -32,18 +32,26 @@ class MarketSyncService
 
                 $status = 'OPEN';
                 $openAt = now();
-                $closeAt = $match->kickoff_at;
-
-                if ($periodType === 'SECOND_HALF') {
-                    $closeAt = $match->kickoff_at->clone()->addMinutes(90);
+                
+                // Mốc đóng kèo: Tính từ giờ đá (kickoff_at)
+                if ($periodType === 'FULL_TIME' || $periodType === 'FIRST_HALF') {
+                    // Cho phép cược thêm 10 phút tính từ lúc bắt đầu hiệp 1
+                    $closeAt = $match->kickoff_at->clone()->addMinutes(10);
+                } elseif ($periodType === 'SECOND_HALF') {
+                    // Hiệp 2 bắt đầu vào khoảng phút 60 (45p + 15p nghỉ) -> +10p = 70p
+                    $closeAt = $match->kickoff_at->clone()->addMinutes(70);
                 } elseif ($periodType === 'EXTRA_TIME') {
                     $status = 'DRAFT'; // Sẽ mở khi hòa 90 phút
-                    $openAt = $match->kickoff_at->clone()->addMinutes(105); // Tạm tính
+                    $openAt = $match->kickoff_at->clone()->addMinutes(105);
+                    // Hiệp phụ bắt đầu khoảng phút 115 -> +5p = 120p
                     $closeAt = $match->kickoff_at->clone()->addMinutes(120);
                 } elseif ($periodType === 'PENALTY') {
                     $status = 'DRAFT'; // Sẽ mở khi hòa 120 phút
-                    $openAt = $match->kickoff_at->clone()->addMinutes(135); // Tạm tính
-                    $closeAt = $match->kickoff_at->clone()->addMinutes(145);
+                    $openAt = $match->kickoff_at->clone()->addMinutes(135);
+                    // Pen bắt đầu khoảng phút 145 -> +5p = 150p
+                    $closeAt = $match->kickoff_at->clone()->addMinutes(150);
+                } else {
+                    $closeAt = $match->kickoff_at;
                 }
 
                 // Tìm hoặc tạo kèo mới

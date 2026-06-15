@@ -122,9 +122,12 @@ class MatchSyncService
             return;
         }
 
+        $missingMatches = [];
         foreach ($liveDbMatches as $match) {
             $apiMatch = $apiLiveMatches->get($match->api_id);
             if (! $apiMatch) {
+                // Trận đấu không có trong luồng LIVE (có thể do API bị delay hoặc đã kết thúc)
+                $missingMatches[] = $match;
                 continue;
             }
 
@@ -132,6 +135,25 @@ class MatchSyncService
                 $this->updateMatchFromApi($match, $apiMatch);
             } catch (\Exception $e) {
                 Log::error("Failed to update match {$match->id} from bulk data: ".$e->getMessage());
+            }
+        }
+
+        // TỐI ƯU REQUEST: Gộp các trận bị thiếu vào 1 request duy nhất thay vì quét toàn giải
+        if (!empty($missingMatches)) {
+            $missingIds = collect($missingMatches)->pluck('api_id')->filter()->toArray();
+            if (!empty($missingIds) && ($provider === 'rapidapi' || $provider === 'rapidapi_fallback_footballdata')) {
+                try {
+                    $missingApiMatches = collect($this->rapidApiService->fetchMatchesByIds($missingIds))->keyBy('apiId');
+                    
+                    foreach ($missingMatches as $match) {
+                        $apiMatch = $missingApiMatches->get($match->api_id);
+                        if ($apiMatch) {
+                            $this->updateMatchFromApi($match, $apiMatch);
+                        }
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Failed to fetch missing matches by IDs: '.$e->getMessage());
+                }
             }
         }
     }
