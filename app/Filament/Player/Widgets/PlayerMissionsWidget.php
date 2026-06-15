@@ -36,10 +36,16 @@ class PlayerMissionsWidget extends BaseWidget
                     ->weight('bold')
                     ->html()
                     ->formatStateUsing(function (string $state, Mission $record): string {
-                        $typeLabel = $record->type === 'daily' ? 'Hàng ngày' : 'Hàng tuần';
-                        $typeColorClass = $record->type === 'daily'
-                            ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-blue-200/50 dark:border-blue-800/30'
-                            : 'bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 border-purple-200/50 dark:border-purple-800/30';
+                        $typeLabel = match($record->type) {
+                            'daily' => 'Hàng ngày',
+                            'season' => 'Mùa giải',
+                            default => 'Hàng tuần',
+                        };
+                        $typeColorClass = match($record->type) {
+                            'daily' => 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-blue-200/50 dark:border-blue-800/30',
+                            'season' => 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 border-indigo-200/50 dark:border-indigo-800/30',
+                            default => 'bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 border-purple-200/50 dark:border-purple-800/30',
+                        };
                         
                         return "
                             <div class='flex items-center gap-2'>

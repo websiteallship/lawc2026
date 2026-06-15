@@ -134,7 +134,7 @@ class MarketSyncService
 
     private function calculateProfitRate(float $odd): float
     {
-        if ($odd > 1.0) {
+        if ($odd >= 1.0) {
             return round($odd - 1, 3);
         }
 
