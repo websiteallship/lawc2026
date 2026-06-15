@@ -2,23 +2,23 @@
     <div class="space-y-6">
         {{-- Ví stats --}}
         @if($wallet)
-            <div class="grid grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <x-filament::card>
                     <div class="text-center">
                         <p class="text-xs text-gray-500 mb-1">Lá khả dụng</p>
-                        <p class="text-2xl font-bold text-emerald-600">{{ number_format($wallet->available_balance) }}</p>
+                        <p class="text-2xl font-bold text-emerald-600 break-words">{{ number_format($wallet->available_balance) }}</p>
                     </div>
                 </x-filament::card>
                 <x-filament::card>
                     <div class="text-center">
                         <p class="text-xs text-gray-500 mb-1">Đang khóa</p>
-                        <p class="text-2xl font-bold text-amber-500">{{ number_format($wallet->locked_balance) }}</p>
+                        <p class="text-2xl font-bold text-amber-500 break-words">{{ number_format($wallet->locked_balance) }}</p>
                     </div>
                 </x-filament::card>
                 <x-filament::card>
                     <div class="text-center">
                         <p class="text-xs text-gray-500 mb-1">Tổng lá</p>
-                        <p class="text-2xl font-bold text-gray-700 dark:text-gray-200">{{ number_format($wallet->total_balance) }}</p>
+                        <p class="text-2xl font-bold text-gray-700 dark:text-gray-200 break-words">{{ number_format($wallet->total_balance) }}</p>
                     </div>
                 </x-filament::card>
             </div>
