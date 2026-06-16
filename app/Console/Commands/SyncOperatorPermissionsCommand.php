@@ -50,6 +50,13 @@ class SyncOperatorPermissionsCommand extends Command
             // Settlements
             'ViewAny:Settlement',
             'View:Settlement',
+            
+            // Users
+            'ViewAny:User',
+            'View:User',
+            'Create:User',
+            'Update:User',
+            'Delete:User',
         ];
 
         // Ensure these permissions exist, in case Shield hasn't generated them
