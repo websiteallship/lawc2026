@@ -93,7 +93,14 @@ class OutcomesRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('profit_rate')
                     ->label('Tỷ lệ ăn')
                     ->formatStateUsing(fn ($state) => "ăn {$state}"),
-                Tables\Columns\TextColumn::make('status')->badge(),
+                Tables\Columns\TextColumn::make('status')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'ACTIVE' => 'success',
+                        'SUSPENDED' => 'warning',
+                        'INACTIVE' => 'gray',
+                        default => 'gray',
+                    }),
                 Tables\Columns\TextColumn::make('display_order')->label('#')->sortable(),
             ])
             ->reorderable('display_order')
@@ -101,34 +108,35 @@ class OutcomesRelationManager extends RelationManager
                 CreateAction::make(),
             ])
             ->actions([
-                EditAction::make()
-                    ->after(function (\App\Models\MarketOutcome $record) {
-                        if (in_array($record->status, ['INACTIVE', 'SUSPENDED'])) {
-                            $pendingBets = \App\Models\Bet::where('outcome_id', $record->id)
-                                ->where('status', 'PENDING')
-                                ->get();
-                                
-                            if ($pendingBets->isNotEmpty()) {
-                                $walletService = app(\App\Domain\Wallet\Services\WalletService::class);
-                                foreach ($pendingBets as $bet) {
-                                    $wallet = \App\Models\Wallet::lockForUpdate()->findOrFail($bet->wallet_id);
-                                    $bet->status = \App\Enums\BetStatus::VOIDED;
-                                    $bet->voided_at = now();
-                                    $bet->metadata = array_merge($bet->metadata ?? [], ['void_reason' => 'Tỷ lệ cược bị tắt/tạm ngưng bởi admin']);
-                                    $bet->save();
-                                    $walletService->voidBet($wallet, $bet);
-                                }
-                                \Filament\Notifications\Notification::make()
-                                    ->title("Đã hủy và hoàn tiền {$pendingBets->count()} vé cược của kèo này")
-                                    ->warning()
-                                    ->send();
-                            }
-                        }
-                    }),
+                EditAction::make(),
                 DeleteAction::make(),
             ])
             ->bulkActions([
                 BulkActionGroup::make([
+                    \Filament\Actions\BulkAction::make('active_selected')
+                        ->label('Active selected')
+                        ->icon('heroicon-o-play-circle')
+                        ->color('success')
+                        ->action(function (\Illuminate\Database\Eloquent\Collection $records) {
+                            $records->each->update(['status' => 'ACTIVE']);
+                            \Filament\Notifications\Notification::make()
+                                ->title('Đã mở (ACTIVE) các tỷ lệ được chọn')
+                                ->success()
+                                ->send();
+                        })
+                        ->deselectRecordsAfterCompletion(),
+                    \Filament\Actions\BulkAction::make('suspend_selected')
+                        ->label('Suspend selected')
+                        ->icon('heroicon-o-pause-circle')
+                        ->color('warning')
+                        ->action(function (\Illuminate\Database\Eloquent\Collection $records) {
+                            $records->each->update(['status' => 'SUSPENDED']);
+                            \Filament\Notifications\Notification::make()
+                                ->title('Đã tạm ngưng (SUSPENDED) các tỷ lệ được chọn')
+                                ->success()
+                                ->send();
+                        })
+                        ->deselectRecordsAfterCompletion(),
                     DeleteBulkAction::make(),
                 ]),
             ]);

@@ -132,7 +132,14 @@ class SettlementResource extends Resource
                             ->label('')
                             ->schema([
                                 TextEntry::make('bet.public_code')->label('Mã phiếu'),
-                                TextEntry::make('user.name')->label('Người chơi'),
+                                TextEntry::make('user.name')
+                                    ->label('Người chơi')
+                                    ->html()
+                                    ->state(function ($record) {
+                                        $name = $record->user?->name ?? '-';
+                                        $time = $record->bet?->created_at?->format('d/m/Y H:i:s') ?? '';
+                                        return "{$name}<br><span class='text-xs text-gray-500'>{$time}</span>";
+                                    }),
                                 TextEntry::make('stake')->label('Cược')->numeric(),
                                 TextEntry::make('result_status')
                                     ->label('KQ')

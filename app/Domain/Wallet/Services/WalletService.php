@@ -188,12 +188,6 @@ class WalletService
     {
         // Gọi trong transaction đã mở, wallet đã lockForUpdate
         if ($adjustment < 0 && $wallet->available_balance < abs($adjustment)) {
-            // Cho phép âm available balance nếu sửa kết quả làm mất tiền? 
-            // Phase 2 yêu cầu available_balance không được âm, nên ta có thể throw hoặc cứ trừ (rồi user nợ, nhưng rule cấm âm).
-            // Tạm thời nếu âm, allow nợ hoặc set về 0? Trong cá cược nội bộ có thể allow tạm hoặc ném exception
-            // We will throw InsufficientBalanceException for now if it drops below 0, or let it go negative? 
-            // Rule: "Negative `available_balance` is forbidden." - wait, if we settled wrong and user spent it? 
-            // Let's just deduct it and if it goes negative, we might need a manual grant, but for now we throw.
             throw new InsufficientBalanceException($wallet->available_balance, abs($adjustment));
         }
 

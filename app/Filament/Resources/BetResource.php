@@ -8,6 +8,10 @@ use App\Helpers\CountryFlagHelper;
 use App\Models\Bet;
 use App\Models\FootballMatch;
 use App\Models\User;
+use App\Domain\Wallet\Services\WalletService;
+use Filament\Notifications\Notification;
+use Filament\Actions\Action;
+use Illuminate\Support\Facades\DB;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\ViewAction;
@@ -123,6 +127,16 @@ class BetResource extends Resource
                     ->dateTime('d/m/Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label('Tạo lúc')
+                    ->dateTime('d/m/Y H:i:s')
+                    ->sortable()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('updated_at')
+                    ->label('Cập nhật lúc')
+                    ->dateTime('d/m/Y H:i:s')
+                    ->sortable()
+                    ->toggleable(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
@@ -156,9 +170,98 @@ class BetResource extends Resource
             ])
             ->actions([
                 ViewAction::make(),
+                Action::make('void')
+                    ->label('Hủy vé')
+                    ->icon('heroicon-o-x-circle')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->visible(fn (Bet $record) => $record->status === BetStatus::PENDING)
+                    ->form([
+                        \Filament\Forms\Components\Textarea::make('void_reason')
+                            ->label('Lý do hủy vé')
+                            ->required()
+                            ->maxLength(255)
+                    ])
+                    ->action(function (Bet $record, array $data, WalletService $walletService) {
+                        try {
+                            DB::transaction(function () use ($record, $walletService, $data) {
+                                $wallet = \App\Models\Wallet::lockForUpdate()->findOrFail($record->wallet_id);
+                                $reason = $data['void_reason'] ?? 'Admin hủy vé thủ công';
+
+                                $walletService->voidBet($wallet, $record);
+                                
+                                $record->status = BetStatus::VOIDED;
+                                $record->voided_at = now();
+                                $record->metadata = array_merge($record->metadata ?? [], ['void_reason' => $reason]);
+                                $record->save();
+                            });
+
+                            Notification::make()
+                                ->title('Đã hủy vé và hoàn tiền')
+                                ->success()
+                                ->send();
+                        } catch (\Exception $e) {
+                            Notification::make()
+                                ->title('Lỗi hệ thống')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    }),
             ])
             ->bulkActions([
                 BulkActionGroup::make([
+                    BulkAction::make('void_bulk')
+                        ->label('Hủy các vé đã chọn')
+                        ->icon('heroicon-o-x-circle')
+                        ->color('danger')
+                        ->requiresConfirmation()
+                        ->form([
+                            \Filament\Forms\Components\Textarea::make('void_reason')
+                                ->label('Lý do hủy vé hàng loạt')
+                                ->required()
+                                ->maxLength(255)
+                        ])
+                        ->action(function (Collection $records, array $data, WalletService $walletService) {
+                            $count = 0;
+                            $failed = 0;
+                            
+                            foreach ($records as $record) {
+                                if ($record->status !== BetStatus::PENDING) {
+                                    continue;
+                                }
+                                
+                                try {
+                                    DB::transaction(function () use ($record, $walletService, $data) {
+                                        $wallet = \App\Models\Wallet::lockForUpdate()->findOrFail($record->wallet_id);
+                                        $reason = $data['void_reason'] ?? 'Admin hủy vé thủ công';
+
+                                        $walletService->voidBet($wallet, $record);
+                                        
+                                        $record->status = BetStatus::VOIDED;
+                                        $record->voided_at = now();
+                                        $record->metadata = array_merge($record->metadata ?? [], ['void_reason' => $reason]);
+                                        $record->save();
+                                    });
+                                    $count++;
+                                } catch (\Exception $e) {
+                                    $failed++;
+                                }
+                            }
+
+                            if ($failed > 0) {
+                                Notification::make()
+                                    ->title("Hủy {$count} vé thành công. Thất bại {$failed} vé.")
+                                    ->warning()
+                                    ->send();
+                            } else {
+                                Notification::make()
+                                    ->title("Đã hủy thành công {$count} vé PENDING")
+                                    ->success()
+                                    ->send();
+                            }
+                        })
+                        ->deselectRecordsAfterCompletion(),
                     BulkAction::make('export_csv')
                         ->label('Export CSV')
                         ->icon('heroicon-o-document-arrow-down')

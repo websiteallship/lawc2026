@@ -544,7 +544,7 @@ Preferred stack:
 
 ```txt
 Laravel
-Filament
+Filament V5
 Livewire
 Alpine.js
 Tailwind CSS
@@ -748,13 +748,15 @@ Stop and ask for human review if a task requires:
 
 ### Filament v3 Action Namespaces
 
-In Filament v3, all Action classes (e.g., `Action`, `BulkAction`, `EditAction`, `DeleteBulkAction`, `BulkActionGroup`) have been moved to the standalone `Filament\Actions` namespace. 
+In Filament v3, all Action classes (e.g., `Action`, `BulkAction`, `EditAction`, `DeleteBulkAction`, `BulkActionGroup`) have been moved to the standalone `Filament\Actions` namespace.
 They no longer reside in `Filament\Tables\Actions` or `Filament\Forms\Actions`.
 The agent MUST NOT use namespaces like `Filament\Tables\Actions\BulkActionGroup` or `Filament\Tables\Actions\DeleteBulkAction`.
 Instead, use:
+
 ```php
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\BulkAction;
 use Filament\Actions\DeleteBulkAction;
 ```
+
 Do not hallucinate v2 namespaces for v3 projects.

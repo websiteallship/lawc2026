@@ -65,6 +65,8 @@ class CorrectionService
                 'result_home_score' => $matchResult->homeScore,
                 'result_away_score' => $matchResult->awayScore,
                 'reason' => 'CORRECTED: ' . $correction->reason,
+                'executed_by' => $executor?->id,
+                'executed_at' => now(),
             ]);
 
             $totalPayoutDiff = 0;
@@ -75,6 +77,12 @@ class CorrectionService
                 ->chunkById(500, function ($settlementItems) use ($market, $matchResult, &$totalPayoutDiff, $correction) {
                     foreach ($settlementItems as $item) {
                         $bet = $item->bet;
+
+                        // Bỏ qua các vé đã bị Admin hủy thủ công (Voided) để 2 luồng không bị giẫm chân lên nhau
+                        if ($bet->status === BetStatus::VOIDED || $bet->status === BetStatus::VOIDED->value) {
+                            continue;
+                        }
+
                         $oldGrossPayout = $item->gross_payout;
 
                         // Tính toán lại

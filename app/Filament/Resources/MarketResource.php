@@ -417,7 +417,7 @@ class MarketResource extends Resource
                     ->label('Nhập kết quả')
                     ->icon('heroicon-o-pencil-square')
                     ->color('info')
-                    ->visible(fn (Market $record) => in_array($record->status, ['OPEN', 'LOCKED', 'SETTLING', 'SETTLED']))
+                    ->visible(fn (Market $record) => in_array($record->status, ['OPEN', 'LOCKED', 'SETTLING']))
                     ->fillForm(function (Market $record): array {
                         $existing = MatchPeriodResult::where('match_id', $record->match_id)
                             ->where('period_type', $record->period_type)
@@ -458,6 +458,81 @@ class MarketResource extends Resource
                             ]
                         );
                         Notification::make()->title('Đã lưu kết quả')->success()->send();
+                    }),
+
+                // ---- Action: Sửa thưởng (Correction) ----
+                Action::make('correct_settlement')
+                    ->label('Sửa thưởng')
+                    ->icon('heroicon-o-wrench-screwdriver')
+                    ->color('danger')
+                    ->visible(fn (Market $record) => $record->status === 'SETTLED')
+                    ->requiresConfirmation()
+                    ->modalHeading('Xác nhận Sửa kết quả & Tính lại thưởng')
+                    ->modalDescription('Hành động này sẽ thay đổi kết quả của kèo đã xổ, tự động thu hồi hoặc bù thêm tiền cho người chơi theo kết quả mới.')
+                    ->fillForm(function (Market $record): array {
+                        $existing = MatchPeriodResult::where('match_id', $record->match_id)
+                            ->where('period_type', $record->period_type)
+                            ->first();
+
+                        return [
+                            'home_score' => $existing?->home_score,
+                            'away_score' => $existing?->away_score,
+                        ];
+                    })
+                    ->form([
+                        Forms\Components\TextInput::make('home_score')
+                            ->label('Bàn thắng đội nhà (Mới)')
+                            ->numeric()->required()->minValue(0),
+                        Forms\Components\TextInput::make('away_score')
+                            ->label('Bàn thắng đội khách (Mới)')
+                            ->numeric()->required()->minValue(0),
+                        Forms\Components\Textarea::make('reason')
+                            ->label('Lý do sửa thưởng')
+                            ->required()
+                            ->rows(2),
+                    ])
+                    ->action(function (Market $record, array $data): void {
+                        try {
+                            $settlement = \App\Models\Settlement::where('market_id', $record->id)->latest()->first();
+                            if (!$settlement) {
+                                throw new \Exception('Không tìm thấy dữ liệu Quyết toán cũ.');
+                            }
+
+                            $correctionService = app(\App\Domain\Settlement\Services\CorrectionService::class);
+                            
+                            $correction = $correctionService->createCorrection(
+                                $settlement->id,
+                                [
+                                    'home_score' => $data['home_score'],
+                                    'away_score' => $data['away_score']
+                                ],
+                                $data['reason'],
+                                auth()->user()
+                            );
+
+                            $correctionService->executeCorrection($correction, auth()->user());
+
+                            // Cập nhật luôn lại MatchPeriodResult cho đồng bộ hiển thị
+                            MatchPeriodResult::updateOrCreate(
+                                ['match_id' => $record->match_id, 'period_type' => $record->period_type],
+                                [
+                                    'home_score' => $data['home_score'],
+                                    'away_score' => $data['away_score'],
+                                    'status' => 'CONFIRMED',
+                                    'entered_by' => auth()->id(),
+                                ]
+                            );
+
+                            Notification::make()
+                                ->title('Đã sửa thưởng thành công')
+                                ->success()
+                                ->send();
+                        } catch (\Exception $e) {
+                            Notification::make()
+                                ->title('Lỗi: ' . $e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
                     }),
 
                 // ---- Action: Preview Settlement ----
