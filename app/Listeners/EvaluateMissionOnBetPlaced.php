@@ -18,9 +18,17 @@ class EvaluateMissionOnBetPlaced
         $userId = $bet->user_id;
 
         EvaluateMissionsJob::dispatch($userId, 'DAILY_ONE_BET', 1);
-        EvaluateMissionsJob::dispatch($userId, 'WEEKLY_ACTIVE_PLAYER', 1);
-        EvaluateMissionsJob::dispatch($userId, 'WEEKLY_MARKET_EXPLORER', 1);
-        EvaluateMissionsJob::dispatch($userId, 'SMART_STAKE', 1);
+
+        $activeCodes = \App\Models\Mission::where('is_active', true)->pluck('code')->toArray();
+        foreach ($activeCodes as $code) {
+            if ($code === 'DAILY_ONE_BET' || $code === 'KNOCKOUT_PARTICIPANT') continue;
+            
+            $value = 1;
+            if ($code === 'WEEKLY_W8') {
+                $value = $bet->stake; // Tay chơi lớn: cộng dồn số lá cược
+            }
+            EvaluateMissionsJob::dispatch($userId, $code, $value);
+        }
 
         if ($bet->match && $bet->match->stage !== 'GROUP_STAGE') {
             EvaluateMissionsJob::dispatch($userId, 'KNOCKOUT_PARTICIPANT', 1);

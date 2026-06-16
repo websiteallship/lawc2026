@@ -750,13 +750,24 @@ Stop and ask for human review if a task requires:
 
 In Filament v3, all Action classes (e.g., `Action`, `BulkAction`, `EditAction`, `DeleteBulkAction`, `BulkActionGroup`) have been moved to the standalone `Filament\Actions` namespace.
 They no longer reside in `Filament\Tables\Actions` or `Filament\Forms\Actions`.
-The agent MUST NOT use namespaces like `Filament\Tables\Actions\BulkActionGroup` or `Filament\Tables\Actions\DeleteBulkAction`.
+The agent MUST NOT use namespaces like `Filament\Tables\Actions\Action`, `Filament\Tables\Actions\BulkActionGroup` or `Filament\Tables\Actions\DeleteBulkAction`.
+
+This applies to **ALL** actions, including those used in table `->actions([])` or `->headerActions([])`. Do not use `Tables\Actions\Action::make()`. 
+
 Instead, use:
 
 ```php
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\BulkAction;
 use Filament\Actions\DeleteBulkAction;
+```
+
+And in the code:
+```php
+->headerActions([
+    Action::make('view_all') // NOT Tables\Actions\Action::make()
+])
 ```
 
 Do not hallucinate v2 namespaces for v3 projects.

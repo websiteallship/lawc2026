@@ -78,5 +78,14 @@ class MissionService
     {
         $weeklyMissions = Mission::where('type', 'weekly')->pluck('id');
         UserMission::whereIn('mission_id', $weeklyMissions)->delete();
+
+        // Reset all weekly missions to inactive
+        Mission::where('type', 'weekly')->update(['is_active' => false]);
+
+        // Randomly activate 5 weekly missions
+        $randomWeeklyIds = Mission::where('type', 'weekly')->inRandomOrder()->limit(5)->pluck('id');
+        if ($randomWeeklyIds->isNotEmpty()) {
+            Mission::whereIn('id', $randomWeeklyIds)->update(['is_active' => true]);
+        }
     }
 }
