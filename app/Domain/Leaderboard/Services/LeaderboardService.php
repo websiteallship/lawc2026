@@ -77,7 +77,7 @@ class LeaderboardService
             BetStatus::HALF_LOST->value,
         ];
 
-        $betStats = Bet::selectRaw("
+        $betStats = Bet::withTrashed()->selectRaw("
             user_id,
             COUNT(*) AS total_bets,
             SUM(CASE WHEN status IN ('".implode("','", $settledStatuses)."') THEN 1 ELSE 0 END) AS settled_bets,

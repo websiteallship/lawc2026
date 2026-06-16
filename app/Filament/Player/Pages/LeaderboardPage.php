@@ -63,10 +63,13 @@ class LeaderboardPage extends Page
         ->values();
 
         $this->rankings = $wallets->map(function ($wallet, $index) {
-            $betsCount = Bet::where('user_id', $wallet->user_id)
+            $betsCount = Bet::withTrashed()
+                ->where('user_id', $wallet->user_id)
                 ->where('season_id', $wallet->season_id)
+                ->whereIn('status', ['WON', 'LOST', 'PUSH', 'HALF_WON', 'HALF_LOST'])
                 ->count();
-            $wonCount = Bet::where('user_id', $wallet->user_id)
+            $wonCount = Bet::withTrashed()
+                ->where('user_id', $wallet->user_id)
                 ->where('season_id', $wallet->season_id)
                 ->whereIn('status', ['WON', 'HALF_WON'])
                 ->count();
