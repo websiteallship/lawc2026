@@ -58,8 +58,10 @@ class LeaderboardPage extends Page
                 'user' => $user,
             ];
         })
-        ->sortByDesc('net_profit')
-        ->sortByDesc('available_balance')
+        ->sortBy([
+            ['net_profit', 'desc'],
+            ['available_balance', 'desc'],
+        ])
         ->take(50)
         ->values();
 
