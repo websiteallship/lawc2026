@@ -10,7 +10,7 @@ class AdminMarketTypeChart extends ChartWidget
 {
     protected ?string $heading = 'Phân bổ loại kèo';
 
-    protected static ?int $sort = 2;
+    protected static ?int $sort = 4;
 
     protected function getData(): array
     {

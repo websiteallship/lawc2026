@@ -11,6 +11,11 @@ class ApiQuotaWidget extends BaseWidget
     protected static ?int $sort = -3;
     protected ?string $pollingInterval = '30s';
 
+    public static function canView(): bool
+    {
+        return ! request()->routeIs('filament.admin.pages.dashboard');
+    }
+
     protected function getStats(): array
     {
         $quotaService = app(ApiQuotaService::class);

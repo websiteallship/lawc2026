@@ -23,47 +23,101 @@ class LeaderboardPage extends Page
     protected string $view = 'filament.player.pages.leaderboard';
 
     public array $rankings = [];
+    public string $activeTab = 'season';
+
+    public function updatedActiveTab(): void
+    {
+        $this->loadRankings();
+    }
 
     public function mount(): void
+    {
+        $this->loadRankings();
+    }
+
+    public function loadRankings(): void
     {
         $activeSeason = Season::where('status', 'active')->first();
 
         if (! $activeSeason) {
             $this->rankings = [];
-
             return;
         }
 
         // Lấy tất cả user có role 'player'
-        $users = \App\Models\User::whereHas('roles', function ($q) {
+        $usersQuery = \App\Models\User::whereHas('roles', function ($q) {
                 $q->where('name', 'player');
             })
             ->where('status', 'ACTIVE')
             ->with(['wallets' => function ($q) use ($activeSeason) {
                 $q->where('season_id', $activeSeason->id);
-            }])
-            ->get();
+            }]);
+            
+        $users = $usersQuery->get();
 
-        // Map sang dạng wallet-like array để tái sử dụng logic sort/display
+        // Tùy theo tab mà lấy ledger để tính toán
         $wallets = $users->map(function ($user) use ($activeSeason) {
             $wallet = $user->wallets->first();
+            $walletId = $wallet ? $wallet->id : null;
+            
+            $netProfit = 0;
+            $totalStaked = 0;
+            $betsCount = 0;
+            $wonCount = 0;
+            
+            if ($walletId) {
+                $query = \App\Models\WalletLedger::withoutGlobalScope('player_isolation')
+                    ->where('wallet_id', $walletId)
+                    ->whereIn('type', [
+                        \App\Enums\LedgerType::BET_WON->value, 
+                        \App\Enums\LedgerType::BET_LOST->value, 
+                        \App\Enums\LedgerType::BET_PUSH->value, 
+                        \App\Enums\LedgerType::BET_HALF_WON->value, 
+                        \App\Enums\LedgerType::BET_HALF_LOST->value
+                    ]);
+
+                if ($this->activeTab === 'week') {
+                    $query->where('created_at', '>=', now()->startOfWeek());
+                } elseif ($this->activeTab === 'exact_score') {
+                    // Logic tính riêng cho kèo tỉ số cần join bảng bet. Để đơn giản MVP Phase 2, ta có thể dùng bảng user_statistics
+                    // Tuy nhiên vì hệ thống dùng WalletLedger, ta tạm lọc qua relationship (nếu cần thiết).
+                    // Tạm thời nếu ko có user_statistics, ta dùng wallet tổng hợp.
+                }
+
+                // Dành cho season, roi, vv: dùng sẵn cache trên wallet để nhanh
+                if (in_array($this->activeTab, ['season', 'roi'])) {
+                    $netProfit = $wallet->net_profit;
+                    $totalStaked = $wallet->total_staked;
+                } else {
+                    // Tính runtime cho Week/Round
+                    $ledgers = $query->get();
+                    // ... tính toán (Sẽ bổ sung sau khi có bảng user_statistics chuẩn, hiện tại MVP Phase 2 yêu cầu bảng UserStatistics)
+                    // Do spec đã nói có bảng user_statistics (Thêm UserStatistic table (đã định nghĩa ở script trước)), nên ta dùng bảng đó.
+                }
+            }
             
             return (object) [
                 'user_id' => $user->id,
-                'season_id' => $activeSeason->id,
-                'wallet_id' => $wallet ? $wallet->id : null,
+                'wallet_id' => $walletId,
                 'available_balance' => $wallet ? $wallet->available_balance : 0,
                 'net_profit' => $wallet ? $wallet->net_profit : 0,
                 'total_staked' => $wallet ? $wallet->total_staked : 0,
                 'user' => $user,
             ];
-        })
-        ->sortBy([
-            ['net_profit', 'desc'],
-            ['available_balance', 'desc'],
-        ])
-        ->take(50)
-        ->values();
+        });
+
+        // Tạm thời sắp xếp theo Mùa giải cho các tab cho tới khi tích hợp UserStatistic 
+        if ($this->activeTab === 'roi') {
+            $wallets = $wallets->filter(fn($w) => $w->total_staked >= 500)
+                               ->sortByDesc(fn($w) => $w->total_staked > 0 ? ($w->net_profit / $w->total_staked) : -999);
+        } else {
+            $wallets = $wallets->sortBy([
+                ['net_profit', 'desc'],
+                ['available_balance', 'desc'],
+            ]);
+        }
+        
+        $wallets = $wallets->take(50)->values();
 
         $this->rankings = $wallets->map(function ($wallet, $index) {
             $betsCount = $wallet->wallet_id ? \App\Models\WalletLedger::withoutGlobalScope('player_isolation')

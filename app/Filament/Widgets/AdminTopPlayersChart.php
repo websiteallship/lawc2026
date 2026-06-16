@@ -4,17 +4,35 @@ namespace App\Filament\Widgets;
 
 use App\Models\Season;
 use App\Models\Wallet;
-use Filament\Widgets\ChartWidget;
+use Leandrocfe\FilamentApexCharts\Widgets\ApexChartWidget;
 
-class AdminTopPlayersChart extends ChartWidget
+class AdminTopPlayersChart extends ApexChartWidget
 {
-    protected ?string $heading = 'Top 10 Người Chơi (Theo số dư)';
+    /**
+     * Chart Id
+     *
+     * @var string
+     */
+    protected static ?string $chartId = 'adminTopPlayersChart';
 
-    protected static ?int $sort = 3;
+    /**
+     * Widget Title
+     *
+     * @var string|null
+     */
+    protected static ?string $heading = 'Top 10 Người Chơi (Theo số dư)';
+
+    protected static ?int $sort = 5;
 
     protected int|string|array $columnSpan = 'full';
 
-    protected function getData(): array
+    /**
+     * Chart options (series, labels, types, size, animations...)
+     * https://apexcharts.com/docs/options
+     *
+     * @return array
+     */
+    protected function getOptions(): array
     {
         $activeSeason = Season::where('status', 'active')->first();
 
@@ -28,25 +46,51 @@ class AdminTopPlayersChart extends ChartWidget
         $data = [];
 
         foreach ($wallets as $wallet) {
-            $labels[] = $wallet->user ? $wallet->user->name : 'N/A';
-            $data[] = $wallet->total_balance;
+            $name = $wallet->user ? $wallet->user->name : 'N/A';
+            // Truncate name if it's too long so it fits nicely on the X axis
+            $labels[] = mb_strlen($name) > 15 ? mb_substr($name, 0, 15) . '...' : $name;
+            $data[] = (int) $wallet->total_balance;
         }
 
         return [
-            'datasets' => [
-                [
-                    'label' => 'Tổng Lá',
-                    'data' => $data,
-                    'backgroundColor' => '#f59e0b', // amber-500
-                    'borderRadius' => 4,
+            'chart' => [
+                'type' => 'bar',
+                'height' => 300,
+                'toolbar' => [
+                    'show' => false,
                 ],
             ],
-            'labels' => $labels,
+            'series' => [
+                [
+                    'name' => 'Tổng Lá',
+                    'data' => $data,
+                ],
+            ],
+            'xaxis' => [
+                'categories' => $labels,
+                'labels' => [
+                    'style' => [
+                        'fontFamily' => 'inherit',
+                    ],
+                ],
+            ],
+            'yaxis' => [
+                'labels' => [
+                    'style' => [
+                        'fontFamily' => 'inherit',
+                    ],
+                ],
+            ],
+            'colors' => ['#f59e0b'], // amber-500
+            'plotOptions' => [
+                'bar' => [
+                    'borderRadius' => 4,
+                    'horizontal' => false,
+                ],
+            ],
+            'dataLabels' => [
+                'enabled' => false,
+            ],
         ];
-    }
-
-    protected function getType(): string
-    {
-        return 'bar';
     }
 }

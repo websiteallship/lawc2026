@@ -9,7 +9,7 @@ use Spatie\Activitylog\Models\Activity;
 
 class AdminRecentAuditLogsWidget extends BaseWidget
 {
-    protected static ?int $sort = 5;
+    protected static ?int $sort = 8;
 
     protected static ?string $heading = 'Nhật ký hệ thống gần đây';
 

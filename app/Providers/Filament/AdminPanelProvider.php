@@ -64,6 +64,9 @@ class AdminPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
                 AdminStatsOverviewWidget::class,
+                \App\Filament\Widgets\AdminHouseProfitChart::class,
+                \App\Filament\Widgets\AdminMarketStatusListWidget::class,
+                \App\Filament\Widgets\AdminNegativeWalletsWidget::class,
                 AdminLeaderboardWidget::class,
                 AdminTopPlayersChart::class,
                 AdminBetsPerDayChart::class,
@@ -82,6 +85,7 @@ class AdminPanelProvider extends PanelProvider
                 DispatchServingFilamentEvent::class,
             ])
             ->plugins([
+                \Leandrocfe\FilamentApexCharts\FilamentApexChartsPlugin::make(),
                 FilamentShieldPlugin::make(),
                 ...((app()->environment('local') && rescue(fn () => app(AppSettings::class)->enable_local_logins, env('LOCAL_LOGINS_ENABLED', false)))
                     ? [new LocalLogins]

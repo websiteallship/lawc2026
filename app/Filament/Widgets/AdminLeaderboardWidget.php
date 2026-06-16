@@ -10,7 +10,7 @@ use Filament\Widgets\TableWidget as BaseWidget;
 
 class AdminLeaderboardWidget extends BaseWidget
 {
-    protected static ?int $sort = 4;
+    protected static ?int $sort = 6;
 
     protected static ?string $heading = 'Top 10 Bảng Xếp Hạng';
 
@@ -20,11 +20,15 @@ class AdminLeaderboardWidget extends BaseWidget
     {
         $activeSeason = Season::where('status', 'active')->first();
 
+        $latestSnapshotDate = LeaderboardSnapshot::query()
+            ->when($activeSeason, fn ($q) => $q->where('season_id', $activeSeason->id))
+            ->max('snapshot_at');
+
         return $table
             ->query(
                 LeaderboardSnapshot::query()
                     ->when($activeSeason, fn ($q) => $q->where('season_id', $activeSeason->id))
-                    ->orderByDesc('snapshot_at')
+                    ->when($latestSnapshotDate, fn ($q) => $q->where('snapshot_at', $latestSnapshotDate))
                     ->orderBy('rank')
                     ->limit(10)
             )

@@ -1,8 +1,46 @@
 <x-filament-panels::page>
     <div class="space-y-4" x-data="{ openModal: null }">
+        <x-filament::tabs label="Leaderboard Tabs">
+            <x-filament::tabs.item
+                wire:click="$set('activeTab', 'season')"
+                :active="$activeTab === 'season'"
+                icon="heroicon-o-trophy"
+            >
+                Mùa giải
+            </x-filament::tabs.item>
+            <x-filament::tabs.item
+                wire:click="$set('activeTab', 'week')"
+                :active="$activeTab === 'week'"
+                icon="heroicon-o-calendar"
+            >
+                Tuần
+            </x-filament::tabs.item>
+            <x-filament::tabs.item
+                wire:click="$set('activeTab', 'round')"
+                :active="$activeTab === 'round'"
+                icon="heroicon-o-flag"
+            >
+                Vòng đấu
+            </x-filament::tabs.item>
+            <x-filament::tabs.item
+                wire:click="$set('activeTab', 'roi')"
+                :active="$activeTab === 'roi'"
+                icon="heroicon-o-chart-pie"
+            >
+                ROI (Top)
+            </x-filament::tabs.item>
+            <x-filament::tabs.item
+                wire:click="$set('activeTab', 'exact_score')"
+                :active="$activeTab === 'exact_score'"
+                icon="heroicon-o-bolt"
+            >
+                Cao thủ Tỉ số
+            </x-filament::tabs.item>
+        </x-filament::tabs>
+
         <x-filament::card>
             @if(count($rankings) === 0)
-                <p class="text-center text-gray-400 py-4">Chưa có dữ liệu xếp hạng. Hãy là người đầu tiên đặt dự đoán!</p>
+                <p class="text-center text-gray-400 py-4">Chưa có dữ liệu xếp hạng cho mục này.</p>
             @else
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
