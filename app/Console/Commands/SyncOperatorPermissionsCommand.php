@@ -34,21 +34,10 @@ class SyncOperatorPermissionsCommand extends Command
             // Matches
             'ViewAny:FootballMatch',
             'View:FootballMatch',
-            'Create:FootballMatch',
-            'Update:FootballMatch',
             
             // Markets
             'ViewAny:Market',
             'View:Market',
-            'Create:Market',
-            'Update:Market',
-            
-            // Users
-            'ViewAny:User',
-            'View:User',
-            'Create:User',
-            'Update:User',
-            'Delete:User',
             
             // Bets
             'ViewAny:Bet',
@@ -61,16 +50,6 @@ class SyncOperatorPermissionsCommand extends Command
             // Settlements
             'ViewAny:Settlement',
             'View:Settlement',
-
-            // Wallets
-            'ViewAny:Wallet',
-            'View:Wallet',
-            'ViewAny:WalletLedger',
-            'View:WalletLedger',
-
-            // Leaderboard
-            'ViewAny:Leaderboard',
-
         ];
 
         // Ensure these permissions exist, in case Shield hasn't generated them
