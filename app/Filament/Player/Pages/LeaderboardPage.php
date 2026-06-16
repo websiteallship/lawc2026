@@ -51,6 +51,7 @@ class LeaderboardPage extends Page
             return (object) [
                 'user_id' => $user->id,
                 'season_id' => $activeSeason->id,
+                'wallet_id' => $wallet ? $wallet->id : null,
                 'available_balance' => $wallet ? $wallet->available_balance : 0,
                 'net_profit' => $wallet ? $wallet->net_profit : 0,
                 'total_staked' => $wallet ? $wallet->total_staked : 0,
@@ -63,20 +64,18 @@ class LeaderboardPage extends Page
         ->values();
 
         $this->rankings = $wallets->map(function ($wallet, $index) {
-            $betsCount = \App\Models\WalletLedger::where('user_id', $wallet->user_id)
-                ->where('season_id', $wallet->season_id)
+            $betsCount = $wallet->wallet_id ? \App\Models\WalletLedger::where('wallet_id', $wallet->wallet_id)
                 ->whereIn('type', [
-                    \App\Enums\LedgerType::BET_WON, 
-                    \App\Enums\LedgerType::BET_LOST, 
-                    \App\Enums\LedgerType::BET_PUSH, 
-                    \App\Enums\LedgerType::BET_HALF_WON, 
-                    \App\Enums\LedgerType::BET_HALF_LOST
+                    \App\Enums\LedgerType::BET_WON->value, 
+                    \App\Enums\LedgerType::BET_LOST->value, 
+                    \App\Enums\LedgerType::BET_PUSH->value, 
+                    \App\Enums\LedgerType::BET_HALF_WON->value, 
+                    \App\Enums\LedgerType::BET_HALF_LOST->value
                 ])
-                ->count();
-            $wonCount = \App\Models\WalletLedger::where('user_id', $wallet->user_id)
-                ->where('season_id', $wallet->season_id)
-                ->whereIn('type', [\App\Enums\LedgerType::BET_WON, \App\Enums\LedgerType::BET_HALF_WON])
-                ->count();
+                ->count() : 0;
+            $wonCount = $wallet->wallet_id ? \App\Models\WalletLedger::where('wallet_id', $wallet->wallet_id)
+                ->whereIn('type', [\App\Enums\LedgerType::BET_WON->value, \App\Enums\LedgerType::BET_HALF_WON->value])
+                ->count() : 0;
 
             $userAchievements = \App\Models\UserAchievement::where('user_id', $wallet->user_id)
                 ->join('achievements', 'user_achievements.achievement_id', '=', 'achievements.id')
