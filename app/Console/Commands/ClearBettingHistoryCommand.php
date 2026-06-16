@@ -49,16 +49,13 @@ class ClearBettingHistoryCommand extends Command
             // Find valid PENDING bet IDs
             $pendingBetIds = Bet::where('status', 'PENDING')->pluck('id')->toArray();
 
-            $deletedLedgersQuery = WalletLedger::where('reason', '!=', 'Lá khởi đầu mùa giải');
-            
-            if (!empty($pendingBetIds)) {
-                $deletedLedgersQuery->where(function($query) use ($pendingBetIds) {
-                    $query->whereNotIn('bet_id', $pendingBetIds)
-                          ->orWhereNull('bet_id');
-                });
-            }
-
-            $deletedLedgers = $deletedLedgersQuery->forceDelete();
+            // Delete ALL ledgers EXCEPT "Lá khởi đầu mùa giải" and PENDING bet_placed ledgers
+            $deletedLedgers = WalletLedger::where(function($query) use ($pendingBetIds) {
+                $query->whereNotIn('bet_id', $pendingBetIds)
+                      ->orWhereNull('bet_id');
+            })
+            ->where('reason', '!=', 'Lá khởi đầu mùa giải')
+            ->forceDelete();
 
             $this->info("Permanently deleted {$deletedLedgers} wallet ledger records.");
 

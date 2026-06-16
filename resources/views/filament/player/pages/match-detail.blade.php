@@ -350,9 +350,41 @@
             @forelse($marketsByType as $type => $markets)
                 <x-filament::card>
                     <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100 border-b border-gray-100 dark:border-gray-700 pb-3 mb-4 flex flex-wrap items-center justify-between gap-2">
-                        <div class="flex items-center gap-2">
+                        <div class="flex flex-wrap items-center gap-2">
                             <div class="w-1.5 h-5 bg-emerald-500 rounded-full"></div>
                             <span>{{ $typeNames[$type] ?? $type }}</span>
+                            
+                            @php
+                                $keoTren = null;
+                                $keoDuoi = null;
+                                if ($type === 'ASIAN_HANDICAP') {
+                                    foreach ($markets as $m) {
+                                        foreach ($m->outcomes as $oc) {
+                                            if (!is_null($oc->line_value) && (float)$oc->line_value < 0) {
+                                                $keoTren = in_array($oc->selection_side, ['HOME']) || $oc->label === 'Đội Nhà' || $oc->label === $match->home_team ? $match->home_team : $match->away_team;
+                                                $keoDuoi = ($keoTren === $match->home_team) ? $match->away_team : $match->home_team;
+                                                break 2;
+                                            }
+                                        }
+                                    }
+                                }
+                            @endphp
+
+                            <span class="text-sm font-medium bg-gray-50 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 px-3 py-1 rounded-full ml-0 sm:ml-2 shadow-sm">
+                                @if($keoTren && $keoDuoi)
+                                    @php
+                                        $keoTrenColor = $keoTren === $match->home_team ? 'text-emerald-600 dark:text-emerald-400' : 'text-blue-600 dark:text-blue-400';
+                                        $keoDuoiColor = $keoDuoi === $match->home_team ? 'text-emerald-600 dark:text-emerald-400' : 'text-blue-600 dark:text-blue-400';
+                                    @endphp
+                                    <span class="text-gray-500 dark:text-gray-400 text-xs">Kèo trên:</span> <span class="{{ $keoTrenColor }} font-bold">{{ $keoTren }}</span> 
+                                    <span class="mx-1.5 text-gray-300 dark:text-gray-600">|</span> 
+                                    <span class="text-gray-500 dark:text-gray-400 text-xs">Kèo dưới:</span> <span class="{{ $keoDuoiColor }} font-bold">{{ $keoDuoi }}</span>
+                                @else
+                                    <span class="text-gray-500 dark:text-gray-400 text-xs">Chủ:</span> <span class="text-emerald-600 dark:text-emerald-400 font-bold">{{ $match->home_team }}</span> 
+                                    <span class="mx-1.5 text-gray-300 dark:text-gray-600">|</span> 
+                                    <span class="text-gray-500 dark:text-gray-400 text-xs">Khách:</span> <span class="text-blue-600 dark:text-blue-400 font-bold">{{ $match->away_team }}</span>
+                                @endif
+                            </span>
                         </div>
                         @if(!in_array($match->status, ['FINISHED', 'SETTLED', 'POSTPONED', 'CANCELLED']) && $lastUpdated = $markets->max('updated_at'))
                             @php
@@ -478,7 +510,15 @@
                                             @endphp
                                             <div class="flex justify-between items-center p-3 {{ $loop->even ? 'bg-gray-50/80 dark:bg-gray-800/40' : 'bg-white dark:bg-gray-900' }} hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group">
                                                 <div class="flex flex-wrap items-center gap-2">
-                                                    <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ $displayName }}</span>
+                                                    @php
+                                                        $nameColor = 'text-gray-800 dark:text-gray-200';
+                                                        if ($displayName === $match->home_team || str_starts_with($displayName, 'Tài')) {
+                                                            $nameColor = 'text-emerald-600 dark:text-emerald-400';
+                                                        } elseif ($displayName === $match->away_team || str_starts_with($displayName, 'Xỉu')) {
+                                                            $nameColor = 'text-blue-600 dark:text-blue-400';
+                                                        }
+                                                    @endphp
+                                                    <span class="text-sm font-bold {{ $nameColor }}">{{ $displayName }}</span>
                                                     
                                                     @if($displayLine !== null)
                                                         <span class="text-sm font-bold text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">
