@@ -175,7 +175,7 @@ class BetResource extends Resource
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
                     ->requiresConfirmation()
-                    ->visible(fn (Bet $record) => $record->status === BetStatus::PENDING)
+                    ->visible(fn (Bet $record) => $record->status === BetStatus::PENDING && auth()->user()->can('update', $record))
                     ->form([
                         \Filament\Forms\Components\Textarea::make('void_reason')
                             ->label('Lý do hủy vé')
@@ -215,6 +215,7 @@ class BetResource extends Resource
                         ->label('Hủy các vé đã chọn')
                         ->icon('heroicon-o-x-circle')
                         ->color('danger')
+                        ->visible(fn () => auth()->user()->can('Update:Bet'))
                         ->requiresConfirmation()
                         ->form([
                             \Filament\Forms\Components\Textarea::make('void_reason')

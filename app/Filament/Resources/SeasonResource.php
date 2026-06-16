@@ -128,7 +128,7 @@ class SeasonResource extends Resource
                     ->label('Kích hoạt')
                     ->icon('heroicon-o-play')
                     ->color('success')
-                    ->hidden(fn (Season $record): bool => $record->status === 'active')
+                    ->visible(fn (Season $record): bool => $record->status !== 'active' && auth()->user()->can('update', $record))
                     ->action(function (Season $record) {
                         // Deactivate all others
                         Season::where('id', '!=', $record->id)->update(['status' => 'closed']);
@@ -141,7 +141,7 @@ class SeasonResource extends Resource
                     ->label('Đóng mùa giải')
                     ->icon('heroicon-o-stop')
                     ->color('danger')
-                    ->hidden(fn (Season $record): bool => $record->status === 'closed')
+                    ->visible(fn (Season $record): bool => $record->status !== 'closed' && auth()->user()->can('update', $record))
                     ->action(function (Season $record) {
                         $record->update(['status' => 'closed']);
                         Notification::make()->title('Thành công')->body("Mùa giải {$record->name} đã đóng.")->success()->send();
@@ -156,6 +156,7 @@ class SeasonResource extends Resource
                         ->label('Cấp Ví & Lá cho Player')
                         ->icon('heroicon-o-wallet')
                         ->color('warning')
+                        ->visible(fn () => auth()->user()->can('Update:Season'))
                         ->action(function (Collection $records, WalletService $walletService) {
                             $count = 0;
                             foreach ($records as $season) {

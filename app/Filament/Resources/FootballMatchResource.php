@@ -209,6 +209,7 @@ class FootballMatchResource extends Resource
                     ->label('Xóa KQ')
                     ->icon('heroicon-o-backspace')
                     ->color('danger')
+                    ->visible(fn (FootballMatch $record) => auth()->user()->can('update', $record))
                     ->requiresConfirmation()
                     ->action(function (FootballMatch $record) {
                         $record->update([
@@ -227,6 +228,7 @@ class FootballMatchResource extends Resource
                     ->label('Đồng bộ Kèo API')
                     ->icon('heroicon-o-arrow-path')
                     ->color('warning')
+                    ->visible(fn (FootballMatch $record) => auth()->user()->can('update', $record))
                     ->action(function (FootballMatch $record) {
                         try {
                             $oddsService = app(OddsIntegrationService::class);
@@ -260,6 +262,7 @@ class FootballMatchResource extends Resource
                     ->label('Kéo Chi tiết (Sự kiện)')
                     ->icon('heroicon-o-bars-3-bottom-left')
                     ->color('success')
+                    ->visible(fn (FootballMatch $record) => auth()->user()->can('update', $record))
                     ->action(function (FootballMatch $record) {
                         try {
                             $syncService = app(\App\Domain\Match\Services\MatchSyncService::class);

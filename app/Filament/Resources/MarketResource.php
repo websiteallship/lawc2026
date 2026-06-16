@@ -417,7 +417,7 @@ class MarketResource extends Resource
                     ->label('Nhập kết quả')
                     ->icon('heroicon-o-pencil-square')
                     ->color('info')
-                    ->visible(fn (Market $record) => in_array($record->status, ['OPEN', 'LOCKED', 'SETTLING']))
+                    ->visible(fn (Market $record) => in_array($record->status, ['OPEN', 'LOCKED', 'SETTLING']) && auth()->user()->can('update', $record))
                     ->fillForm(function (Market $record): array {
                         $existing = MatchPeriodResult::where('match_id', $record->match_id)
                             ->where('period_type', $record->period_type)
@@ -465,7 +465,7 @@ class MarketResource extends Resource
                     ->label('Sửa thưởng')
                     ->icon('heroicon-o-wrench-screwdriver')
                     ->color('danger')
-                    ->visible(fn (Market $record) => $record->status === 'SETTLED')
+                    ->visible(fn (Market $record) => $record->status === 'SETTLED' && auth()->user()->can('update', $record))
                     ->requiresConfirmation()
                     ->modalHeading('Xác nhận Sửa kết quả & Tính lại thưởng')
                     ->modalDescription('Hành động này sẽ thay đổi kết quả của kèo đã xổ, tự động thu hồi hoặc bù thêm tiền cho người chơi theo kết quả mới.')
@@ -540,7 +540,7 @@ class MarketResource extends Resource
                     ->label('Preview Settlement')
                     ->icon('heroicon-o-eye')
                     ->color('warning')
-                    ->visible(fn (Market $record) => in_array($record->status, ['LOCKED', 'SETTLING']))
+                    ->visible(fn (Market $record) => in_array($record->status, ['LOCKED', 'SETTLING']) && auth()->user()->can('update', $record))
                     ->action(function (Market $record) {
                         $periodResult = MatchPeriodResult::where('match_id', $record->match_id)
                             ->where('period_type', $record->period_type)
@@ -576,7 +576,7 @@ class MarketResource extends Resource
                     ->label('Execute Settlement')
                     ->icon('heroicon-o-bolt')
                     ->color('danger')
-                    ->visible(fn (Market $record) => in_array($record->status, ['LOCKED', 'SETTLING']))
+                    ->visible(fn (Market $record) => in_array($record->status, ['LOCKED', 'SETTLING']) && auth()->user()->can('update', $record))
                     ->requiresConfirmation()
                     ->modalHeading('Xác nhận Execute Settlement')
                     ->modalDescription('Hành động này sẽ mở thưởng TẤT CẢ phiếu dự đoán trong kèo này. Thao tác KHÔNG thể hoàn tác.')
@@ -623,7 +623,7 @@ class MarketResource extends Resource
                     ->label(fn (Market $record) => $record->status === 'OPEN' ? 'Đóng kèo' : 'Mở kèo (Publish)')
                     ->icon(fn (Market $record) => $record->status === 'OPEN' ? 'heroicon-o-lock-closed' : 'heroicon-o-arrow-up-circle')
                     ->color(fn (Market $record) => $record->status === 'OPEN' ? 'warning' : 'success')
-                    ->visible(fn (Market $record) => in_array($record->status, ['DRAFT', 'OPEN', 'LOCKED']))
+                    ->visible(fn (Market $record) => in_array($record->status, ['DRAFT', 'OPEN', 'LOCKED']) && auth()->user()->can('update', $record))
                     ->requiresConfirmation()
                     ->action(function (Market $record) {
                         try {
@@ -638,7 +638,7 @@ class MarketResource extends Resource
                     ->label('Void')
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
-                    ->visible(fn (Market $record) => in_array($record->status, ['OPEN', 'LOCKED']))
+                    ->visible(fn (Market $record) => in_array($record->status, ['OPEN', 'LOCKED']) && auth()->user()->can('update', $record))
                     ->requiresConfirmation()
                     ->form([
                         Forms\Components\Textarea::make('reason')
@@ -660,6 +660,7 @@ class MarketResource extends Resource
                         ->label('Mở kèo (Publish)')
                         ->icon('heroicon-o-arrow-up-circle')
                         ->color('success')
+                        ->visible(fn () => auth()->user()->can('Update:Market'))
                         ->requiresConfirmation()
                         ->action(function (Collection $records) {
                             $count = 0;
@@ -675,6 +676,7 @@ class MarketResource extends Resource
                         ->label('Đóng kèo (Lock)')
                         ->icon('heroicon-o-lock-closed')
                         ->color('warning')
+                        ->visible(fn () => auth()->user()->can('Update:Market'))
                         ->requiresConfirmation()
                         ->action(function (Collection $records) {
                             $count = 0;

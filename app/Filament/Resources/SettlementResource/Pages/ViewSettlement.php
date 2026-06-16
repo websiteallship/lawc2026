@@ -23,7 +23,7 @@ class ViewSettlement extends ViewRecord
                 ->label('Sửa kết quả (Correction)')
                 ->color('warning')
                 ->icon('heroicon-o-pencil-square')
-                ->visible(fn (\App\Models\Settlement $record) => $record->status === 'EXECUTED')
+                ->visible(fn (\App\Models\Settlement $record) => $record->status === 'EXECUTED' && auth()->user()->can('update', $record))
                 ->form([
                     \Filament\Forms\Components\TextInput::make('home_score')
                         ->label('Tỉ số Đội nhà')
