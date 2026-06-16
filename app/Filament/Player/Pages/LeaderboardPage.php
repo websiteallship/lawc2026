@@ -66,7 +66,8 @@ class LeaderboardPage extends Page
         ->values();
 
         $this->rankings = $wallets->map(function ($wallet, $index) {
-            $betsCount = $wallet->wallet_id ? \App\Models\WalletLedger::where('wallet_id', $wallet->wallet_id)
+            $betsCount = $wallet->wallet_id ? \App\Models\WalletLedger::withoutGlobalScope('player_isolation')
+                ->where('wallet_id', $wallet->wallet_id)
                 ->whereIn('type', [
                     \App\Enums\LedgerType::BET_WON->value, 
                     \App\Enums\LedgerType::BET_LOST->value, 
@@ -75,7 +76,8 @@ class LeaderboardPage extends Page
                     \App\Enums\LedgerType::BET_HALF_LOST->value
                 ])
                 ->count() : 0;
-            $wonCount = $wallet->wallet_id ? \App\Models\WalletLedger::where('wallet_id', $wallet->wallet_id)
+            $wonCount = $wallet->wallet_id ? \App\Models\WalletLedger::withoutGlobalScope('player_isolation')
+                ->where('wallet_id', $wallet->wallet_id)
                 ->whereIn('type', [\App\Enums\LedgerType::BET_WON->value, \App\Enums\LedgerType::BET_HALF_WON->value])
                 ->count() : 0;
 
