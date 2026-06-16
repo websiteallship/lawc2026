@@ -29,20 +29,23 @@ class EvaluateMissionOnBetPlaced
             } elseif ($code === 'WEEKLY_W2') {
                 $hour = $bet->placed_at->hour;
                 if ($hour >= 0 && $hour < 5) {
-                    $hasBetThisNight = \App\Models\Bet::where('user_id', $userId)->where('id', '!=', $bet->id)
+                    $hasBetThisNight = \App\Models\Bet::where('user_id', $userId)
+                        ->where('placed_at', '<', $bet->placed_at)
                         ->whereDate('placed_at', $bet->placed_at->toDateString())
                         ->whereRaw('EXTRACT(HOUR FROM placed_at) >= 0 AND EXTRACT(HOUR FROM placed_at) < 5')
                         ->exists();
                     if (!$hasBetThisNight) $value = 1;
                 }
             } elseif ($code === 'WEEKLY_W3') {
-                $hasBetThisMarket = \App\Models\Bet::where('user_id', $userId)->where('id', '!=', $bet->id)
+                $hasBetThisMarket = \App\Models\Bet::where('user_id', $userId)
+                    ->where('placed_at', '<', $bet->placed_at)
                     ->where('market_type_snapshot', $bet->market_type_snapshot)
                     ->where('placed_at', '>=', now()->startOfWeek())
                     ->exists();
                 if (!$hasBetThisMarket) $value = 1;
             } elseif ($code === 'WEEKLY_W4') {
-                $hasBetThisDay = \App\Models\Bet::where('user_id', $userId)->where('id', '!=', $bet->id)
+                $hasBetThisDay = \App\Models\Bet::where('user_id', $userId)
+                    ->where('placed_at', '<', $bet->placed_at)
                     ->whereDate('placed_at', $bet->placed_at->toDateString())
                     ->exists();
                 if (!$hasBetThisDay) $value = 1;
