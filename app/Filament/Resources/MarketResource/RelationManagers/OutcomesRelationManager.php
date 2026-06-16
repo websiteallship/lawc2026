@@ -117,6 +117,7 @@ class OutcomesRelationManager extends RelationManager
                         ->label('Active selected')
                         ->icon('heroicon-o-play-circle')
                         ->color('success')
+                        ->visible(fn () => auth()->user()->can('Update:Market'))
                         ->action(function (\Illuminate\Database\Eloquent\Collection $records) {
                             $records->each->update(['status' => 'ACTIVE']);
                             \Filament\Notifications\Notification::make()
@@ -129,6 +130,7 @@ class OutcomesRelationManager extends RelationManager
                         ->label('Suspend selected')
                         ->icon('heroicon-o-pause-circle')
                         ->color('warning')
+                        ->visible(fn () => auth()->user()->can('Update:Market'))
                         ->action(function (\Illuminate\Database\Eloquent\Collection $records) {
                             $records->each->update(['status' => 'SUSPENDED']);
                             \Filament\Notifications\Notification::make()
