@@ -410,6 +410,7 @@ class MarketResource extends Resource
             ])
             ->defaultSort('created_at', 'desc')
             ->actions([
+                \Filament\Actions\ViewAction::make(),
                 EditAction::make(),
 
                 // ---- Action: Nhập kết quả ----
@@ -741,6 +742,7 @@ class MarketResource extends Resource
             'index' => Pages\ListMarkets::route('/'),
             'create' => Pages\CreateMarket::route('/create'),
             'bulk-create' => Pages\BulkCreateMarkets::route('/bulk-create'),
+            'view' => Pages\ViewMarket::route('/{record}'),
             'edit' => Pages\EditMarket::route('/{record}/edit'),
         ];
     }

@@ -19,7 +19,8 @@ class ListMarkets extends ListRecords
                 ->label('Tạo kèo hàng loạt')
                 ->icon('heroicon-o-squares-plus')
                 ->color('success')
-                ->url(MarketResource::getUrl('bulk-create')),
+                ->url(MarketResource::getUrl('bulk-create'))
+                ->visible(fn () => auth()->user()->can('create', \App\Models\Market::class)),
             Actions\CreateAction::make()
                 ->label('Tạo 1 kèo'),
         ];
