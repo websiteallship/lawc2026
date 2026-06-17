@@ -182,7 +182,10 @@ class SettlementResource extends Resource
                                         default => 'gray',
                                     }),
                                 TextEntry::make('gross_payout')->label('Trả thưởng')->numeric(),
-                                TextEntry::make('net_result')->label('Lãi/Lỗ')->numeric(),
+                                TextEntry::make('net_result')
+                                    ->label('Lãi/Lỗ')
+                                    ->color(fn ($state) => (int)$state > 0 ? 'success' : ((int)$state < 0 ? 'danger' : 'gray'))
+                                    ->formatStateUsing(fn ($state) => (int)$state > 0 ? '+' . number_format((int)$state) : number_format((int)$state)),
                             ])->columns(6),
                     ]),
             ]);
