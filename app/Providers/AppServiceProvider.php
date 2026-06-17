@@ -51,6 +51,8 @@ class AppServiceProvider extends ServiceProvider
             ApiQuotaListener::class,
         );
 
+        \App\Models\Bet::observe(\App\Observers\BetObserver::class);
+
         // ===================== RATE LIMITING (DDOS PREVENTION) =====================
         RateLimiter::for('global', function (Request $request) {
             return Limit::perMinute(100)->by($request->ip());
