@@ -1,23 +1,34 @@
 <x-filament-panels::page>
     <div class="space-y-6">
-        {{-- Tabs --}}
-        <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide border-b border-gray-200 dark:border-gray-700">
-            @foreach([
-                'all' => 'Tất cả',
-                'pending' => 'Chưa mở thưởng',
-                'settled' => 'Đã mở thưởng',
-                'voided' => 'Đã hoàn',
-                'corrected' => 'Đã điều chỉnh'
-            ] as $key => $label)
-                <button wire:click="$set('activeTab', '{{ $key }}')"
-                    @class([
-                        'px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors',
-                        'border-emerald-500 text-emerald-600 dark:text-emerald-400' => $activeTab === $key,
-                        'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:hover:text-gray-300' => $activeTab !== $key,
-                    ])>
-                    {{ $label }}
-                </button>
-            @endforeach
+        {{-- Tabs & Search --}}
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-gray-200 dark:border-gray-700">
+            <div class="flex gap-2 overflow-x-auto scrollbar-hide">
+                @foreach([
+                    'all' => 'Tất cả',
+                    'pending' => 'Chưa mở',
+                    'settled' => 'Đã mở',
+                    'voided' => 'Đã hoàn',
+                    'corrected' => 'Đã sửa'
+                ] as $key => $label)
+                    <button wire:click="$set('activeTab', '{{ $key }}')"
+                        @class([
+                            'px-4 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors',
+                            'border-emerald-500 text-emerald-600 dark:text-emerald-400' => $activeTab === $key,
+                            'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:hover:text-gray-300' => $activeTab !== $key,
+                        ])>
+                        {{ $label }}
+                    </button>
+                @endforeach
+            </div>
+
+            <div class="w-full md:w-64 relative">
+                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                    <x-filament::icon icon="heroicon-m-magnifying-glass" class="w-4 h-4 text-gray-400" />
+                </div>
+                <input type="search" wire:model.live.debounce.500ms="searchQuery" 
+                       class="block w-full py-2 pl-9 pr-3 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-800 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-emerald-500 dark:focus:border-emerald-500 shadow-sm transition-colors" 
+                       placeholder="Mã phiếu, tên đội bóng...">
+            </div>
         </div>
 
         {{-- Bet Cards --}}

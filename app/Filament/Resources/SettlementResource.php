@@ -101,6 +101,37 @@ class SettlementResource extends Resource
                         default => 'gray',
                     }),
             ])
+            ->filters([
+                Tables\Filters\SelectFilter::make('match_id')
+                    ->label('Trận đấu')
+                    ->relationship('match', 'match_code')
+                    ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->match_code} | {$record->home_team} vs {$record->away_team}")
+                    ->searchable(['match_code', 'home_team', 'away_team'])
+                    ->preload(),
+                Tables\Filters\SelectFilter::make('status')
+                    ->label('Trạng thái')
+                    ->options([
+                        'EXECUTED' => 'Đã thực hiện',
+                        'PROCESSING' => 'Đang xử lý',
+                    ]),
+                Tables\Filters\Filter::make('executed_at')
+                    ->label('Ngày thực hiện')
+                    ->form([
+                        \Filament\Forms\Components\DatePicker::make('created_from')->label('Từ ngày'),
+                        \Filament\Forms\Components\DatePicker::make('created_until')->label('Đến ngày'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['created_from'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('executed_at', '>=', $date),
+                            )
+                            ->when(
+                                $data['created_until'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('executed_at', '<=', $date),
+                            );
+                    })
+            ])
             ->defaultSort('id', 'desc')
             ->actions([
                 ViewAction::make(),

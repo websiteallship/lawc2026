@@ -9,6 +9,9 @@ use App\Models\WalletLedger;
 use Filament\Pages\Page;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
+use Filament\Actions\Action;
+use Filament\Infolists\Infolist;
+use App\Models\Bet;
 
 class WalletHistoryPage extends Page
 {
@@ -34,6 +37,13 @@ class WalletHistoryPage extends Page
 
     public string $filterType = 'all';
 
+    public string $searchQuery = '';
+
+    public function updatedSearchQuery()
+    {
+        // Add reset if needed, though WalletHistory doesn't use standard pagination currently
+    }
+
     public function mount(): void
     {
         $user = Auth::user();
@@ -55,6 +65,19 @@ class WalletHistoryPage extends Page
         $query = WalletLedger::where('wallet_id', $this->wallet->id)
             ->orderByDesc('created_at');
 
+        if ($this->searchQuery) {
+            $query->where(function ($q) {
+                $q->where('reason', 'like', '%' . $this->searchQuery . '%')
+                  ->orWhereHas('bet', function ($betQuery) {
+                      $betQuery->where('public_code', 'like', '%' . $this->searchQuery . '%')
+                               ->orWhereHas('market.match', function ($matchQuery) {
+                                   $matchQuery->where('home_team', 'like', '%' . $this->searchQuery . '%')
+                                              ->orWhere('away_team', 'like', '%' . $this->searchQuery . '%');
+                               });
+                  });
+            });
+        }
+
         if ($this->filterType !== 'all') {
             $query->where('type', $this->filterType);
         }
@@ -70,5 +93,25 @@ class WalletHistoryPage extends Page
         }
 
         return $options;
+    }
+
+    public function viewBetAction(): Action
+    {
+        return Action::make('viewBet')
+            ->label('Xem phiếu')
+            ->icon('heroicon-m-eye')
+            ->color('gray')
+            ->modalHeading('Chi tiết phiếu dự đoán')
+            ->modalSubmitAction(false)
+            ->modalCancelActionLabel('Đóng')
+            ->modalContent(function (array $arguments) {
+                $bet = Bet::with('market.match')->find($arguments['bet_id'] ?? null);
+
+                if (! $bet) {
+                    return null;
+                }
+
+                return view('filament.player.components.bet-card', ['bet' => $bet]);
+            });
     }
 }

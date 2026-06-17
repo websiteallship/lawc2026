@@ -28,22 +28,35 @@
             </x-filament::card>
         @endif
 
-        {{-- Filter --}}
+        {{-- Filter & Search --}}
         <x-filament::card>
-            <div class="flex flex-wrap gap-2 mb-4">
-                <p class="text-sm font-medium text-gray-600 dark:text-gray-300 self-center">Lọc:</p>
-                @foreach($this->getLedgerTypeOptions() as $val => $label)
-                    <button
-                        wire:click="$set('filterType', '{{ $val }}')"
-                        class="text-xs px-3 py-1 rounded-full border
-                            {{ $filterType === $val
-                                ? 'bg-emerald-600 text-white border-emerald-600'
-                                : 'bg-white text-gray-600 border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600'
-                            }}"
-                    >
-                        {{ $label }}
-                    </button>
-                @endforeach
+            <div class="space-y-4 mb-4 border-b border-gray-100 dark:border-gray-800 pb-4">
+                <!-- Search input -->
+                <div class="w-full max-w-md relative">
+                    <div class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
+                        <x-filament::icon icon="heroicon-m-magnifying-glass" class="w-4 h-4 text-gray-400" />
+                    </div>
+                    <input type="search" wire:model.live.debounce.500ms="searchQuery" 
+                           class="block w-full py-2 pl-10 pr-4 text-sm text-gray-900 border border-gray-200 rounded-xl bg-gray-50 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 dark:bg-gray-800 dark:border-gray-700 dark:placeholder-gray-400 dark:text-white dark:focus:ring-emerald-500/20 dark:focus:border-emerald-500 shadow-sm transition-all duration-200" 
+                           placeholder="Tìm kiếm mã phiếu, đội bóng, lý do...">
+                </div>
+
+                <!-- Filters -->
+                <div class="flex flex-wrap items-center gap-1.5">
+                    <span class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mr-2">Bộ lọc:</span>
+                    @foreach($this->getLedgerTypeOptions() as $val => $label)
+                        <button
+                            wire:click="$set('filterType', '{{ $val }}')"
+                            class="text-xs px-3 py-1 rounded-full border transition-all duration-200
+                                {{ $filterType === $val
+                                    ? 'bg-emerald-650 text-white border-emerald-600 bg-emerald-600 shadow-sm font-semibold'
+                                    : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50 hover:text-gray-900 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700'
+                                }}"
+                        >
+                            {{ $label }}
+                        </button>
+                    @endforeach
+                </div>
             </div>
 
             {{-- Ledger list --}}
@@ -54,7 +67,14 @@
                     $netLocked = $ledger->amount_locked;
                     $isPositive = $netAvail > 0;
                 @endphp
-                <div class="flex items-start justify-between py-3 border-b border-gray-100 dark:border-gray-700 last:border-0">
+                <div 
+                    @if($ledger->bet_id)
+                        wire:click="mountAction('viewBet', { bet_id: {{ $ledger->bet_id }} })"
+                        class="flex items-start justify-between py-3 px-2 -mx-2 rounded-xl border-b border-gray-100 dark:border-gray-700 last:border-0 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors duration-200"
+                    @else
+                        class="flex items-start justify-between py-3 border-b border-gray-100 dark:border-gray-700 last:border-0"
+                    @endif
+                >
                     <div class="flex-1">
                         <div class="flex items-center gap-2">
                             <x-filament::badge

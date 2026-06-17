@@ -46,6 +46,27 @@ class WalletLedgersRelationManager extends RelationManager
                     ->searchable(),
                 TextColumn::make('actor.name')
                     ->label('Người thực hiện')
+                    ->state(function ($record) {
+                        if ($record->actor) {
+                            return $record->actor->name;
+                        }
+                        
+                        if ($record->type?->value === 'BET_PLACED') {
+                            return 'Người chơi';
+                        }
+                        
+                        return 'Hệ thống';
+                    })
+                    ->badge()
+                    ->color(function ($record) {
+                        if ($record->actor) {
+                            return 'warning';
+                        }
+                        if ($record->type?->value === 'BET_PLACED') {
+                            return 'info';
+                        }
+                        return 'gray';
+                    })
                     ->searchable(),
             ])
             ->filters([])
@@ -53,7 +74,23 @@ class WalletLedgersRelationManager extends RelationManager
                 \Filament\Actions\ExportAction::make()
                     ->exporter(\App\Filament\Exports\WalletLedgerExporter::class),
             ])
-            ->recordActions([])
-            ->toolbarActions([]);
+            ->actions([
+                \Filament\Actions\Action::make('viewBet')
+                    ->label('Xem phiếu')
+                    ->icon('heroicon-m-eye')
+                    ->color('gray')
+                    ->visible(fn ($record) => $record->bet_id !== null)
+                    ->modalHeading('Chi tiết phiếu dự đoán')
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Đóng')
+                    ->modalContent(function ($record) {
+                        $bet = \App\Models\Bet::with('market.match')->find($record->bet_id);
+                        if (! $bet) {
+                            return null;
+                        }
+                        return view('filament.player.components.bet-card', ['bet' => $bet, 'isAdmin' => true]);
+                    }),
+            ])
+            ->bulkActions([]);
     }
 }

@@ -33,7 +33,14 @@ class MyBetsPage extends Page
 
     public string $activeTab = 'all';
 
+    public string $searchQuery = '';
+
     public function updatedActiveTab()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedSearchQuery()
     {
         $this->resetPage();
     }
@@ -44,6 +51,16 @@ class MyBetsPage extends Page
         $query = Bet::with(['market.match', 'outcome'])
             ->where('user_id', Auth::id())
             ->orderByDesc('created_at');
+
+        if ($this->searchQuery) {
+            $query->where(function ($q) {
+                $q->where('public_code', 'like', '%' . $this->searchQuery . '%')
+                  ->orWhereHas('market.match', function ($matchQuery) {
+                      $matchQuery->where('home_team', 'like', '%' . $this->searchQuery . '%')
+                                 ->orWhere('away_team', 'like', '%' . $this->searchQuery . '%');
+                  });
+            });
+        }
 
         if ($this->activeTab !== 'all') {
             if ($this->activeTab === 'pending') {

@@ -16,7 +16,7 @@ enum BetStatus: string
     public function isSettled(): bool
     {
         return match ($this) {
-            self::WON, self::LOST, self::PUSH, self::HALF_WON, self::HALF_LOST => true,
+            self::WON, self::LOST, self::PUSH, self::HALF_WON, self::HALF_LOST, self::VOIDED, self::CORRECTED => true,
             default => false,
         };
     }

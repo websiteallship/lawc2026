@@ -54,4 +54,9 @@ class WalletLedger extends Model
     {
         return $this->belongsTo(User::class, 'actor_id');
     }
+
+    public function bet(): BelongsTo
+    {
+        return $this->belongsTo(Bet::class);
+    }
 }
