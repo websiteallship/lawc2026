@@ -117,7 +117,7 @@ class AchievementsPage extends Page
         }
 
         $recentDays = \App\Models\Bet::where('user_id', $user->id)
-            ->selectRaw('DATE(placed_at) as date')
+            ->selectRaw("DATE(placed_at AT TIME ZONE 'Asia/Ho_Chi_Minh') as date")
             ->groupBy('date')
             ->orderBy('date', 'desc')
             ->limit(7)
@@ -128,7 +128,7 @@ class AchievementsPage extends Page
             $dedicationStreak = 1;
             for ($i = 0; $i < count($recentDays) - 1; $i++) {
                 $d1 = \Carbon\Carbon::parse($recentDays[$i])->startOfDay();
-                $d2 = \Carbon\Carbon::parse($recentDays[$i+1])->startOfDay();
+                $d2 = \Carbon\Carbon::parse($recentDays[$i + 1])->startOfDay();
                 if ($d1->diffInDays($d2) === 1) {
                     $dedicationStreak++;
                 } else {
@@ -162,7 +162,11 @@ class AchievementsPage extends Page
             'WIN_STREAK_5'  => ['current' => $longestWinStreak, 'target' => 5],
             'WIN_STREAK_10' => ['current' => $longestWinStreak, 'target' => 10],
             'EARLY_BIRD'    => ['current' => $earlyBirdStreak, 'target' => 10],
-            'NIGHT_OWL'     => ['current' => \App\Models\Bet::where('user_id', $user->id)->whereTime('placed_at', '>=', '00:00:00')->whereTime('placed_at', '<=', '05:00:00')->selectRaw('DATE(placed_at) as date')->groupBy('date')->get()->count(), 'target' => 7],
+            'NIGHT_OWL'     => ['current' => \App\Models\Bet::where('user_id', $user->id)
+                ->selectRaw("DATE(placed_at AT TIME ZONE 'Asia/Ho_Chi_Minh') as date")
+                ->whereRaw("EXTRACT(HOUR FROM placed_at AT TIME ZONE 'Asia/Ho_Chi_Minh') >= 0")
+                ->whereRaw("EXTRACT(HOUR FROM placed_at AT TIME ZONE 'Asia/Ho_Chi_Minh') < 5")
+                ->groupBy('date')->get()->count(), 'target' => 7],
             'MULTI_MARKET'  => ['current' => \App\Models\Bet::where('user_id', $user->id)->select('market_type_snapshot')->distinct()->count('market_type_snapshot'), 'target' => 3],
             // ACCURACY_SNIPER: hiển thị số bet hiện tại nếu chưa đủ 50, hiển thị win-rate nếu đủ
             'ACCURACY_SNIPER' => $totalBets < 50

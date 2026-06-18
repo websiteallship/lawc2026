@@ -155,10 +155,11 @@ class AchievementService
                     $shouldAward = $ebStreak >= $achievement->target_value;
                     break;
                 case 'NIGHT_OWL':
+                    // Dùng giờ VN: 0h-5h sáng VN = 17h-22h UTC ngày hôm trước
                     $nightDaysCount = Bet::where('user_id', $userId)
-                        ->whereTime('placed_at', '>=', '00:00:00')
-                        ->whereTime('placed_at', '<=', '05:00:00')
-                        ->selectRaw('DATE(placed_at) as date')
+                        ->selectRaw("DATE(placed_at AT TIME ZONE 'Asia/Ho_Chi_Minh') as date")
+                        ->whereRaw("EXTRACT(HOUR FROM placed_at AT TIME ZONE 'Asia/Ho_Chi_Minh') >= 0")
+                        ->whereRaw("EXTRACT(HOUR FROM placed_at AT TIME ZONE 'Asia/Ho_Chi_Minh') < 5")
                         ->groupBy('date')
                         ->get()
                         ->count();
@@ -217,20 +218,17 @@ class AchievementService
                     $shouldAward = Bet::where('user_id', $userId)->where('status', 'PUSH')->count() >= 5;
                     break;
                 case 'DEDICATION_7_DAYS':
-                    // Simplify: Did user place bets on 7 distinct consecutive days recently?
-                    // Fetch last 7 distinct dates
                     $recentDays = Bet::where('user_id', $userId)
-                        ->selectRaw('DATE(placed_at) as date')
+                        ->selectRaw("DATE(placed_at AT TIME ZONE 'Asia/Ho_Chi_Minh') as date")
                         ->groupBy('date')
                         ->orderBy('date', 'desc')
                         ->limit(7)
                         ->pluck('date')
                         ->toArray();
                     if (count($recentDays) === 7) {
-                        // Check if they are exactly consecutive
                         $firstDate = \Carbon\Carbon::parse($recentDays[6])->startOfDay();
-                        $lastDate = \Carbon\Carbon::parse($recentDays[0])->startOfDay();
-                        if (abs((int)$lastDate->diffInDays($firstDate)) === 6) {
+                        $lastDate  = \Carbon\Carbon::parse($recentDays[0])->startOfDay();
+                        if (abs((int) $lastDate->diffInDays($firstDate)) === 6) {
                             $shouldAward = true;
                         }
                     }
