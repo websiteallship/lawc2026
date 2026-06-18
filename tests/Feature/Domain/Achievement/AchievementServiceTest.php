@@ -108,23 +108,16 @@ class AchievementServiceTest extends TestCase
         $user = User::factory()->create();
         for ($i = 0; $i < 7; $i++) {
             Bet::factory()->create([
-                'user_id' => $user->id,
-                'placed_at' => now()->subDays($i)->setTime(2, 30, 0),
+                'user_id'   => $user->id,
+                // 20:00 UTC = 03:00 sáng VN (UTC+7) → nằm trong 0h-5h VN
+                'placed_at' => now()->subDays($i)->setTime(20, 0, 0),
             ]);
         }
-        
+
         $this->service->checkAndAward($user->id);
 
-        $nightDaysCount = Bet::where('user_id', $user->id)
-            ->whereTime('placed_at', '>=', '00:00:00')
-            ->whereTime('placed_at', '<=', '05:00:00')
-            ->selectRaw('DATE(placed_at) as date')
-            ->groupBy('date')
-            ->get()
-            ->count();
-
         $this->assertDatabaseHas('user_achievements', [
-            'user_id' => $user->id,
+            'user_id'        => $user->id,
             'achievement_id' => Achievement::where('code', 'NIGHT_OWL')->first()->id,
         ]);
     }

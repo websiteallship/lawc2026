@@ -10,6 +10,34 @@ use App\Models\UserAchievement;
 class AchievementService
 {
     /**
+     * Trả về SQL expression DATE theo timezone VN (UTC+7),
+     * tương thích cả PostgreSQL lẫn SQLite (test).
+     */
+    private function localDate(string $column = 'placed_at'): string
+    {
+        $driver = config('database.default');
+        $conn   = config("database.connections.{$driver}.driver");
+
+        return match ($conn) {
+            'pgsql'  => "DATE({$column} AT TIME ZONE 'Asia/Ho_Chi_Minh')",
+            'sqlite' => "DATE(datetime({$column}, '+7 hours'))",
+            default  => "DATE({$column})",
+        };
+    }
+
+    private function localHour(string $column = 'placed_at'): string
+    {
+        $driver = config('database.default');
+        $conn   = config("database.connections.{$driver}.driver");
+
+        return match ($conn) {
+            'pgsql'  => "EXTRACT(HOUR FROM {$column} AT TIME ZONE 'Asia/Ho_Chi_Minh')",
+            'sqlite' => "CAST(strftime('%H', datetime({$column}, '+7 hours')) AS INTEGER)",
+            default  => "HOUR({$column})",
+        };
+    }
+
+    /**
      * Kiểm tra và trao các thành tựu cho người dùng.
      */
     public function checkAndAward(int $userId): void
@@ -155,11 +183,11 @@ class AchievementService
                     $shouldAward = $ebStreak >= $achievement->target_value;
                     break;
                 case 'NIGHT_OWL':
-                    // Dùng giờ VN: 0h-5h sáng VN = 17h-22h UTC ngày hôm trước
+                    // Dùng giờ VN: 0h-5h sáng
                     $nightDaysCount = Bet::where('user_id', $userId)
-                        ->selectRaw("DATE(placed_at AT TIME ZONE 'Asia/Ho_Chi_Minh') as date")
-                        ->whereRaw("EXTRACT(HOUR FROM placed_at AT TIME ZONE 'Asia/Ho_Chi_Minh') >= 0")
-                        ->whereRaw("EXTRACT(HOUR FROM placed_at AT TIME ZONE 'Asia/Ho_Chi_Minh') < 5")
+                        ->selectRaw("{$this->localDate()} as date")
+                        ->whereRaw("{$this->localHour()} >= 0")
+                        ->whereRaw("{$this->localHour()} < 5")
                         ->groupBy('date')
                         ->get()
                         ->count();
@@ -218,8 +246,9 @@ class AchievementService
                     $shouldAward = Bet::where('user_id', $userId)->where('status', 'PUSH')->count() >= 5;
                     break;
                 case 'DEDICATION_7_DAYS':
+                    $localDate = $this->localDate();
                     $recentDays = Bet::where('user_id', $userId)
-                        ->selectRaw("DATE(placed_at AT TIME ZONE 'Asia/Ho_Chi_Minh') as date")
+                        ->selectRaw("{$localDate} as date")
                         ->groupBy('date')
                         ->orderBy('date', 'desc')
                         ->limit(7)
