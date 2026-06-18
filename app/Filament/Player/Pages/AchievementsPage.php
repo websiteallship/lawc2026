@@ -142,7 +142,8 @@ class AchievementsPage extends Page
             for ($i = 0; $i < count($recentDays) - 1; $i++) {
                 $d1 = \Carbon\Carbon::parse($recentDays[$i])->startOfDay();
                 $d2 = \Carbon\Carbon::parse($recentDays[$i + 1])->startOfDay();
-                if ($d1->diffInDays($d2) === 1) {
+                // Cast to int: Carbon 3 có thể trả float, === 1 sẽ fail
+                if ((int) $d1->diffInDays($d2) === 1) {
                     $dedicationStreak++;
                 } else {
                     break;
