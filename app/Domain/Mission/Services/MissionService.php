@@ -93,12 +93,12 @@ class MissionService
         }
 
         if ($mission->reward_achievement_id) {
-            $this->achievementService->checkAndAward($userId); 
-            // the implementation plan says call AchievementService::award, but this project might use checkAndAward
-            // Ideally we pass achievement code, or if award method exists we call it.
+            $achievement = \App\Models\Achievement::find($mission->reward_achievement_id);
+            if ($achievement) {
+                // Award trực tiếp achievement gắn với mission — không re-check condition
+                $this->achievementService->awardDirectly($userId, $achievement);
+            }
         }
-
-        // event(new \App\Events\MissionCompleted($userId, $missionId));
     }
 
     public function evaluateDailyMissions(): void

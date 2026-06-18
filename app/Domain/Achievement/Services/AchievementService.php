@@ -234,7 +234,17 @@ class AchievementService
         }
     }
 
+    /**
+     * Award achievement trực tiếp (bypass condition check).
+     * Dùng khi achievement được trigger bởi mission completion.
+     */
+    public function awardDirectly(int $userId, Achievement $achievement): void
+    {
+        $this->awardAchievement($userId, $achievement);
+    }
+
     protected function awardAchievement(int $userId, Achievement $achievement): void
+
     {
         // Kiểm tra logic cooldown đối với repeatable achievement
         if ($achievement->is_repeatable && $achievement->cooldown_period) {
