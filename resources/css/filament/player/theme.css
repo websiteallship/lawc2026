@@ -1,4 +1,6 @@
 @import '../../../../vendor/filament/filament/resources/css/theme.css';
+@import '../../components/modal-animations.css';
 
 @source '../../../../app/Filament/Player/**/*';
 @source '../../../../resources/views/filament/player/**/*';
+@source '../../../../resources/views/livewire/player/**/*';

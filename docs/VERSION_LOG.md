@@ -232,3 +232,41 @@
 - **Alert System**: Tự động bắn thông báo khẩn (`Database Notification`) cho Admin/SuperAdmin khi dung lượng quota chạm ngưỡng báo động <= 10%. Thiết lập cờ chống spam `api_quota_alert_sent` với TTL 24h.
 - **UI/UX (Admin Panel)**: Bổ sung `ApiQuotaWidget` vào trang `ManageApiSettings` (Cấu hình API). Tự động fallback số liệu `0 / 7,500` (dựa trên gói trả phí mặc định) nếu hệ thống chưa nhận được payload header mới. Trực quan hoá cảnh báo tiêu thụ bằng các mã màu trạng thái (Success, Warning, Danger).
 - **Testing**: Bổ sung `ApiQuotaServiceTest` bao phủ toàn bộ mock HTTP (`Http::fake()`), verify quá trình bóc xuất Headers và hành vi Alerting. Đạt 100% tỷ lệ pass Unit Tests.
+
+## v1.11.0 (WP-11 - Modal Engagement System) - Hoàn tất (Toàn bộ các Phase)
+- **Database**: Migration thêm 6 cột tracking timestamp (`last_daily_briefing_at`, `last_daily_ranking_shown_at`, v.v.) vào bảng `users`. Tạo bảng `match_reminders` quản lý chu kỳ báo lại (snooze). Bổ sung cột cấu hình Modal vào `settings` bằng Spatie Laravel Settings.
+- **Architecture**: 
+  - Đã thiết lập `ModalCheckerInterface` làm xương sống thiết kế.
+  - Áp dụng Livewire Component `ModalOrchestrator` (đã bơm vào Hook `BODY_END` của `PlayerPanelProvider`) quản lý hàng đợi ưu tiên Modal Queue để ngăn chặn UI/UX conflict (hiển thị chồng chéo Modal).
+- **Domain Checkers & Views**:
+  - Triển khai **M1 (Daily Briefing Modal)**: Component `DailyBriefingChecker` kết hợp UI lấy dữ liệu ví (Wallet), nhiệm vụ (Missions), và trận đấu sắp đóng (Matches) kèm hiệu ứng Badge nhấp nháy Pulse dành cho kèo < 60 phút.
+  - Triển khai **M6 (Daily Ranking Modal)**: Component `DailyRankingChecker` kết hợp UI hiển thị vị thế hiện tại của User, hạng, và bảng Mini Leaderboard Top 3. Đã có Animation "Tuyệt đỉnh", "Phong độ tốt" thay đổi viền tuỳ độ phân cấp (Vàng/Bạc/Đồng).
+  - Triển khai **M2 (Celebration Modal)** - Phase C:
+    - `CelebrationChecker::shouldShow()` query `UserAchievement` và `UserMission` so với `last_celebration_shown_at`.
+    - `CelebrationChecker::getData()` trả về danh sách achievements + missions mới với full Eloquent relations.
+    - `celebration.blade.php`: Achievement section (glow pulse animation + badge bounce-in), Mission section (checkmark SVG draw animation), Confetti effect qua `window.fireConfetti()`.
+    - Hỗ trợ hiển thị kết hợp nếu có cả achievement + mission cùng lúc (phân cách bằng divider).
+  - Triển khai **M4 (Settlement Summary Modal)** - Phase D:
+    - `SettlementSummaryChecker::shouldShow()` query `Bet` settled sau `last_settlement_summary_shown_at`, filter đúng statuses (WON/LOST/PUSH/HALF_WON/HALF_LOST/CORRECTED).
+    - `SettlementSummaryChecker::getData()` group vé theo match, tính `totalNetResult`, trả `byMatch[]` cho UI.
+    - `settlement.blade.php`: Header gradient động (xanh/đỏ/xám) theo `totalNetResult`, danh sách vé grouped by match với status badge (THẮNG/THUA/HOÀ VỐN/THẮNG ½/THUA ½/ĐIỀU CHỈNH), confetti nhỏ khi tổng dương.
+  - Triển khai **M3 (Match Reminder Modal)** - Phase E:
+    - `MatchReminderChecker::shouldShow()` query các trận `OPEN` sắp đóng (config qua `AppSettings`), loại trừ các trận User đã bet và các trận đang bị snooze.
+    - Ghi nhận `reminded_at` thông qua `upsert` vào bảng `match_reminders`.
+    - Bổ sung hàm `snoozeReminder()` và `dismissReminder()` trực tiếp trong `ModalOrchestrator` để xử lý State.
+    - `reminder.blade.php`: Hỗ trợ dual-layout (hiển thị dạng Toast nhỏ gọn ở góc dưới nếu chỉ có 1 trận, hoặc hiển thị Modal danh sách đầy đủ nếu có từ 2 trận trở lên). Dùng Heroicons thay cho Emoji theo AGENTS.md rules.
+  - Triển khai **M5 (Re-engagement Modal)** - Phase F:
+    - `ReengagementChecker::shouldShow()` tính số ngày vắng mặt dựa trên `last_active_at` hoặc `last_login_at` (với config mặc định 3 ngày), chỉ hiển thị khi có Market đang `OPEN` và có cooldown 7 ngày thông qua `last_reengagement_shown_at`.
+    - `reengagement.blade.php`: Cấu trúc UI thân thiện, thông báo số ngày vắng mặt, số trận đang mở kèo. Hỗ trợ CTA điều hướng nhanh tới trang danh sách trận đấu. Dùng Heroicons chuẩn.
+- **Middleware & System** - Phase G & H:
+  - Tạo `UpdateLastActiveMiddleware` đăng ký vào `PlayerPanelProvider` để theo dõi tracking `last_active_at` của user một cách tự động (giới hạn query update 1 giờ/lần để giảm tải DB).
+  - Tách toàn bộ các `@keyframes` và custom class cho hiệu ứng CSS (glow, bounce, svg draw) của modals vào file `resources/css/components/modal-animations.css`.
+  - Tích hợp import file css mới vào `theme.css` và thực thi biên dịch lại Frontend Assets (Vite) thông qua `npm run build`. Đã hoàn thành đóng gói Frontend hoàn chỉnh.
+  - `npm run build` thành công — `app.js` 54.84 kB (21.38 kB gzipped).
+- **Testing**: **4/4 ModalOrchestratorTest PASS** — tất cả blade views đều có `@php` defaults chống undefined variable trong test environments.
+- **Bug Fixes & Refinements (Live UI Validation)**:
+  - Cập nhật logic `ModalOrchestrator::withFakeDevData()` tích hợp trọn vẹn Fake Mockup Data (Collection) cho toàn bộ 6 loại Modal, hỗ trợ testing UI/UX bằng Dev Mode (nút Con bọ) trong trường hợp Database rỗng.
+  - Fix triệt để lỗi `MissingAttributeException` khi check mảng rỗng trên Collection của Laravel bằng cách đổi `empty()` sang `count() === 0`.
+  - Fix lỗi Route 404 cho nút "Dự đoán ngay" (`/player/match/{id}`) và "Xem lịch sử cược" (`/player/my-bets-page`).
+  - Nâng cấp UI/UX: Modal M6 (Daily Ranking) bổ sung 2 nút điều hướng song song ("Đóng" và "Xem BXH"), sử dụng `dismissAndRedirect` để bảo vệ State "Đã xem" trước khi chuyển hướng.
+  - Tối ưu UX loại bỏ NOT NULL constraint exception (`reminded_at`) với Match Reminder khi nhấn nút "Nhắc lại sau" hoặc "Bỏ qua tất cả", chuyển sang dùng cấu trúc `upsert` DB table an toàn. Cập nhật window reminder từ 5h lên 15h.

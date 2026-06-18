@@ -34,6 +34,10 @@ class PlayerPanelProvider extends PanelProvider
                 fn (): string => Blade::render('@livewire(\'player-balance-header\')')
             )
             ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn (): string => Blade::render('@vite([\'resources/js/app.js\'])')
+            )
+            ->renderHook(
                 PanelsRenderHook::USER_MENU_BEFORE,
                 fn (): string => Blade::render('
                     <div class="flex items-center gap-3 mr-2">
@@ -46,6 +50,7 @@ class PlayerPanelProvider extends PanelProvider
                 PanelsRenderHook::BODY_END,
                 fn (): string => Blade::render('
                     @livewire(\'player.missions-mobile-widget\')
+                    @livewire(\'player.modal-orchestrator\')
                     @auth
                     <div x-data="{
                         timeout: 15 * 60 * 1000,
@@ -105,6 +110,7 @@ class PlayerPanelProvider extends PanelProvider
                 Authenticate::class,
                 EnsurePlayerAcceptedRules::class,
                 PlayerScopeMiddleware::class,
+                \App\Http\Middleware\UpdateLastActiveMiddleware::class,
             ])
             ->plugins([
                 ...((app()->environment('local') && rescue(fn () => app(AppSettings::class)->enable_local_logins, env('LOCAL_LOGINS_ENABLED', false)))

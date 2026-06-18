@@ -20,6 +20,18 @@ class AppSettings extends Settings
 
     public bool $enable_local_logins;
 
+    public bool $welcome_modal_enabled;
+
+    public int $welcome_modal_cooldown_hours;
+
+    public int $match_reminder_window_hours;
+
+    public int $match_reminder_cooldown_hours;
+
+    public bool $match_reminder_enabled;
+
+    public int $reengagement_absent_days;
+
     public static function group(): string
     {
         return 'app';

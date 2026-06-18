@@ -29,6 +29,12 @@ class User extends Authenticatable implements FilamentUser
         'status',
         'accepted_rules_at',
         'last_login_at',
+        'last_daily_briefing_at',
+        'last_daily_ranking_shown_at',
+        'last_celebration_shown_at',
+        'last_settlement_summary_shown_at',
+        'last_reengagement_shown_at',
+        'last_active_at',
     ];
 
     /**
@@ -51,6 +57,12 @@ class User extends Authenticatable implements FilamentUser
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'last_daily_briefing_at' => 'datetime',
+            'last_daily_ranking_shown_at' => 'datetime',
+            'last_celebration_shown_at' => 'datetime',
+            'last_settlement_summary_shown_at' => 'datetime',
+            'last_reengagement_shown_at' => 'datetime',
+            'last_active_at' => 'datetime',
         ];
     }
 

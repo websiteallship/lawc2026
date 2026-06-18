@@ -20,7 +20,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(\App\Domain\Modal\Contracts\DailyBriefingCheckerInterface::class, \App\Domain\Modal\Checkers\DailyBriefingChecker::class);
+        $this->app->bind(\App\Domain\Modal\Contracts\DailyRankingCheckerInterface::class, \App\Domain\Modal\Checkers\DailyRankingChecker::class);
+        $this->app->bind(\App\Domain\Modal\Contracts\CelebrationCheckerInterface::class, \App\Domain\Modal\Checkers\CelebrationChecker::class);
+        $this->app->bind(\App\Domain\Modal\Contracts\SettlementSummaryCheckerInterface::class, \App\Domain\Modal\Checkers\SettlementSummaryChecker::class);
+        $this->app->bind(\App\Domain\Modal\Contracts\MatchReminderCheckerInterface::class, \App\Domain\Modal\Checkers\MatchReminderChecker::class);
+        $this->app->bind(\App\Domain\Modal\Contracts\ReengagementCheckerInterface::class, \App\Domain\Modal\Checkers\ReengagementChecker::class);
     }
 
     /**
