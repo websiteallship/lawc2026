@@ -116,8 +116,21 @@ class AchievementsPage extends Page
             }
         }
 
+        $driver = config('database.default');
+        $conn   = config("database.connections.{$driver}.driver");
+        $localDateSql = match ($conn) {
+            'pgsql'  => "DATE(placed_at AT TIME ZONE 'Asia/Ho_Chi_Minh')",
+            'sqlite' => "DATE(datetime(placed_at, '+7 hours'))",
+            default  => "DATE(placed_at)",
+        };
+        $localHourSql = match ($conn) {
+            'pgsql'  => "EXTRACT(HOUR FROM placed_at AT TIME ZONE 'Asia/Ho_Chi_Minh')",
+            'sqlite' => "CAST(strftime('%H', datetime(placed_at, '+7 hours')) AS INTEGER)",
+            default  => "HOUR(placed_at)",
+        };
+
         $recentDays = \App\Models\Bet::where('user_id', $user->id)
-            ->selectRaw("DATE(placed_at AT TIME ZONE 'Asia/Ho_Chi_Minh') as date")
+            ->selectRaw("{$localDateSql} as date")
             ->groupBy('date')
             ->orderBy('date', 'desc')
             ->limit(7)
@@ -163,9 +176,9 @@ class AchievementsPage extends Page
             'WIN_STREAK_10' => ['current' => $longestWinStreak, 'target' => 10],
             'EARLY_BIRD'    => ['current' => $earlyBirdStreak, 'target' => 10],
             'NIGHT_OWL'     => ['current' => \App\Models\Bet::where('user_id', $user->id)
-                ->selectRaw("DATE(placed_at AT TIME ZONE 'Asia/Ho_Chi_Minh') as date")
-                ->whereRaw("EXTRACT(HOUR FROM placed_at AT TIME ZONE 'Asia/Ho_Chi_Minh') >= 0")
-                ->whereRaw("EXTRACT(HOUR FROM placed_at AT TIME ZONE 'Asia/Ho_Chi_Minh') < 5")
+                ->selectRaw("{$localDateSql} as date")
+                ->whereRaw("{$localHourSql} >= 0")
+                ->whereRaw("{$localHourSql} < 5")
                 ->groupBy('date')->get()->count(), 'target' => 7],
             'MULTI_MARKET'  => ['current' => \App\Models\Bet::where('user_id', $user->id)->select('market_type_snapshot')->distinct()->count('market_type_snapshot'), 'target' => 3],
             // ACCURACY_SNIPER: hiển thị số bet hiện tại nếu chưa đủ 50, hiển thị win-rate nếu đủ
