@@ -70,10 +70,11 @@ class AchievementsPage extends Page
         $totalWins = \App\Models\Bet::where('user_id', $user->id)->whereIn('status', ['WON', 'HALF_WON'])->count();
         $exactScoreWins = \App\Models\Bet::where('user_id', $user->id)->where('market_type_snapshot', 'EXACT_SCORE')->where('status', 'WON')->count();
         
-        // Calculate Win Streak
+        // Calculate Win Streak — dùng settled_at để đúng thứ tự settle
         $latestBets = \App\Models\Bet::where('user_id', $user->id)
             ->whereNotIn('status', ['PENDING'])
-            ->orderBy('placed_at', 'desc')
+            ->whereNotNull('settled_at')
+            ->orderBy('settled_at', 'desc')
             ->limit(20)
             ->get();
         $winStreak = 0;

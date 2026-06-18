@@ -58,9 +58,22 @@ class AchievementService
                         ->count() >= $achievement->target_value;
                     break;
                 case 'LV4_EXPERT':
-                    $shouldAward = Bet::where('user_id', $userId)
-                        ->whereIn('status', ['WON', 'HALF_WON'])
-                        ->count() >= 10;
+                    // Thắng liên tiếp 3 — dùng settled_at để đúng thứ tự settle
+                    $lv4Bets = Bet::where('user_id', $userId)
+                        ->whereNotIn('status', ['PENDING'])
+                        ->whereNotNull('settled_at')
+                        ->orderBy('settled_at', 'desc')
+                        ->limit(10)
+                        ->get();
+                    $lv4Streak = 0;
+                    foreach ($lv4Bets as $bet) {
+                        if (in_array($bet->status, ['WON', 'HALF_WON'])) {
+                            $lv4Streak++;
+                        } else {
+                            break;
+                        }
+                    }
+                    $shouldAward = $lv4Streak >= 3;
                     break;
                 case 'LV5_PROPHET':
                     $wins = Bet::where('user_id', $userId)
@@ -102,13 +115,14 @@ class AchievementService
                     $shouldAward = Bet::where('user_id', $userId)->where('stake', '>=', 5000000)->exists();
                     break;
 
-                // Win Streak Quests
+                // Win Streak Quests — dùng settled_at để đúng thứ tự settle
                 case 'WIN_STREAK_3':
                 case 'WIN_STREAK_5':
                 case 'WIN_STREAK_10':
                     $latestBets = Bet::where('user_id', $userId)
                         ->whereNotIn('status', ['PENDING'])
-                        ->orderBy('placed_at', 'desc')
+                        ->whereNotNull('settled_at')
+                        ->orderBy('settled_at', 'desc')
                         ->limit(15)
                         ->get();
                     $winStreak = 0;
