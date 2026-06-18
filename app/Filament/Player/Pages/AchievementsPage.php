@@ -79,8 +79,23 @@ class AchievementsPage extends Page
             ->get();
         $winStreak = 0;
         foreach ($latestBets as $bet) {
-            if (in_array($bet->status, ['WON', 'HALF_WON'])) {
+            if (in_array($bet->status instanceof \App\Enums\BetStatus ? $bet->status->value : $bet->status, ['WON', 'HALF_WON'])) {
                 $winStreak++;
+            } else {
+                break;
+            }
+        }
+
+        // Lấy longest streak từ UserStatistic (không bị reset khi thua)
+        $stats = \App\Models\UserStatistic::where('user_id', $user->id)->first();
+        $longestWinStreak = $stats?->longest_win_streak ?? $winStreak;
+
+        // Calculate Lose Streak (cho BAD_LUCK_5)
+        $loseStreak = 0;
+        foreach ($latestBets as $bet) {
+            $statusVal = $bet->status instanceof \App\Enums\BetStatus ? $bet->status->value : $bet->status;
+            if (in_array($statusVal, ['LOST', 'HALF_LOST'])) {
+                $loseStreak++;
             } else {
                 break;
             }
@@ -143,20 +158,25 @@ class AchievementsPage extends Page
             
             // Side quests
             'WIN_STREAK_3' => ['current' => $winStreak, 'target' => 3],
-            'WIN_STREAK_5' => ['current' => $winStreak, 'target' => 5],
-            'WIN_STREAK_10' => ['current' => $winStreak, 'target' => 10],
-            'EARLY_BIRD' => ['current' => $earlyBirdStreak, 'target' => 10],
-            'NIGHT_OWL' => ['current' => \App\Models\Bet::where('user_id', $user->id)->whereTime('placed_at', '>=', '00:00:00')->whereTime('placed_at', '<=', '05:00:00')->selectRaw('DATE(placed_at) as date')->groupBy('date')->get()->count(), 'target' => 7],
-            'MULTI_MARKET' => ['current' => \App\Models\Bet::where('user_id', $user->id)->select('market_type_snapshot')->distinct()->count('market_type_snapshot'), 'target' => 3],
-            'ACCURACY_SNIPER' => ['current' => $totalBets >= 50 ? round(($totalWins / $totalBets) * 100) : 0, 'target' => 80],
-            'ACCURACY_MATH' => ['current' => $exactScoreWins, 'target' => 3],
-            'BIG_WINNER' => ['current' => \App\Models\Bet::where('user_id', $user->id)->where('profit_rate_snapshot', '>=', 5.0)->whereIn('status', ['WON', 'HALF_WON'])->count(), 'target' => 1],
-            'BAD_LUCK_5' => ['current' => 0, 'target' => 5], // Needs complex streak logic
+            // WIN_STREAK_5/10: dùng longest streak để progress không bị reset về 0 khi thua
+            'WIN_STREAK_5'  => ['current' => $longestWinStreak, 'target' => 5],
+            'WIN_STREAK_10' => ['current' => $longestWinStreak, 'target' => 10],
+            'EARLY_BIRD'    => ['current' => $earlyBirdStreak, 'target' => 10],
+            'NIGHT_OWL'     => ['current' => \App\Models\Bet::where('user_id', $user->id)->whereTime('placed_at', '>=', '00:00:00')->whereTime('placed_at', '<=', '05:00:00')->selectRaw('DATE(placed_at) as date')->groupBy('date')->get()->count(), 'target' => 7],
+            'MULTI_MARKET'  => ['current' => \App\Models\Bet::where('user_id', $user->id)->select('market_type_snapshot')->distinct()->count('market_type_snapshot'), 'target' => 3],
+            // ACCURACY_SNIPER: hiển thị số bet hiện tại nếu chưa đủ 50, hiển thị win-rate nếu đủ
+            'ACCURACY_SNIPER' => $totalBets < 50
+                ? ['current' => $totalBets, 'target' => 50, 'label_override' => "{$totalBets}/50 vé (cần đủ 50 để tính win-rate)"]
+                : ['current' => round(($totalWins / $totalBets) * 100), 'target' => 80],
+            'ACCURACY_MATH'  => ['current' => $exactScoreWins, 'target' => 3],
+            'BIG_WINNER'     => ['current' => \App\Models\Bet::where('user_id', $user->id)->where('profit_rate_snapshot', '>=', 5.0)->whereIn('status', ['WON', 'HALF_WON'])->count(), 'target' => 1],
+            // BAD_LUCK_5: dùng lose streak hiện tại
+            'BAD_LUCK_5'     => ['current' => $loseStreak, 'target' => 5],
             'BAD_LUCK_NARROW' => ['current' => \App\Models\Bet::where('user_id', $user->id)->where('status', 'HALF_LOST')->count(), 'target' => 3],
-            'BAD_LUCK_DRAW' => ['current' => \App\Models\Bet::where('user_id', $user->id)->where('status', 'PUSH')->count(), 'target' => 5],
-            'DEDICATION_7_DAYS' => ['current' => $dedicationStreak, 'target' => 7],
+            'BAD_LUCK_DRAW'  => ['current' => \App\Models\Bet::where('user_id', $user->id)->where('status', 'PUSH')->count(), 'target' => 5],
+            'DEDICATION_7_DAYS'   => ['current' => $dedicationStreak, 'target' => 7],
             'DEDICATION_100_BETS' => ['current' => $totalBets, 'target' => 100],
-            'HIGH_ROLLER' => ['current' => \App\Models\Bet::where('user_id', $user->id)->max('stake') ?: 0, 'target' => 5000000],
+            'HIGH_ROLLER'    => ['current' => \App\Models\Bet::where('user_id', $user->id)->max('stake') ?: 0, 'target' => 5000000],
         ];
 
         // Find current level status
