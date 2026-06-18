@@ -16,16 +16,22 @@ class EvaluateMissionsJob implements ShouldQueue
     public $userId;
     public $action;
     public $value;
+    public bool $absolute;
 
-    public function __construct(int $userId, string $action, int $value = 1)
+    public function __construct(int $userId, string $action, int $value = 1, bool $absolute = false)
     {
-        $this->userId = $userId;
-        $this->action = $action;
-        $this->value = $value;
+        $this->userId   = $userId;
+        $this->action   = $action;
+        $this->value    = $value;
+        $this->absolute = $absolute;
     }
 
     public function handle(MissionService $missionService): void
     {
-        $missionService->trackProgress($this->userId, $this->action, $this->value);
+        if ($this->absolute) {
+            $missionService->trackAbsolute($this->userId, $this->action, $this->value);
+        } else {
+            $missionService->trackProgress($this->userId, $this->action, $this->value);
+        }
     }
 }

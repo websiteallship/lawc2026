@@ -33,8 +33,41 @@ class MissionService
 
         $userMission->update([
             'current_value' => min($newValue, $mission->target_value),
-            'is_completed' => $isCompleted,
-            'completed_at' => $isCompleted ? now() : null,
+            'is_completed'  => $isCompleted,
+            'completed_at'  => $isCompleted ? now() : null,
+        ]);
+
+        if ($isCompleted) {
+            $this->completeMission($userId, $mission->id);
+        }
+    }
+
+    /**
+     * Cập nhật mission bằng giá trị tuyệt đối (overwrite, không cộng dồn).
+     * Dùng cho các mission đo streak/count tuần tính từ DB.
+     */
+    public function trackAbsolute(int $userId, string $action, int $value): void
+    {
+        $mission = Mission::where('code', $action)->where('is_active', true)->first();
+        if (!$mission) return;
+
+        $userMission = UserMission::firstOrCreate(
+            ['user_id' => $userId, 'mission_id' => $mission->id],
+            ['current_value' => 0, 'is_completed' => false]
+        );
+
+        if ($userMission->is_completed) return;
+
+        // Chỉ update nếu giá trị mới lớn hơn (tránh lùi progress)
+        if ($value <= $userMission->current_value) return;
+
+        $capped = min($value, $mission->target_value);
+        $isCompleted = $capped >= $mission->target_value;
+
+        $userMission->update([
+            'current_value' => $capped,
+            'is_completed'  => $isCompleted,
+            'completed_at'  => $isCompleted ? now() : null,
         ]);
 
         if ($isCompleted) {
