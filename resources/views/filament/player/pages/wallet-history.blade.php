@@ -117,6 +117,12 @@
             @empty
                 <p class="text-center text-gray-400 py-4">Chưa có lịch sử ví.</p>
             @endforelse
+
+            @if($ledgers instanceof \Illuminate\Contracts\Pagination\LengthAwarePaginator)
+                <div class="mt-4 border-t border-gray-100 dark:border-gray-800 pt-4">
+                    {{ $ledgers->links() }}
+                </div>
+            @endif
         </x-filament::card>
     </div>
 </x-filament-panels::page>

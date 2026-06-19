@@ -8,13 +8,17 @@ use App\Models\Wallet;
 use App\Models\WalletLedger;
 use Filament\Pages\Page;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Filament\Actions\Action;
 use Filament\Infolists\Infolist;
 use App\Models\Bet;
+use Livewire\WithPagination;
 
 class WalletHistoryPage extends Page
 {
+    use WithPagination;
+
     public static function getNavigationIcon(): string|\BackedEnum|null
     {
         return 'heroicon-o-wallet';
@@ -41,7 +45,12 @@ class WalletHistoryPage extends Page
 
     public function updatedSearchQuery()
     {
-        // Add reset if needed, though WalletHistory doesn't use standard pagination currently
+        $this->resetPage();
+    }
+
+    public function updatedFilterType()
+    {
+        $this->resetPage();
     }
 
     public function mount(): void
@@ -56,7 +65,7 @@ class WalletHistoryPage extends Page
         }
     }
 
-    public function getLedgers(): Collection
+    public function getLedgers(): LengthAwarePaginator|Collection
     {
         if (! $this->wallet) {
             return new Collection;
@@ -82,7 +91,7 @@ class WalletHistoryPage extends Page
             $query->where('type', $this->filterType);
         }
 
-        return $query->take(100)->get();
+        return $query->paginate(20);
     }
 
     public function getLedgerTypeOptions(): array
