@@ -51,10 +51,13 @@ class AdminHouseProfitChart extends ApexChartWidget
             'BET_WON', 'BET_LOST', 'BET_HALF_WON', 'BET_HALF_LOST', 'BET_PUSH', 'SETTLEMENT_CORRECTION', 'BET_VOIDED'
         ];
 
+        $testUserIds = \App\Models\User::where('is_test_user', true)->pluck('id');
+
         $query = WalletLedger::select(
             DB::raw('date(created_at) as date'),
             DB::raw('SUM(-1 * (amount_available + amount_locked)) as profit')
-        )->whereIn('type', $types);
+        )->whereIn('type', $types)
+         ->whereNotIn('user_id', $testUserIds);
 
         if ($filter === 'all') {
             $query->whereNotNull('created_at');

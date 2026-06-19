@@ -36,8 +36,11 @@ class AdminTopPlayersChart extends ApexChartWidget
     {
         $activeSeason = Season::where('status', 'active')->first();
 
+        $testUserIds = \App\Models\User::where('is_test_user', true)->pluck('id');
+
         $wallets = Wallet::with('user')
             ->when($activeSeason, fn ($query) => $query->where('season_id', $activeSeason->id))
+            ->whereNotIn('user_id', $testUserIds)
             ->orderByRaw('(available_balance + locked_balance) DESC')
             ->take(10)
             ->get();

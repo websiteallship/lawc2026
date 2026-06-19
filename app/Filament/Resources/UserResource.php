@@ -109,6 +109,12 @@ class UserResource extends Resource
                     ->dehydrated(fn ($state) => filled($state))
                     ->required(fn (string $context): bool => $context === 'create')
                     ->maxLength(255),
+                Forms\Components\Toggle::make('is_test_user')
+                    ->label('Tài khoản Testing')
+                    ->helperText('Bật nếu đây là account test, sẽ bị loại khỏi báo cáo dashboard admin.')
+                    ->default(false)
+                    ->columnSpanFull()
+                    ->visible(fn () => auth()->user()?->hasRole('super_admin')),
             ]);
     }
 
@@ -166,6 +172,14 @@ class UserResource extends Resource
                     ->label('Đồng ý Rules')
                     ->boolean()
                     ->getStateUsing(fn (User $record): bool => ! is_null($record->accepted_rules_at)),
+                Tables\Columns\IconColumn::make('is_test_user')
+                    ->label('Test')
+                    ->boolean()
+                    ->trueColor('warning')
+                    ->falseColor('gray')
+                    ->trueIcon('heroicon-s-beaker')
+                    ->falseIcon('heroicon-o-minus')
+                    ->tooltip(fn (User $record) => $record->is_test_user ? 'Tài khoản test (đang bị loại khỏi báo cáo)' : 'Người chơi thực'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Ngày tạo')
                     ->dateTime('d/m/Y H:i')
@@ -191,6 +205,10 @@ class UserResource extends Resource
                         'ACTIVE' => 'Hoạt động',
                         'BLOCKED' => 'Khóa',
                     ]),
+                Tables\Filters\TernaryFilter::make('is_test_user')
+                    ->label('Loại tài khoản')
+                    ->trueLabel('Chỉ hiện account test')
+                    ->falseLabel('Chỉ hiện người chơi thực'),
             ])
             ->actions([
                 ViewAction::make(),
@@ -300,6 +318,18 @@ class UserResource extends Resource
                             ->body("Đã đổi mật khẩu cho người dùng {$record->name}")
                             ->success()
                             ->send();
+                    })
+                    ->requiresConfirmation(),
+
+                Action::make('toggle_test_user')
+                    ->visible(fn () => auth()->user()?->hasRole('super_admin'))
+                    ->label(fn (User $record): string => $record->is_test_user ? 'Bỏ tất đánh Test' : 'Đánh dấu Test')
+                    ->icon(fn (User $record): string => $record->is_test_user ? 'heroicon-o-check-circle' : 'heroicon-o-beaker')
+                    ->color(fn (User $record): string => $record->is_test_user ? 'success' : 'warning')
+                    ->action(function (User $record): void {
+                        $record->update(['is_test_user' => ! $record->is_test_user]);
+                        $label = $record->is_test_user ? 'đã được đánh dấu là TEST' : 'đã bỏ dấu test, trở lại người chơi thực';
+                        Notification::make()->title('Thành công')->body("{$record->name} {$label}.")->success()->send();
                     })
                     ->requiresConfirmation(),
 

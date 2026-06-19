@@ -27,22 +27,30 @@ class AdminStatsOverviewWidget extends BaseWidget
     {
         $activeSeason = Season::where('status', 'active')->first();
 
-        $activeUsers = User::where('status', 'ACTIVE')->count();
+        // Lấy IDs của test users để loại khỏi báo cáo
+        $testUserIds = User::where('is_test_user', true)->pluck('id');
+
+        $activeUsers = User::where('status', 'ACTIVE')
+            ->where('is_test_user', false)
+            ->count();
 
         $totalAvailable = 0;
         $totalLocked = 0;
         $negativeWallets = 0;
         
         if ($activeSeason) {
-            $totalAvailable = Wallet::where('season_id', $activeSeason->id)->sum('available_balance');
-            $totalLocked = Wallet::where('season_id', $activeSeason->id)->sum('locked_balance');
-            $negativeWallets = Wallet::where('season_id', $activeSeason->id)->where('available_balance', '<', 0)->count();
+            $walletBase = \App\Models\Wallet::where('season_id', $activeSeason->id)
+                ->whereNotIn('user_id', $testUserIds);
+            $totalAvailable  = (clone $walletBase)->sum('available_balance');
+            $totalLocked     = (clone $walletBase)->sum('locked_balance');
+            $negativeWallets = (clone $walletBase)->where('available_balance', '<', 0)->count();
         } else {
-            $negativeWallets = Wallet::where('available_balance', '<', 0)->count();
+            $negativeWallets = \App\Models\Wallet::whereNotIn('user_id', $testUserIds)
+                ->where('available_balance', '<', 0)->count();
         }
 
-        $openMarkets = Market::where('status', 'OPEN')->count();
-        $settleNeeded = Market::where('status', 'LOCKED')->count();
+        $openMarkets   = Market::where('status', 'OPEN')->count();
+        $settleNeeded  = Market::where('status', 'LOCKED')->count();
         
         $failedJobs = DB::table('failed_jobs')->count();
 

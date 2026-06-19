@@ -27,6 +27,7 @@ class User extends Authenticatable implements FilamentUser
         'email',
         'password',
         'status',
+        'is_test_user',
         'accepted_rules_at',
         'last_login_at',
         'last_daily_briefing_at',
@@ -55,15 +56,24 @@ class User extends Authenticatable implements FilamentUser
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'last_daily_briefing_at' => 'datetime',
-            'last_daily_ranking_shown_at' => 'datetime',
-            'last_celebration_shown_at' => 'datetime',
+            'email_verified_at'              => 'datetime',
+            'password'                       => 'hashed',
+            'is_test_user'                   => 'boolean',
+            'last_daily_briefing_at'         => 'datetime',
+            'last_daily_ranking_shown_at'    => 'datetime',
+            'last_celebration_shown_at'      => 'datetime',
             'last_settlement_summary_shown_at' => 'datetime',
-            'last_reengagement_shown_at' => 'datetime',
-            'last_active_at' => 'datetime',
+            'last_reengagement_shown_at'     => 'datetime',
+            'last_active_at'                 => 'datetime',
         ];
+    }
+
+    /**
+     * Scope loại bỏ test users (dùng cho admin dashboard reporting)
+     */
+    public function scopeRealUsers($query)
+    {
+        return $query->where('is_test_user', false);
     }
 
     /**
