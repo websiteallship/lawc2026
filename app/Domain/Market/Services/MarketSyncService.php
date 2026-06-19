@@ -13,7 +13,7 @@ class MarketSyncService
     /**
      * Chỉ hỗ trợ:
      */
-    private const ALLOWED_BET_IDS = [4, 19, 5, 6, 10, 26, 104, 65, 66, 68];
+    private const ALLOWED_BET_IDS = [4, 19, 5, 6, 10, 26, 104, 65, 66, 68, 50, 72];
 
     public function syncOddsForMatch(FootballMatch $match, OddsResponseDto $dto): void
     {
@@ -166,7 +166,7 @@ class MarketSyncService
     {
         return match ($betId) {
             4, 19, 104, 65 => 'ASIAN_HANDICAP',
-            5, 6, 26, 66 => 'OVER_UNDER',
+            5, 6, 26, 66, 50, 72 => 'OVER_UNDER',
             10 => 'EXACT_SCORE',
             68 => 'PENALTY_WINNER',
             default => null,
@@ -176,8 +176,8 @@ class MarketSyncService
     private function mapPeriodType(int $betId): ?string
     {
         return match ($betId) {
-            4, 5, 10 => 'FULL_TIME',
-            19, 6 => 'FIRST_HALF',
+            4, 5, 10, 50 => 'FULL_TIME',
+            19, 6, 72 => 'FIRST_HALF',
             26, 104 => 'SECOND_HALF',
             65, 66 => 'EXTRA_TIME',
             68 => 'PENALTY',

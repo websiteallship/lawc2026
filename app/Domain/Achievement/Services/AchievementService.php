@@ -91,6 +91,7 @@ class AchievementService
                         ->whereNotIn('status', ['PENDING'])
                         ->whereNotNull('settled_at')
                         ->orderBy('settled_at', 'desc')
+                        ->orderBy('id', 'desc')
                         ->limit(10)
                         ->get();
                     $lv4Streak = 0;
@@ -151,6 +152,7 @@ class AchievementService
                         ->whereNotIn('status', ['PENDING'])
                         ->whereNotNull('settled_at')
                         ->orderBy('settled_at', 'desc')
+                        ->orderBy('id', 'desc')
                         ->limit(15)
                         ->get();
                     $winStreak = 0;

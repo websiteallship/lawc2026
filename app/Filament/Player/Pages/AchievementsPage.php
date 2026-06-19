@@ -75,6 +75,7 @@ class AchievementsPage extends Page
             ->whereNotIn('status', ['PENDING'])
             ->whereNotNull('settled_at')
             ->orderBy('settled_at', 'desc')
+            ->orderBy('id', 'desc')
             ->limit(20)
             ->get();
         $winStreak = 0;
@@ -167,7 +168,7 @@ class AchievementsPage extends Page
             'LV5_PROPHET' => ['current' => $totalWins, 'target' => 20], // UI can also show "3/3 loại kèo"
             'LV6_FUTURE_ENVOY' => ['current' => $totalWins, 'target' => 50],
             'LV7_LORD_OF_DESTINY' => ['current' => $exactScoreWins, 'target' => 5],
-            'LV8_COSMIC' => ['current' => $winStreak, 'target' => 7],
+            'LV8_COSMIC' => ['current' => $longestWinStreak, 'target' => 7],
             'LV9_OMNISCIENT' => ['current' => $totalWins, 'target' => 100],
             
             // Side quests
