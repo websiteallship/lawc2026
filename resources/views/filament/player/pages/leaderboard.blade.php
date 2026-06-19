@@ -16,11 +16,8 @@
             <x-filament::tabs.item wire:click="$set('activeTab', 'exact_score')" :active="$activeTab === 'exact_score'" icon="heroicon-o-bolt">
                 Cao thủ Tỉ số
             </x-filament::tabs.item>
-            <x-filament::tabs.item wire:click="$set('activeTab', 'weekly_missions')" :active="$activeTab === 'weekly_missions'" icon="heroicon-o-star">
-                NV Tuần
-            </x-filament::tabs.item>
-            <x-filament::tabs.item wire:click="$set('activeTab', 'all_missions')" :active="$activeTab === 'all_missions'" icon="heroicon-o-check-badge">
-                NV Tổng
+            <x-filament::tabs.item wire:click="$set('activeTab', 'missions')" :active="$activeTab === 'missions'" icon="heroicon-o-check-badge">
+                Nhiệm vụ
             </x-filament::tabs.item>
             <x-filament::tabs.item wire:click="$set('activeTab', 'level')" :active="$activeTab === 'level'" icon="heroicon-o-arrow-trending-up">
                 Level
@@ -49,12 +46,10 @@
                                     <th class="py-2 pr-4 text-right">Tỉ số đúng</th>
                                     @endif
                                     <th class="py-2 text-right">Phiếu</th>
-                                @elseif($activeTab === 'weekly_missions')
-                                    <th class="py-2 pr-4 text-right">NV Tuần</th>
-                                    <th class="py-2 text-right">NV Tổng</th>
-                                @elseif($activeTab === 'all_missions')
-                                    <th class="py-2 pr-4 text-right">NV Tổng</th>
-                                    <th class="py-2 text-right">NV Tuần</th>
+                                @elseif($activeTab === 'missions')
+                                    <th class="py-2 pr-4 text-right">NV Hoàn thành</th>
+                                    <th class="py-2 pr-4 text-right">Tiến độ tuần</th>
+                                    <th class="py-2 text-right">Tuần 100%</th>
                                 @elseif($activeTab === 'level')
                                     <th class="py-2 pr-4 text-right">Level</th>
                                     <th class="py-2 text-right">Danh hiệu</th>
@@ -100,12 +95,10 @@
                                         </td>
                                         @endif
                                         <td class="py-3 text-right text-gray-500">{{ $row['bets_count'] }}</td>
-                                    @elseif($activeTab === 'weekly_missions')
-                                        <td class="py-3 pr-4 text-right text-primary-600 font-semibold">{{ $row['weekly_missions'] }}</td>
-                                        <td class="py-3 text-right text-gray-500">{{ $row['total_missions'] }}</td>
-                                    @elseif($activeTab === 'all_missions')
+                                    @elseif($activeTab === 'missions')
                                         <td class="py-3 pr-4 text-right text-primary-600 font-semibold">{{ $row['total_missions'] }}</td>
-                                        <td class="py-3 text-right text-gray-500">{{ $row['weekly_missions'] }}</td>
+                                        <td class="py-3 pr-4 text-right text-gray-600 dark:text-gray-300">{{ $row['weekly_rate'] }}%</td>
+                                        <td class="py-3 text-right text-amber-600 font-bold">{{ $row['perfect_weeks'] > 0 ? $row['perfect_weeks'] : '—' }}</td>
                                     @elseif($activeTab === 'level')
                                         <td class="py-3 pr-4 text-right text-amber-600 font-bold text-lg">LV {{ $row['level'] }}</td>
                                         <td class="py-3 text-right text-gray-500">{{ $row['badge_count'] }}</td>
@@ -267,8 +260,7 @@
                     @elseif($activeTab === 'round') * Lãi/lỗ tính trong 7 ngày gần nhất.
                     @elseif($activeTab === 'roi') * Chỉ hiển thị người chơi có ≥5 phiếu đã settle. ROI = lãi ròng / tổng cược.
                     @elseif($activeTab === 'exact_score') * Xếp theo số lần dự đoán tỉ số chính xác.
-                    @elseif($activeTab === 'weekly_missions') * Xếp theo số nhiệm vụ tuần đã hoàn thành.
-                    @elseif($activeTab === 'all_missions') * Xếp theo tổng nhiệm vụ đã hoàn thành (daily + weekly + season).
+                    @elseif($activeTab === 'missions') * Xếp theo tổng NV đã hoàn thành. Tiến độ tuần tính trên các NV Tuần hiện đang mở.
                     @elseif($activeTab === 'level') * Xếp theo Level cao nhất đạt được từ danh hiệu chính.
                     @elseif($activeTab === 'badges') * Xếp theo tổng số danh hiệu đạt được (chính + phụ).
                     @endif

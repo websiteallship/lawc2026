@@ -154,11 +154,7 @@ class LeaderboardPage extends Page
                                     ['exact_score_wins', 'desc'],
                                     ['net_profit', 'desc'],
                                 ]),
-            'weekly_missions' => $entries->sortBy([
-                                    ['weekly_missions', 'desc'],
-                                    ['total_missions', 'desc'],
-                                ]),
-            'all_missions'    => $entries->sortBy([
+            'missions'        => $entries->sortBy([
                                     ['total_missions', 'desc'],
                                     ['weekly_missions', 'desc'],
                                 ]),
@@ -201,7 +197,10 @@ class LeaderboardPage extends Page
             'Mạnh mẽ', 'Xinh xắn', 'Đáng yêu', 'Mũm mĩm', 'Trầm ngâm', 'Hay quên', 'Thích đùa',
         ];
 
-        $this->rankings = $entries->map(function ($entry, $index) use ($animals, $adjectives) {
+        // Tính tổng số nhiệm vụ tuần đang active để chia %
+        $totalWeeklyActive = \App\Models\Mission::where('type', 'weekly')->where('is_active', true)->count();
+
+        $this->rankings = $entries->map(function ($entry, $index) use ($animals, $adjectives, $totalWeeklyActive) {
             $hash      = md5($entry->user_id . config('app.key'));
             $animal    = $animals[hexdec(substr($hash, 0, 4)) % count($animals)];
             $adjective = $adjectives[hexdec(substr($hash, 4, 4)) % count($adjectives)];
@@ -210,6 +209,10 @@ class LeaderboardPage extends Page
                 ->join('achievements', 'user_achievements.achievement_id', '=', 'achievements.id')
                 ->select('achievements.*')
                 ->get();
+
+            $weeklyRate = $totalWeeklyActive > 0 ? round(($entry->weekly_missions / $totalWeeklyActive) * 100) : 0;
+            // perfect_weeks placeholder, db chưa có
+            $perfectWeeks = $entry->perfect_weeks ?? 0;
 
             return [
                 'rank'             => $index + 1,
@@ -225,6 +228,8 @@ class LeaderboardPage extends Page
                 'badge_count'      => $entry->badge_count,
                 'total_missions'   => $entry->total_missions,
                 'weekly_missions'  => $entry->weekly_missions,
+                'weekly_rate'      => $weeklyRate,
+                'perfect_weeks'    => $perfectWeeks,
                 'achievements'     => $userAchievements->map(fn($ach) => [
                     'name'        => $ach->name,
                     'description' => $ach->description,
