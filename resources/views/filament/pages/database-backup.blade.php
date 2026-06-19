@@ -1,39 +1,36 @@
 <x-filament-panels::page>
-    <div class="fi-ta-ctn border border-gray-200 shadow-sm rounded-xl bg-white dark:bg-gray-900 dark:border-white/10 overflow-hidden">
-        <div class="p-6 border-b border-gray-200 dark:border-white/10 flex items-center justify-between">
-            <div>
-                <h3 class="text-base font-semibold leading-6 text-gray-950 dark:text-white">
-                    Danh sách bản sao lưu
-                </h3>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    Các bản sao lưu cơ sở dữ liệu đã được tạo. Bạn có thể tải xuống hoặc xóa chúng.
-                </p>
-            </div>
-        </div>
+    <x-filament::section>
+        <x-slot name="heading">
+            Danh sách bản sao lưu
+        </x-slot>
 
-        <div class="overflow-x-auto">
-            <table class="w-full text-sm text-left divide-y divide-gray-200 dark:divide-white/5">
-                <thead class="bg-gray-55 dark:bg-gray-800/50">
+        <x-slot name="description">
+            Các bản sao lưu cơ sở dữ liệu đã được tạo. Bạn có thể tải xuống hoặc xóa chúng.
+        </x-slot>
+
+        <div class="mt-4 overflow-x-auto rounded-lg border border-gray-200 dark:border-white/10">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-white/10 text-sm text-left">
+                <thead class="bg-gray-50 dark:bg-white/5">
                     <tr>
-                        <th scope="col" class="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider dark:text-gray-400">
+                        <th scope="col" class="px-6 py-3 font-semibold text-gray-950 dark:text-white">
                             Tên file sao lưu
                         </th>
-                        <th scope="col" class="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider dark:text-gray-400">
+                        <th scope="col" class="px-6 py-3 font-semibold text-gray-950 dark:text-white">
                             Kích thước
                         </th>
-                        <th scope="col" class="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider dark:text-gray-400">
+                        <th scope="col" class="px-6 py-3 font-semibold text-gray-950 dark:text-white">
                             Ngày tạo (Giờ hệ thống)
                         </th>
-                        <th scope="col" class="px-6 py-3.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider dark:text-gray-400">
+                        <th scope="col" class="px-6 py-3 font-semibold text-gray-950 dark:text-white text-right">
                             Thao tác
                         </th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-200 dark:divide-white/5 bg-white dark:bg-transparent">
+                <tbody class="divide-y divide-gray-200 dark:divide-white/10 bg-white dark:bg-transparent">
                     @forelse($this->backups as $backup)
-                        <tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors duration-150">
+                        <tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition duration-150">
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="flex items-center gap-x-2">
+                                <div class="flex items-center gap-x-2.5">
                                     <x-filament::icon
                                         icon="heroicon-m-document-arrow-down"
                                         class="h-5 w-5 text-gray-400 dark:text-gray-500"
@@ -43,8 +40,8 @@
                                     </span>
                                 </div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-300">
-                                <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10 dark:bg-gray-400/10 dark:text-gray-400 dark:ring-gray-400/20">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex items-center rounded-md bg-gray-50 px-2.5 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10 dark:bg-gray-400/10 dark:text-gray-400 dark:ring-gray-400/20">
                                     {{ $backup['size'] }}
                                 </span>
                             </td>
@@ -90,5 +87,5 @@
                 </tbody>
             </table>
         </div>
-    </div>
+    </x-filament::section>
 </x-filament-panels::page>
