@@ -1,4 +1,17 @@
-# Hướng dẫn Kiểm thử (Testing) - Dự Đoán Lá WC2026
+# Dự Đoán Lá WC2026
+
+Internal football prediction game for a company. Users use virtual points called **lá** to predict football results.
+
+## Legal Positioning & Non-Negotiable Rules
+This is an internal prediction game using virtual points. **It is NOT a gambling platform, betting business, or a public betting website.**
+- No real-money deposit, withdrawal, or conversion of lá to cash or physical rewards.
+- No user-to-user transfer of lá. No payment integration.
+- No public registration or access outside the company.
+- Admin can grant or deduct lá only through auditable ledger entries.
+
+---
+
+## 1. Hướng dẫn Kiểm thử (Testing)
 
 Dự án này bao gồm cả unit tests (cho backend) và browser tests (cho frontend) để đảm bảo chất lượng hệ thống MVP cho quá trình UAT & Go-live.
 
