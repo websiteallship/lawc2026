@@ -114,7 +114,7 @@ class UserResource extends Resource
                     ->helperText('Bật nếu đây là account test, sẽ bị loại khỏi báo cáo dashboard admin.')
                     ->default(false)
                     ->columnSpanFull()
-                    ->visible(fn () => auth()->user()?->hasRole('super_admin')),
+                    ->visible(fn () => auth()->user()?->hasAnyRole(['super_admin', 'operator'])),
             ]);
     }
 
@@ -322,7 +322,7 @@ class UserResource extends Resource
                     ->requiresConfirmation(),
 
                 Action::make('toggle_test_user')
-                    ->visible(fn () => auth()->user()?->hasRole('super_admin'))
+                    ->visible(fn () => auth()->user()?->hasAnyRole(['super_admin', 'operator']))
                     ->label(fn (User $record): string => $record->is_test_user ? 'Bỏ tất đánh Test' : 'Đánh dấu Test')
                     ->icon(fn (User $record): string => $record->is_test_user ? 'heroicon-o-check-circle' : 'heroicon-o-beaker')
                     ->color(fn (User $record): string => $record->is_test_user ? 'success' : 'warning')
