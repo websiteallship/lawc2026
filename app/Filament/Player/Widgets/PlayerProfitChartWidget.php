@@ -16,15 +16,37 @@ class PlayerProfitChartWidget extends ChartWidget
 
     protected ?string $maxHeight = '300px';
 
+    public ?string $filter = 'week';
+
+    protected function getFilters(): ?array
+    {
+        return [
+            'today' => 'Hôm nay',
+            'week'  => '7 ngày qua',
+            'month' => '30 ngày qua',
+            'all'   => 'Toàn thời gian',
+        ];
+    }
+
     protected function getData(): array
     {
         $user = Auth::user();
+        $activeFilter = $this->filter;
         
-        $chartData = \Illuminate\Support\Facades\Cache::remember("player_profit_chart_{$user->id}", 900, function () use ($user) {
-            $bets = Bet::where('user_id', $user->id)
-                ->whereNotNull('settled_at')
-                ->orderBy('settled_at', 'asc')
-                ->get();
+        $chartData = \Illuminate\Support\Facades\Cache::remember("player_profit_chart_{$user->id}_{$activeFilter}", 300, function () use ($user, $activeFilter) {
+            $query = Bet::where('user_id', $user->id)
+                ->whereNotIn('status', ['PENDING', 'VOIDED'])
+                ->whereNotNull('settled_at');
+                
+            if ($activeFilter === 'today') {
+                $query->where('settled_at', '>=', now()->startOfDay());
+            } elseif ($activeFilter === 'week') {
+                $query->where('settled_at', '>=', now()->subDays(7));
+            } elseif ($activeFilter === 'month') {
+                $query->where('settled_at', '>=', now()->subDays(30));
+            }
+
+            $bets = $query->orderBy('settled_at', 'asc')->get();
 
             $data = [];
             $labels = [];
@@ -35,10 +57,10 @@ class PlayerProfitChartWidget extends ChartWidget
             $labels[] = 'Bắt đầu';
 
             foreach ($bets as $bet) {
-                $net = ($bet->gross_payout ?? 0) - $bet->stake;
+                $net = $bet->net_result ?? (($bet->gross_payout ?? 0) - $bet->stake);
                 $cumulativeProfit += $net;
                 $data[] = $cumulativeProfit;
-                $labels[] = $bet->settled_at->format('d/m H:i');
+                $labels[] = $bet->settled_at->timezone('Asia/Ho_Chi_Minh')->format('d/m H:i');
             }
 
             return [
