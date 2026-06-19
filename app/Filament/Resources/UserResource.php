@@ -116,6 +116,10 @@ class UserResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('id')
+                    ->label('ID')
+                    ->sortable()
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('name')
                     ->label('Họ tên')
                     ->searchable(),
