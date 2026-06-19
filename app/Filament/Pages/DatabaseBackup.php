@@ -77,10 +77,12 @@ class DatabaseBackup extends Page
                             }
                         } else {
                             $exitCode = Artisan::call('backup:run', ['--only-db' => true]);
+                            $output = Artisan::output();
                             if ($exitCode === 0) {
                                 Notification::make()->title('Sao lưu Database thành công')->success()->send();
                             } else {
-                                throw new \Exception('Lỗi command exit code: ' . $exitCode);
+                                \Illuminate\Support\Facades\Log::error('Backup DB failed', ['exit' => $exitCode, 'output' => $output]);
+                                throw new \Exception('Exit ' . $exitCode . ': ' . trim(substr(strip_tags($output), -300)));
                             }
                         }
                     } catch (\Exception $e) {
@@ -94,19 +96,27 @@ class DatabaseBackup extends Page
                 ->requiresConfirmation()
                 ->action(function () {
                     try {
-                        if (config('database.default') === 'sqlite') {
-                            $exitCode = Artisan::call('backup:run', ['--only-files' => true]);
-                        } else {
-                            $exitCode = Artisan::call('backup:run');
-                        }
-                        
+                        // Chỉ backup DB để tránh timeout khi zip toàn bộ project trên VPS
+                        $exitCode = Artisan::call('backup:run', ['--only-db' => true]);
+                        $output = Artisan::output();
+
                         if ($exitCode === 0) {
-                            Notification::make()->title('Sao lưu Toàn bộ thành công')->success()->send();
+                            Notification::make()->title('Sao lưu thành công (DB)')->success()->send();
                         } else {
-                            throw new \Exception('Lỗi command exit code: ' . $exitCode);
+                            \Illuminate\Support\Facades\Log::error('Backup full failed', [
+                                'exit'   => $exitCode,
+                                'output' => $output,
+                            ]);
+                            $detail = trim(substr(strip_tags($output), -400));
+                            throw new \Exception('Exit ' . $exitCode . ': ' . ($detail ?: 'xem log laravel để biết chi tiết'));
                         }
                     } catch (\Exception $e) {
-                        Notification::make()->title('Lỗi sao lưu: ' . $e->getMessage())->danger()->send();
+                        Notification::make()
+                            ->title('Lỗi sao lưu')
+                            ->body($e->getMessage())
+                            ->danger()
+                            ->persistent()
+                            ->send();
                     }
                 }),
             \Filament\Actions\ExportAction::make('export_bets')
