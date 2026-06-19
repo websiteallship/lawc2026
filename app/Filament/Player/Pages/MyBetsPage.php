@@ -82,4 +82,41 @@ class MyBetsPage extends Page
 
         return $query->paginate(10);
     }
+
+    #[Computed]
+    public function tabCounts()
+    {
+        $query = Bet::where('user_id', Auth::id());
+
+        if ($this->searchQuery) {
+            $query->where(function ($q) {
+                $q->where('public_code', 'like', '%' . $this->searchQuery . '%')
+                  ->orWhereHas('market.match', function ($matchQuery) {
+                      $matchQuery->where('home_team', 'like', '%' . $this->searchQuery . '%')
+                                 ->orWhere('away_team', 'like', '%' . $this->searchQuery . '%');
+                  });
+            });
+        }
+
+        $statusCounts = $query->selectRaw('status, count(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status');
+
+        $pending = $statusCounts->get(BetStatus::PENDING->value, 0);
+        $settled = $statusCounts->get(BetStatus::WON->value, 0)
+                 + $statusCounts->get(BetStatus::LOST->value, 0)
+                 + $statusCounts->get(BetStatus::PUSH->value, 0)
+                 + $statusCounts->get(BetStatus::HALF_WON->value, 0)
+                 + $statusCounts->get(BetStatus::HALF_LOST->value, 0);
+        $voided = $statusCounts->get(BetStatus::VOIDED->value, 0);
+        $corrected = $statusCounts->get(BetStatus::CORRECTED->value, 0);
+
+        return [
+            'all' => $statusCounts->sum(),
+            'pending' => $pending,
+            'settled' => $settled,
+            'voided' => $voided,
+            'corrected' => $corrected,
+        ];
+    }
 }
