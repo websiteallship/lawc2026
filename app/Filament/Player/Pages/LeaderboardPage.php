@@ -55,53 +55,28 @@ class LeaderboardPage extends Page
             
         $users = $usersQuery->get();
 
+        // Tải UserStatistic cho tất cả user để tránh N+1
+        $userIds = $users->pluck('id')->toArray();
+        $userStats = \App\Models\UserStatistic::whereIn('user_id', $userIds)
+            ->get()
+            ->keyBy('user_id');
+
         // Tùy theo tab mà lấy ledger để tính toán
-        $wallets = $users->map(function ($user) use ($activeSeason) {
+        $wallets = $users->map(function ($user) use ($activeSeason, $userStats) {
             $wallet = $user->wallets->first();
-            $walletId = $wallet ? $wallet->id : null;
-            
-            $netProfit = 0;
-            $totalStaked = 0;
-            $betsCount = 0;
-            $wonCount = 0;
-            
-            if ($walletId) {
-                $query = \App\Models\WalletLedger::withoutGlobalScope('player_isolation')
-                    ->where('wallet_id', $walletId)
-                    ->whereIn('type', [
-                        \App\Enums\LedgerType::BET_WON->value, 
-                        \App\Enums\LedgerType::BET_LOST->value, 
-                        \App\Enums\LedgerType::BET_PUSH->value, 
-                        \App\Enums\LedgerType::BET_HALF_WON->value, 
-                        \App\Enums\LedgerType::BET_HALF_LOST->value
-                    ]);
+            $stats = $userStats->get($user->id);
 
-                if ($this->activeTab === 'week') {
-                    $query->where('created_at', '>=', now()->startOfWeek());
-                } elseif ($this->activeTab === 'exact_score') {
-                    // Logic tính riêng cho kèo tỉ số cần join bảng bet. Để đơn giản MVP Phase 2, ta có thể dùng bảng user_statistics
-                    // Tuy nhiên vì hệ thống dùng WalletLedger, ta tạm lọc qua relationship (nếu cần thiết).
-                    // Tạm thời nếu ko có user_statistics, ta dùng wallet tổng hợp.
-                }
+            // Dùng UserStatistic cho net_profit/total_staked vì wallet.net_profit
+            // bao gồm cả stake của PENDING bets chưa settle → sai lệch lớn
+            $netProfit = $stats ? $stats->net_profit : 0;
+            $totalStaked = $stats ? $stats->total_staked : 0;
 
-                // Dành cho season, roi, vv: dùng sẵn cache trên wallet để nhanh
-                if (in_array($this->activeTab, ['season', 'roi'])) {
-                    $netProfit = $wallet->net_profit;
-                    $totalStaked = $wallet->total_staked;
-                } else {
-                    // Tính runtime cho Week/Round
-                    $ledgers = $query->get();
-                    // ... tính toán (Sẽ bổ sung sau khi có bảng user_statistics chuẩn, hiện tại MVP Phase 2 yêu cầu bảng UserStatistics)
-                    // Do spec đã nói có bảng user_statistics (Thêm UserStatistic table (đã định nghĩa ở script trước)), nên ta dùng bảng đó.
-                }
-            }
-            
             return (object) [
                 'user_id' => $user->id,
-                'wallet_id' => $walletId,
+                'wallet_id' => $wallet ? $wallet->id : null,
                 'available_balance' => $wallet ? $wallet->available_balance : 0,
-                'net_profit' => $wallet ? $wallet->net_profit : 0,
-                'total_staked' => $wallet ? $wallet->total_staked : 0,
+                'net_profit' => $netProfit,
+                'total_staked' => $totalStaked,
                 'user' => $user,
             ];
         });
