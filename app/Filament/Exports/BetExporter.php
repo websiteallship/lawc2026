@@ -12,6 +12,11 @@ class BetExporter extends Exporter
 {
     protected static ?string $model = Bet::class;
 
+    public function getFileName(Export $export): string
+    {
+        return "ve-du-doan-" . now()->format('Y-m-d_H-i-s') . ".csv";
+    }
+
     public static function getColumns(): array
     {
         return [

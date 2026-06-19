@@ -12,6 +12,11 @@ class SettlementExporter extends Exporter
 {
     protected static ?string $model = Settlement::class;
 
+    public function getFileName(Export $export): string
+    {
+        return "ket-qua-du-doan-" . now()->format('Y-m-d_H-i-s') . ".csv";
+    }
+
     public static function getColumns(): array
     {
         return [
