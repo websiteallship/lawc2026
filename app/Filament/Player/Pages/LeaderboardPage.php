@@ -110,11 +110,15 @@ class LeaderboardPage extends Page
                 ->filter(fn($e) => $e->settled_bets >= 5)
                 ->sortByDesc(fn($e) => $e->roi ?? -999),
             'exact_score' => $entries
-                ->sortByDesc('exact_score_wins')
-                ->sortByDesc('net_profit'),
+                ->sortBy([
+                    ['exact_score_wins', 'desc'],
+                    ['net_profit', 'desc'],
+                ]),
             default       => $entries
-                ->sortByDesc('net_profit')
-                ->sortByDesc('available'),
+                ->sortBy([
+                    ['net_profit', 'desc'],
+                    ['available', 'desc'],
+                ]),
         };
 
         $entries = $entries->take(50)->values();
