@@ -113,6 +113,7 @@ class PlayerPanelProvider extends PanelProvider
                 \App\Http\Middleware\UpdateLastActiveMiddleware::class,
             ])
             ->plugins([
+                \Leandrocfe\FilamentApexCharts\FilamentApexChartsPlugin::make(),
                 ...((app()->environment('local') && rescue(fn () => app(AppSettings::class)->enable_local_logins, env('LOCAL_LOGINS_ENABLED', false)))
                     ? [new LocalLogins]
                     : []),
