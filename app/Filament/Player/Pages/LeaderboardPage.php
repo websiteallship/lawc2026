@@ -120,20 +120,16 @@ class LeaderboardPage extends Page
         $wallets = $wallets->take(50)->values();
 
         $this->rankings = $wallets->map(function ($wallet, $index) {
-            $betsCount = $wallet->wallet_id ? \App\Models\WalletLedger::withoutGlobalScope('player_isolation')
-                ->where('wallet_id', $wallet->wallet_id)
-                ->whereIn('type', [
-                    \App\Enums\LedgerType::BET_WON->value, 
-                    \App\Enums\LedgerType::BET_LOST->value, 
-                    \App\Enums\LedgerType::BET_PUSH->value, 
-                    \App\Enums\LedgerType::BET_HALF_WON->value, 
-                    \App\Enums\LedgerType::BET_HALF_LOST->value
-                ])
-                ->count() : 0;
-            $wonCount = $wallet->wallet_id ? \App\Models\WalletLedger::withoutGlobalScope('player_isolation')
-                ->where('wallet_id', $wallet->wallet_id)
-                ->whereIn('type', [\App\Enums\LedgerType::BET_WON->value, \App\Enums\LedgerType::BET_HALF_WON->value])
-                ->count() : 0;
+            // Đếm trực tiếp từ bảng bets (chính xác hơn đếm ledger - tránh double-count HALF_WON/HALF_LOST)
+            $betQuery = \App\Models\Bet::where('user_id', $wallet->user_id)
+                ->whereNotIn('status', ['PENDING', 'VOIDED']);
+
+            if ($this->activeTab === 'week') {
+                $betQuery->where('settled_at', '>=', now()->startOfWeek());
+            }
+
+            $betsCount = $betQuery->count();
+            $wonCount = (clone $betQuery)->whereIn('status', ['WON', 'HALF_WON'])->count();
 
             $userAchievements = \App\Models\UserAchievement::where('user_id', $wallet->user_id)
                 ->join('achievements', 'user_achievements.achievement_id', '=', 'achievements.id')

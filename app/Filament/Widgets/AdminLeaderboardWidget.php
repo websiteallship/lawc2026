@@ -57,7 +57,7 @@ class AdminLeaderboardWidget extends BaseWidget
                     ->label('Thắng'),
                 Tables\Columns\TextColumn::make('win_rate')
                     ->label('Win rate')
-                    ->formatStateUsing(fn ($state) => $state ? round($state * 100, 1).'%' : '-'),
+                    ->formatStateUsing(fn ($state) => $state !== null ? round((float) $state, 1).'%' : '-'),
                 Tables\Columns\TextColumn::make('snapshot_at')
                     ->label('Cập nhật lúc')
                     ->dateTime('d/m H:i')
