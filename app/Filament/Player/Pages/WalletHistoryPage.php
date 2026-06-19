@@ -8,6 +8,7 @@ use App\Models\Bet;
 use App\Models\Season;
 use App\Models\Wallet;
 use App\Models\WalletLedger;
+use App\Support\DatePeriodFilter;
 use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Pages\Page;
@@ -46,8 +47,8 @@ class WalletHistoryPage extends Page
 
     public string $searchQuery = '';
 
-    /** @var string Flow period for stat cards & reconciliation: '7', '30', 'all' */
-    public string $flowPeriod = '7';
+    /** @var string Flow period for stat cards & reconciliation — see DatePeriodFilter::options() */
+    public string $flowPeriod = '30';
 
     // Advanced filters
     public string $filterPeriod = 'all'; // all, today, yesterday, week, month
@@ -221,17 +222,15 @@ class WalletHistoryPage extends Page
             return ['received' => 0, 'spent' => 0, 'net' => 0];
         }
 
-        $query = WalletLedger::where('wallet_id', $this->wallet->id);
+        [$start, $end] = DatePeriodFilter::resolve($this->flowPeriod);
 
-        if ($this->flowPeriod !== 'all') {
-            $days = (int) $this->flowPeriod;
-            $query->where('created_at', '>=', now()->subDays($days)->startOfDay());
-        }
-
-        $result = $query->selectRaw(
-            'SUM(CASE WHEN amount_available > 0 THEN amount_available ELSE 0 END) as received,
-             SUM(CASE WHEN amount_available < 0 THEN ABS(amount_available) ELSE 0 END) as spent'
-        )->first();
+        $result = WalletLedger::where('wallet_id', $this->wallet->id)
+            ->where('created_at', '>=', $start)
+            ->where('created_at', '<=', $end)
+            ->selectRaw(
+                'SUM(CASE WHEN amount_available > 0 THEN amount_available ELSE 0 END) as received,
+                 SUM(CASE WHEN amount_available < 0 THEN ABS(amount_available) ELSE 0 END) as spent'
+            )->first();
 
         $received = (int) ($result->received ?? 0);
         $spent    = (int) ($result->spent ?? 0);
@@ -253,41 +252,37 @@ class WalletHistoryPage extends Page
             return ['rows' => [], 'total_received' => 0, 'total_spent' => 0, 'opening_balance' => 0, 'closing_balance' => 0];
         }
 
-        $query = WalletLedger::where('wallet_id', $this->wallet->id);
+        [$start, $end] = DatePeriodFilter::resolve($this->flowPeriod);
 
-        if ($this->flowPeriod !== 'all') {
-            $days = (int) $this->flowPeriod;
-            $query->where('created_at', '>=', now()->subDays($days)->startOfDay());
-        }
-
-        $rows = $query->select(
-            'type',
-            DB::raw('SUM(CASE WHEN amount_available > 0 THEN amount_available ELSE 0 END) as received'),
-            DB::raw('SUM(CASE WHEN amount_available < 0 THEN ABS(amount_available) ELSE 0 END) as spent')
-        )
-        ->groupBy('type')
-        ->orderBy('type')
-        ->get()
-        ->map(function ($row) {
-            $type = LedgerType::tryFrom($row->type instanceof LedgerType ? $row->type->value : $row->type);
-            return [
-                'label'    => $type ? $type->label() : $row->type,
-                'received' => (int) $row->received,
-                'spent'    => (int) $row->spent,
-                'net'      => (int) $row->received - (int) $row->spent,
-            ];
-        })
-        ->toArray();
+        $rows = WalletLedger::where('wallet_id', $this->wallet->id)
+            ->where('created_at', '>=', $start)
+            ->where('created_at', '<=', $end)
+            ->select(
+                'type',
+                DB::raw('SUM(CASE WHEN amount_available > 0 THEN amount_available ELSE 0 END) as received'),
+                DB::raw('SUM(CASE WHEN amount_available < 0 THEN ABS(amount_available) ELSE 0 END) as spent')
+            )
+            ->groupBy('type')
+            ->orderBy('type')
+            ->get()
+            ->map(function ($row) {
+                $type = LedgerType::tryFrom($row->type instanceof LedgerType ? $row->type->value : $row->type);
+                return [
+                    'label'    => $type ? $type->label() : $row->type,
+                    'received' => (int) $row->received,
+                    'spent'    => (int) $row->spent,
+                    'net'      => (int) $row->received - (int) $row->spent,
+                ];
+            })
+            ->toArray();
 
         $totalReceived = array_sum(array_column($rows, 'received'));
         $totalSpent    = array_sum(array_column($rows, 'spent'));
 
         // Opening balance = earliest ledger in period balance_available_after - amount_available
         $earliest = WalletLedger::where('wallet_id', $this->wallet->id)
-            ->when($this->flowPeriod !== 'all', function ($q) {
-                $days = (int) $this->flowPeriod;
-                $q->where('created_at', '>=', now()->subDays($days)->startOfDay());
-            })
+            ->where('created_at', '>=', $start)
+            ->where('created_at', '<=', $end)
             ->orderBy('created_at')
             ->first();
 

@@ -3,8 +3,10 @@
 namespace App\Filament\Player\Widgets;
 
 use App\Models\Bet;
+use App\Support\DatePeriodFilter;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class PlayerProfitChartWidget extends ChartWidget
 {
@@ -16,45 +18,34 @@ class PlayerProfitChartWidget extends ChartWidget
 
     protected ?string $maxHeight = '300px';
 
-    public ?string $filter = 'week';
+    public ?string $filter = '30';
 
     protected function getFilters(): ?array
     {
-        return [
-            'today' => 'Hôm nay',
-            'week'  => '7 ngày qua',
-            'month' => '30 ngày qua',
-            'all'   => 'Toàn thời gian',
-        ];
+        return DatePeriodFilter::options();
     }
 
     protected function getData(): array
     {
         $user = Auth::user();
-        $activeFilter = $this->filter;
-        
-        $chartData = \Illuminate\Support\Facades\Cache::remember("player_profit_chart_{$user->id}_{$activeFilter}", 300, function () use ($user, $activeFilter) {
-            $query = Bet::where('user_id', $user->id)
+        $filter = $this->filter ?? '30';
+
+        [$start, $end] = DatePeriodFilter::resolve($filter);
+
+        $cacheKey = "player_profit_chart_{$user->id}_{$filter}";
+
+        $chartData = Cache::remember($cacheKey, 300, function () use ($user, $start, $end) {
+            $bets = Bet::where('user_id', $user->id)
                 ->whereNotIn('status', ['PENDING', 'VOIDED'])
-                ->whereNotNull('settled_at');
-                
-            if ($activeFilter === 'today') {
-                $query->where('settled_at', '>=', now()->startOfDay());
-            } elseif ($activeFilter === 'week') {
-                $query->where('settled_at', '>=', now()->subDays(7));
-            } elseif ($activeFilter === 'month') {
-                $query->where('settled_at', '>=', now()->subDays(30));
-            }
+                ->whereNotNull('settled_at')
+                ->where('settled_at', '>=', $start)
+                ->where('settled_at', '<=', $end)
+                ->orderBy('settled_at', 'asc')
+                ->get();
 
-            $bets = $query->orderBy('settled_at', 'asc')->get();
-
-            $data = [];
-            $labels = [];
-            
+            $data = [0];
+            $labels = ['Bắt đầu'];
             $cumulativeProfit = 0;
-            
-            $data[] = 0;
-            $labels[] = 'Bắt đầu';
 
             foreach ($bets as $bet) {
                 $net = $bet->net_result ?? (($bet->gross_payout ?? 0) - $bet->stake);
@@ -63,20 +54,17 @@ class PlayerProfitChartWidget extends ChartWidget
                 $labels[] = $bet->settled_at->timezone('Asia/Ho_Chi_Minh')->format('d/m H:i');
             }
 
-            return [
-                'data' => $data,
-                'labels' => $labels,
-            ];
+            return ['data' => $data, 'labels' => $labels];
         });
 
         return [
             'datasets' => [
                 [
-                    'label' => 'Lãi Ròng (Lá)',
-                    'data' => $chartData['data'],
-                    'borderColor' => '#f59e0b',
+                    'label'           => 'Lãi Ròng (Lá)',
+                    'data'            => $chartData['data'],
+                    'borderColor'     => '#f59e0b',
                     'backgroundColor' => 'rgba(245, 158, 11, 0.2)',
-                    'fill' => true,
+                    'fill'            => true,
                 ],
             ],
             'labels' => $chartData['labels'],

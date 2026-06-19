@@ -60,17 +60,21 @@
                     <h3 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider flex items-center gap-2">
                         <x-filament::icon icon="heroicon-o-arrow-path" class="w-4 h-4 text-emerald-500" />
                         Dòng lá lưu hành
+                        @php
+                            $periodOptions = \App\Support\DatePeriodFilter::options();
+                            $periodLabel = $periodOptions[$flowPeriod] ?? 'Toàn mùa';
+                        @endphp
+                        <span class="text-xs font-normal text-gray-400 normal-case tracking-normal">
+                            ({{ $periodLabel }})
+                        </span>
                     </h3>
-                    <div class="flex gap-1.5">
-                        @foreach(['7' => '7 ngày', '30' => '30 ngày', 'all' => 'Toàn mùa'] as $val => $lbl)
-                            <button
-                                wire:click="$set('flowPeriod', '{{ $val }}')"
-                                class="text-xs px-3 py-1 rounded-full border transition-all duration-200
-                                    {{ $flowPeriod === $val
-                                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm font-semibold'
-                                        : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700' }}"
-                            >{{ $lbl }}</button>
-                        @endforeach
+                    <div>
+                        <select wire:model.live="flowPeriod"
+                                class="text-xs py-1.5 px-3 rounded-xl border border-gray-200 bg-white text-gray-700 shadow-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200 transition-all duration-200">
+                            @foreach($periodOptions as $val => $lbl)
+                                <option value="{{ $val }}" {{ $flowPeriod === $val ? 'selected' : '' }}>{{ $lbl }}</option>
+                            @endforeach
+                        </select>
                     </div>
                 </div>
 
@@ -136,8 +140,12 @@
                     <h3 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider flex items-center gap-2">
                         <x-filament::icon icon="heroicon-o-table-cells" class="w-4 h-4 text-blue-500" />
                         Bảng đối soát kế toán
+                        @php
+                            $periodOptions = \App\Support\DatePeriodFilter::options();
+                            $periodLabel = $periodOptions[$flowPeriod] ?? 'Toàn mùa';
+                        @endphp
                         <span class="text-xs font-normal text-gray-400 normal-case tracking-normal">
-                            ({{ match($flowPeriod) { '7' => '7 ngày qua', '30' => '30 ngày qua', default => 'Toàn mùa giải' } }})
+                            ({{ $periodLabel }})
                         </span>
                     </h3>
                     <button

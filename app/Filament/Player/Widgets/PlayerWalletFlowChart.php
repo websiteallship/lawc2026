@@ -2,9 +2,10 @@
 
 namespace App\Filament\Player\Widgets;
 
-use App\Models\WalletLedger;
 use App\Models\Season;
 use App\Models\Wallet;
+use App\Models\WalletLedger;
+use App\Support\DatePeriodFilter;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -20,23 +21,18 @@ class PlayerWalletFlowChart extends ApexChartWidget
 
     protected int|string|array $columnSpan = 'full';
 
-    public ?string $filter = '7';
+    public ?string $filter = '30';
 
     protected function getFilters(): ?array
     {
-        return [
-            '7'  => '7 ngày qua',
-            '30' => '30 ngày qua',
-        ];
+        return DatePeriodFilter::options();
     }
 
     protected function getOptions(): array
     {
         $user = Auth::user();
-        $days = (int) ($this->filter ?? 7);
-        $startDate = now()->subDays($days - 1)->startOfDay();
-
         $activeSeason = Season::where('status', 'active')->first();
+
         if (! $activeSeason) {
             return $this->emptyChartOptions();
         }
@@ -49,8 +45,12 @@ class PlayerWalletFlowChart extends ApexChartWidget
             return $this->emptyChartOptions();
         }
 
+        $seasonStart = Carbon::parse($activeSeason->created_at);
+        [$start, $end, $days] = DatePeriodFilter::resolve($this->filter, $seasonStart);
+
         $data = WalletLedger::where('wallet_id', $wallet->id)
-            ->where('created_at', '>=', $startDate)
+            ->where('created_at', '>=', $start)
+            ->where('created_at', '<=', $end)
             ->select(
                 DB::raw('date(created_at) as date'),
                 DB::raw('SUM(CASE WHEN amount_available > 0 THEN amount_available ELSE 0 END) as received'),
@@ -67,13 +67,13 @@ class PlayerWalletFlowChart extends ApexChartWidget
         $cumulative = [];
         $running = 0;
 
-        for ($i = $days - 1; $i >= 0; $i--) {
-            $date = now()->subDays($i)->format('Y-m-d');
-            $row = $data->get($date);
+        foreach (DatePeriodFilter::dateRange($start, $end) as $date) {
+            $key = $date->format('Y-m-d');
+            $row = $data->get($key);
 
-            $labels[] = Carbon::parse($date)->setTimezone('Asia/Ho_Chi_Minh')->format('d/m');
-            $r = (int) ($row->received ?? 0);
-            $s = (int) ($row->spent ?? 0);
+            $labels[] = $date->format('d/m');
+            $r = (int) ($row?->received ?? 0);
+            $s = (int) ($row?->spent ?? 0);
             $received[] = $r;
             $spent[] = $s;
             $running += ($r - $s);
@@ -88,59 +88,29 @@ class PlayerWalletFlowChart extends ApexChartWidget
                 'stacked' => false,
             ],
             'series' => [
-                [
-                    'name' => 'Nhận vào (Lá)',
-                    'type' => 'bar',
-                    'data' => $received,
-                ],
-                [
-                    'name' => 'Chi ra (Lá)',
-                    'type' => 'bar',
-                    'data' => array_map(fn ($v) => -$v, $spent),
-                ],
-                [
-                    'name' => 'Ròng tích lũy',
-                    'type' => 'line',
-                    'data' => $cumulative,
-                ],
+                ['name' => 'Nhận vào (Lá)', 'type' => 'bar',  'data' => $received],
+                ['name' => 'Chi ra (Lá)',   'type' => 'bar',  'data' => array_map(fn ($v) => -$v, $spent)],
+                ['name' => 'Ròng tích lũy', 'type' => 'line', 'data' => $cumulative],
             ],
-            'stroke' => [
-                'width' => [0, 0, 3],
-                'curve' => 'smooth',
-            ],
-            'xaxis' => [
+            'stroke' => ['width' => [0, 0, 3], 'curve' => 'smooth'],
+            'xaxis'  => [
                 'categories' => $labels,
-                'labels'     => [
-                    'style' => ['fontFamily' => 'inherit', 'fontSize' => '11px'],
+                'labels' => [
+                    'rotate'    => -45,
+                    'style'     => ['fontFamily' => 'inherit', 'fontSize' => '11px'],
+                    'maxHeight' => 70,
                 ],
+                'tickAmount' => min(count($labels), 30),
             ],
             'yaxis' => [
-                [
-                    'title'  => ['text' => 'Lá/ngày'],
-                    'labels' => ['style' => ['fontFamily' => 'inherit']],
-                ],
-                [
-                    'opposite' => true,
-                    'title'    => ['text' => 'Tích lũy'],
-                    'labels'   => ['style' => ['fontFamily' => 'inherit']],
-                ],
+                ['title' => ['text' => 'Lá/ngày'], 'labels' => ['style' => ['fontFamily' => 'inherit']]],
+                ['opposite' => true, 'title' => ['text' => 'Tích lũy'], 'labels' => ['style' => ['fontFamily' => 'inherit']]],
             ],
-            'plotOptions' => [
-                'bar' => [
-                    'borderRadius'    => 4,
-                    'columnWidth'     => '60%',
-                ],
-            ],
-            'colors'     => ['#10b981', '#ef4444', '#f59e0b'],
-            'dataLabels' => ['enabled' => false],
-            'legend'     => ['position' => 'top'],
-            'tooltip'    => [
-                'shared'    => true,
-                'intersect' => false,
-                'y' => [
-                    'formatter' => 'function(val) { return Math.abs(val).toLocaleString() + " lá"; }',
-                ],
-            ],
+            'plotOptions' => ['bar' => ['borderRadius' => 4, 'columnWidth' => '60%']],
+            'colors'      => ['#10b981', '#ef4444', '#f59e0b'],
+            'dataLabels'  => ['enabled' => false],
+            'legend'      => ['position' => 'top'],
+            'tooltip'     => ['shared' => true, 'intersect' => false],
         ];
     }
 
