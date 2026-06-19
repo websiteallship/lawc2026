@@ -164,7 +164,7 @@ class AchievementsPage extends Page
             'LV1_APPRENTICE' => ['current' => $totalBets, 'target' => 1],
             'LV2_LUCKY_HUNTER' => ['current' => $totalWins, 'target' => 5],
             'LV3_DECODER' => ['current' => $exactScoreWins, 'target' => 1],
-            'LV4_EXPERT' => ['current' => $winStreak, 'target' => 3],
+            'LV4_EXPERT' => ['current' => $longestWinStreak, 'target' => 3],
             'LV5_PROPHET' => ['current' => $totalWins, 'target' => 20], // UI can also show "3/3 loại kèo"
             'LV6_FUTURE_ENVOY' => ['current' => $totalWins, 'target' => 50],
             'LV7_LORD_OF_DESTINY' => ['current' => $exactScoreWins, 'target' => 5],
@@ -172,7 +172,7 @@ class AchievementsPage extends Page
             'LV9_OMNISCIENT' => ['current' => $totalWins, 'target' => 100],
             
             // Side quests
-            'WIN_STREAK_3' => ['current' => $winStreak, 'target' => 3],
+            'WIN_STREAK_3' => ['current' => $longestWinStreak, 'target' => 3],
             // WIN_STREAK_5/10: dùng longest streak để progress không bị reset về 0 khi thua
             'WIN_STREAK_5'  => ['current' => $longestWinStreak, 'target' => 5],
             'WIN_STREAK_10' => ['current' => $longestWinStreak, 'target' => 10],
