@@ -211,8 +211,10 @@ class LeaderboardPage extends Page
                 ->get();
 
             $weeklyRate = $totalWeeklyActive > 0 ? round(($entry->weekly_missions / $totalWeeklyActive) * 100) : 0;
-            // perfect_weeks placeholder, db chưa có
-            $perfectWeeks = $entry->perfect_weeks ?? 0;
+            
+            // perfect_weeks placeholder: nếu chưa có trong DB nhưng tuần này đã 100% thì tính là 1
+            $dbPerfectWeeks = $entry->perfect_weeks ?? 0;
+            $perfectWeeks = $dbPerfectWeeks + ($weeklyRate >= 100 ? 1 : 0);
 
             return [
                 'rank'             => $index + 1,
