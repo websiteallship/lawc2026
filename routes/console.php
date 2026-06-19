@@ -64,8 +64,8 @@ if ($apiSettings?->is_rapidapi_auto_sync_enabled ?? false) {
 }
 
 // ===================== BACKUP =====================
-// Backup DB hằng ngày lúc 2:00 AM (giờ VN)
-Schedule::command('backup:run --only-db')->dailyAt('02:00');
+// Backup DB 2 lần/ngày: 02:00 và 14:00 (giờ VN = UTC+7, server UTC thì 19:00 và 07:00 UTC)
+Schedule::command('backup:run --only-db')->twiceDaily(2, 14);
 
 // Dọn backup cũ mỗi tuần (giữ theo strategy trong config/backup.php)
 Schedule::command('backup:clean')->weekly();
