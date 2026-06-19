@@ -4,7 +4,6 @@ namespace App\Filament\Player\Pages;
 
 use App\Models\Bet;
 use App\Models\Season;
-use App\Models\Wallet;
 use Filament\Pages\Page;
 
 class LeaderboardPage extends Page
@@ -25,6 +24,12 @@ class LeaderboardPage extends Page
     public function updatedActiveTab(): void { $this->loadRankings(); }
     public function mount(): void { $this->loadRankings(); }
 
+    /** Các tab betting dùng net_profit/roi */
+    private function isBettingTab(): bool
+    {
+        return in_array($this->activeTab, ['season', 'week', 'round', 'roi', 'exact_score']);
+    }
+
     public function loadRankings(): void
     {
         $activeSeason = Season::where('status', 'active')->first();
@@ -37,11 +42,32 @@ class LeaderboardPage extends Page
 
         $userIds = $users->pluck('id')->toArray();
 
-        // Season-wide stats từ UserStatistic
+        // ── Season-wide stats ────────────────────────────────────────────────
         $userStats = \App\Models\UserStatistic::whereIn('user_id', $userIds)
             ->get()->keyBy('user_id');
 
-        // Runtime stats cho tab Tuần và Vòng đấu
+        // ── Achievement stats (level + badge count) ─────────────────────────
+        // Tính trong một query: count danh hiệu và level cao nhất mỗi user
+        $achievementRows = \App\Models\UserAchievement::join('achievements', 'user_achievements.achievement_id', '=', 'achievements.id')
+            ->whereIn('user_achievements.user_id', $userIds)
+            ->selectRaw('user_achievements.user_id, COUNT(*) as badge_count, MAX(achievements.level) as max_level')
+            ->groupBy('user_achievements.user_id')
+            ->get()->keyBy('user_id');
+
+        // ── Mission stats ─────────────────────────────────────────────────────
+        // Lấy các nhiệm vụ theo type để tính count
+        $missionRows = \App\Models\UserMission::join('missions', 'user_missions.mission_id', '=', 'missions.id')
+            ->whereIn('user_missions.user_id', $userIds)
+            ->where('user_missions.is_completed', true)
+            ->selectRaw("
+                user_missions.user_id,
+                COUNT(*) as total_missions,
+                SUM(CASE WHEN missions.type = 'weekly' THEN 1 ELSE 0 END) as weekly_missions
+            ")
+            ->groupBy('user_missions.user_id')
+            ->get()->keyBy('user_id');
+
+        // ── Runtime stats cho tab Tuần và Vòng đấu ──────────────────────────
         $runtimeStats = [];
         if (in_array($this->activeTab, ['week', 'round'])) {
             $since = $this->activeTab === 'week'
@@ -53,25 +79,30 @@ class LeaderboardPage extends Page
                 ->whereNotNull('settled_at')
                 ->where('settled_at', '>=', $since)
                 ->where('season_id', $activeSeason->id)
-                ->get()
-                ->groupBy('user_id');
+                ->get()->groupBy('user_id');
 
             foreach ($userIds as $uid) {
                 $ub = $bets->get($uid, collect());
                 $runtimeStats[$uid] = [
                     'netProfit'   => $ub->sum('net_result'),
                     'totalStaked' => $ub->sum('stake'),
-                    'wonBets'     => $ub->filter(fn($b) => in_array($b->status instanceof \UnitEnum ? $b->status->value : $b->status, ['WON', 'HALF_WON']))->count(),
+                    'wonBets'     => $ub->filter(fn($b) => in_array(
+                        $b->status instanceof \UnitEnum ? $b->status->value : $b->status,
+                        ['WON', 'HALF_WON']
+                    ))->count(),
                     'settledBets' => $ub->count(),
                 ];
             }
         }
 
-        // Build entries
-        $entries = $users->map(function ($user) use ($userStats, $runtimeStats) {
+        // ── Build entries ────────────────────────────────────────────────────
+        $entries = $users->map(function ($user) use ($userStats, $runtimeStats, $achievementRows, $missionRows) {
             $wallet = $user->wallets->first();
             $stats  = $userStats->get($user->id);
+            $achRow = $achievementRows->get($user->id);
+            $msRow  = $missionRows->get($user->id);
 
+            // Stats betting
             if (in_array($this->activeTab, ['week', 'round'])) {
                 $rt          = $runtimeStats[$user->id] ?? [];
                 $netProfit   = $rt['netProfit'] ?? 0;
@@ -90,39 +121,64 @@ class LeaderboardPage extends Page
             $winRate = $settledBets > 0 ? round($wonBets / $settledBets * 100, 1) : 0;
             $roi     = $totalStaked > 0 ? round($netProfit / $totalStaked * 100, 1) : null;
 
+            // Stats achievement/mission
+            $badgeCount    = $achRow ? (int) $achRow->badge_count : 0;
+            $maxLevel      = $achRow ? (int) $achRow->max_level : 0;
+            $totalMissions = $msRow  ? (int) $msRow->total_missions : 0;
+            $weeklyMissions= $msRow  ? (int) $msRow->weekly_missions : 0;
+
             return (object) [
-                'user_id'         => $user->id,
-                'user'            => $user,
-                'available'       => $wallet ? $wallet->available_balance : 0,
-                'net_profit'      => $netProfit,
-                'total_staked'    => $totalStaked,
-                'roi'             => $roi,
-                'win_rate'        => $winRate,
-                'bets_count'      => $settledBets,
-                'exact_score_wins'=> $exactScoreWins,
-                'settled_bets'    => $settledBets,
+                'user_id'          => $user->id,
+                'user'             => $user,
+                'available'        => $wallet ? $wallet->available_balance : 0,
+                'net_profit'       => $netProfit,
+                'total_staked'     => $totalStaked,
+                'roi'              => $roi,
+                'win_rate'         => $winRate,
+                'bets_count'       => $settledBets,
+                'exact_score_wins' => $exactScoreWins,
+                'settled_bets'     => $settledBets,
+                'badge_count'      => $badgeCount,
+                'max_level'        => $maxLevel,
+                'total_missions'   => $totalMissions,
+                'weekly_missions'  => $weeklyMissions,
             ];
         });
 
-        // Sort và filter theo tab
+        // ── Sort & filter theo tab ───────────────────────────────────────────
         $entries = match($this->activeTab) {
-            'roi'         => $entries
+            'roi'             => $entries
                 ->filter(fn($e) => $e->settled_bets >= 5)
                 ->sortByDesc(fn($e) => $e->roi ?? -999),
-            'exact_score' => $entries
-                ->sortBy([
-                    ['exact_score_wins', 'desc'],
-                    ['net_profit', 'desc'],
-                ]),
-            default       => $entries
-                ->sortBy([
-                    ['net_profit', 'desc'],
-                    ['available', 'desc'],
-                ]),
+            'exact_score'     => $entries->sortBy([
+                                    ['exact_score_wins', 'desc'],
+                                    ['net_profit', 'desc'],
+                                ]),
+            'weekly_missions' => $entries->sortBy([
+                                    ['weekly_missions', 'desc'],
+                                    ['total_missions', 'desc'],
+                                ]),
+            'all_missions'    => $entries->sortBy([
+                                    ['total_missions', 'desc'],
+                                    ['weekly_missions', 'desc'],
+                                ]),
+            'level'           => $entries->sortBy([
+                                    ['max_level', 'desc'],
+                                    ['badge_count', 'desc'],
+                                ]),
+            'badges'          => $entries->sortBy([
+                                    ['badge_count', 'desc'],
+                                    ['max_level', 'desc'],
+                                ]),
+            default           => $entries->sortBy([
+                                    ['net_profit', 'desc'],
+                                    ['available', 'desc'],
+                                ]),
         };
 
         $entries = $entries->take(50)->values();
 
+        // ── Avatar & achievements ─────────────────────────────────────────────
         $animals = [
             ['name' => 'Hươu cao cổ', 'icon' => '🦒'], ['name' => 'Voi', 'icon' => '🐘'],
             ['name' => 'Ngựa vằn', 'icon' => '🦓'], ['name' => 'Bò sữa', 'icon' => '🐄'],
@@ -154,7 +210,6 @@ class LeaderboardPage extends Page
                 ->join('achievements', 'user_achievements.achievement_id', '=', 'achievements.id')
                 ->select('achievements.*')
                 ->get();
-            $mainLevel = $userAchievements->whereNotNull('level')->max('level') ?: 0;
 
             return [
                 'rank'             => $index + 1,
@@ -166,7 +221,10 @@ class LeaderboardPage extends Page
                 'bets_count'       => $entry->bets_count,
                 'exact_score_wins' => $entry->exact_score_wins,
                 'available'        => $entry->available,
-                'level'            => $mainLevel,
+                'level'            => $entry->max_level,
+                'badge_count'      => $entry->badge_count,
+                'total_missions'   => $entry->total_missions,
+                'weekly_missions'  => $entry->weekly_missions,
                 'achievements'     => $userAchievements->map(fn($ach) => [
                     'name'        => $ach->name,
                     'description' => $ach->description,

@@ -1,40 +1,32 @@
 <x-filament-panels::page>
     <div class="space-y-4" x-data="{ openModal: null }">
         <x-filament::tabs label="Leaderboard Tabs">
-            <x-filament::tabs.item
-                wire:click="$set('activeTab', 'season')"
-                :active="$activeTab === 'season'"
-                icon="heroicon-o-trophy"
-            >
+            <x-filament::tabs.item wire:click="$set('activeTab', 'season')" :active="$activeTab === 'season'" icon="heroicon-o-trophy">
                 Mùa giải
             </x-filament::tabs.item>
-            <x-filament::tabs.item
-                wire:click="$set('activeTab', 'week')"
-                :active="$activeTab === 'week'"
-                icon="heroicon-o-calendar"
-            >
+            <x-filament::tabs.item wire:click="$set('activeTab', 'week')" :active="$activeTab === 'week'" icon="heroicon-o-calendar">
                 Tuần
             </x-filament::tabs.item>
-            <x-filament::tabs.item
-                wire:click="$set('activeTab', 'round')"
-                :active="$activeTab === 'round'"
-                icon="heroicon-o-flag"
-            >
+            <x-filament::tabs.item wire:click="$set('activeTab', 'round')" :active="$activeTab === 'round'" icon="heroicon-o-flag">
                 Vòng đấu
             </x-filament::tabs.item>
-            <x-filament::tabs.item
-                wire:click="$set('activeTab', 'roi')"
-                :active="$activeTab === 'roi'"
-                icon="heroicon-o-chart-pie"
-            >
+            <x-filament::tabs.item wire:click="$set('activeTab', 'roi')" :active="$activeTab === 'roi'" icon="heroicon-o-chart-pie">
                 ROI (Top)
             </x-filament::tabs.item>
-            <x-filament::tabs.item
-                wire:click="$set('activeTab', 'exact_score')"
-                :active="$activeTab === 'exact_score'"
-                icon="heroicon-o-bolt"
-            >
+            <x-filament::tabs.item wire:click="$set('activeTab', 'exact_score')" :active="$activeTab === 'exact_score'" icon="heroicon-o-bolt">
                 Cao thủ Tỉ số
+            </x-filament::tabs.item>
+            <x-filament::tabs.item wire:click="$set('activeTab', 'weekly_missions')" :active="$activeTab === 'weekly_missions'" icon="heroicon-o-star">
+                NV Tuần
+            </x-filament::tabs.item>
+            <x-filament::tabs.item wire:click="$set('activeTab', 'all_missions')" :active="$activeTab === 'all_missions'" icon="heroicon-o-check-badge">
+                NV Tổng
+            </x-filament::tabs.item>
+            <x-filament::tabs.item wire:click="$set('activeTab', 'level')" :active="$activeTab === 'level'" icon="heroicon-o-arrow-trending-up">
+                Level
+            </x-filament::tabs.item>
+            <x-filament::tabs.item wire:click="$set('activeTab', 'badges')" :active="$activeTab === 'badges'" icon="heroicon-o-shield-check">
+                Danh hiệu
             </x-filament::tabs.item>
         </x-filament::tabs>
 
@@ -46,15 +38,30 @@
                     <table class="w-full text-sm">
                         <thead>
                             <tr class="text-left text-gray-500 border-b border-gray-200 dark:border-gray-700">
+                                @php $isBetting = in_array($activeTab, ['season','week','round','roi','exact_score']); @endphp
                                 <th class="py-2 pr-4">#</th>
                                 <th class="py-2 pr-4">Người chơi</th>
-                                <th class="py-2 pr-4 text-right">Lãi/lỗ</th>
-                                <th class="py-2 pr-4 text-right">ROI</th>
-                                <th class="py-2 pr-4 text-right">Win%</th>
-                                @if($activeTab === 'exact_score')
-                                <th class="py-2 pr-4 text-right">Tỉ số đúng</th>
+                                @if($isBetting)
+                                    <th class="py-2 pr-4 text-right">Lãi/lỗ</th>
+                                    <th class="py-2 pr-4 text-right">ROI</th>
+                                    <th class="py-2 pr-4 text-right">Win%</th>
+                                    @if($activeTab === 'exact_score')
+                                    <th class="py-2 pr-4 text-right">Tỉ số đúng</th>
+                                    @endif
+                                    <th class="py-2 text-right">Phiếu</th>
+                                @elseif($activeTab === 'weekly_missions')
+                                    <th class="py-2 pr-4 text-right">NV Tuần</th>
+                                    <th class="py-2 text-right">NV Tổng</th>
+                                @elseif($activeTab === 'all_missions')
+                                    <th class="py-2 pr-4 text-right">NV Tổng</th>
+                                    <th class="py-2 text-right">NV Tuần</th>
+                                @elseif($activeTab === 'level')
+                                    <th class="py-2 pr-4 text-right">Level</th>
+                                    <th class="py-2 text-right">Danh hiệu</th>
+                                @elseif($activeTab === 'badges')
+                                    <th class="py-2 pr-4 text-right">Danh hiệu</th>
+                                    <th class="py-2 text-right">Level</th>
                                 @endif
-                                <th class="py-2 text-right">Phiếu</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -77,23 +84,35 @@
                                             </span>
                                         </div>
                                     </td>
-                                    <td class="py-3 pr-4 text-right {{ $row['net_profit'] >= 0 ? 'text-emerald-600' : 'text-red-500' }}">
-                                        {{ $row['net_profit'] >= 0 ? '+' : '' }}{{ number_format($row['net_profit']) }}
-                                    </td>
-                                    <td class="py-3 pr-4 text-right text-gray-600 dark:text-gray-300">
-                                        {{ $row['roi'] !== null ? $row['roi'].'%' : '—' }}
-                                    </td>
-                                    <td class="py-3 pr-4 text-right text-gray-600 dark:text-gray-300">
-                                        {{ $row['win_rate'] }}%
-                                    </td>
-                                    @if($activeTab === 'exact_score')
-                                    <td class="py-3 pr-4 text-right text-amber-600 font-semibold">
-                                        {{ $row['exact_score_wins'] }}
-                                    </td>
+                                    @if($isBetting)
+                                        <td class="py-3 pr-4 text-right {{ $row['net_profit'] >= 0 ? 'text-emerald-600' : 'text-red-500' }}">
+                                            {{ $row['net_profit'] >= 0 ? '+' : '' }}{{ number_format($row['net_profit']) }}
+                                        </td>
+                                        <td class="py-3 pr-4 text-right text-gray-600 dark:text-gray-300">
+                                            {{ $row['roi'] !== null ? $row['roi'].'%' : '—' }}
+                                        </td>
+                                        <td class="py-3 pr-4 text-right text-gray-600 dark:text-gray-300">
+                                            {{ $row['win_rate'] }}%
+                                        </td>
+                                        @if($activeTab === 'exact_score')
+                                        <td class="py-3 pr-4 text-right text-amber-600 font-semibold">
+                                            {{ $row['exact_score_wins'] }}
+                                        </td>
+                                        @endif
+                                        <td class="py-3 text-right text-gray-500">{{ $row['bets_count'] }}</td>
+                                    @elseif($activeTab === 'weekly_missions')
+                                        <td class="py-3 pr-4 text-right text-primary-600 font-semibold">{{ $row['weekly_missions'] }}</td>
+                                        <td class="py-3 text-right text-gray-500">{{ $row['total_missions'] }}</td>
+                                    @elseif($activeTab === 'all_missions')
+                                        <td class="py-3 pr-4 text-right text-primary-600 font-semibold">{{ $row['total_missions'] }}</td>
+                                        <td class="py-3 text-right text-gray-500">{{ $row['weekly_missions'] }}</td>
+                                    @elseif($activeTab === 'level')
+                                        <td class="py-3 pr-4 text-right text-amber-600 font-bold text-lg">LV {{ $row['level'] }}</td>
+                                        <td class="py-3 text-right text-gray-500">{{ $row['badge_count'] }}</td>
+                                    @elseif($activeTab === 'badges')
+                                        <td class="py-3 pr-4 text-right text-indigo-600 font-semibold">{{ $row['badge_count'] }}</td>
+                                        <td class="py-3 text-right text-amber-600 font-bold">LV {{ $row['level'] }}</td>
                                     @endif
-                                    <td class="py-3 text-right text-gray-500">
-                                        {{ $row['bets_count'] }}
-                                    </td>
                                 </tr>
 
 
@@ -248,6 +267,10 @@
                     @elseif($activeTab === 'round') * Lãi/lỗ tính trong 7 ngày gần nhất.
                     @elseif($activeTab === 'roi') * Chỉ hiển thị người chơi có ≥5 phiếu đã settle. ROI = lãi ròng / tổng cược.
                     @elseif($activeTab === 'exact_score') * Xếp theo số lần dự đoán tỉ số chính xác.
+                    @elseif($activeTab === 'weekly_missions') * Xếp theo số nhiệm vụ tuần đã hoàn thành.
+                    @elseif($activeTab === 'all_missions') * Xếp theo tổng nhiệm vụ đã hoàn thành (daily + weekly + season).
+                    @elseif($activeTab === 'level') * Xếp theo Level cao nhất đạt được từ danh hiệu chính.
+                    @elseif($activeTab === 'badges') * Xếp theo tổng số danh hiệu đạt được (chính + phụ).
                     @endif
                 </p>
             @endif
