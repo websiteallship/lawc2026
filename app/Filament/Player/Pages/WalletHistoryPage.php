@@ -91,7 +91,7 @@ class WalletHistoryPage extends Page
             $query->where('type', $this->filterType);
         }
 
-        return $query->paginate(20);
+        return $query->paginate(10);
     }
 
     public function getLedgerTypeOptions(): array
