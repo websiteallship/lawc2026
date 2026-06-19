@@ -16,10 +16,10 @@ class PlayerCombinedStatsWidget extends BaseWidget
 
     protected int|array|null $columns = [
         'default' => 2,
-        'sm' => 2,
-        'md' => 3,
-        'lg' => 3,
-        'xl' => 3,
+        'sm'      => 2,
+        'md'      => 4,
+        'lg'      => 4,
+        'xl'      => 4,
     ];
 
     protected function getStats(): array
@@ -47,10 +47,13 @@ class PlayerCombinedStatsWidget extends BaseWidget
 
             // 3. User Statistics (Win Rate, ROI, Streak, Net Profit)
             $stats = UserStatistic::where('user_id', $user->id)->first();
-            $netProfit = $stats ? $stats->net_profit : 0;
-            $winRate = $stats ? $stats->win_rate : 0;
-            $roi = $stats ? $stats->roi : 0;
+            $netProfit    = $stats ? $stats->net_profit : 0;
+            $winRate      = $stats ? $stats->win_rate : 0;
+            $roi          = $stats ? $stats->roi : 0;
             $currentStreak = $stats ? $stats->current_win_streak : 0;
+            $totalPayout  = $stats ? $stats->total_payout : 0;    // tổng lá nhận về từ các vé thắng/hòa
+            $totalStaked  = $stats ? $stats->total_staked : 0;    // tổng lá đã đặt (chỉ settled)
+            $totalLost    = max(0, $totalStaked - $totalPayout);   // tổng lá bị mất
 
             return [
                 Stat::make('Lá khả dụng', new \Illuminate\Support\HtmlString("<span class='!text-lg sm:!text-xl md:!text-3xl font-semibold block truncate'>" . number_format($available) . " lá</span>"))
@@ -67,6 +70,16 @@ class PlayerCombinedStatsWidget extends BaseWidget
                     ->description('Lãi/lỗ mùa giải này')
                     ->descriptionIcon('heroicon-m-banknotes')
                     ->color($netProfit !== null && $netProfit >= 0 ? 'success' : 'danger'),
+
+                Stat::make('Tổng lá thắng về', new \Illuminate\Support\HtmlString("<span class='!text-lg sm:!text-xl md:!text-3xl font-semibold block truncate'>" . number_format($totalPayout) . " lá</span>"))
+                    ->description('Tổng payout từ các vé đã settle')
+                    ->descriptionIcon('heroicon-m-arrow-trending-up')
+                    ->color('success'),
+
+                Stat::make('Tổng lá đã mất', new \Illuminate\Support\HtmlString("<span class='!text-lg sm:!text-xl md:!text-3xl font-semibold block truncate'>" . number_format($totalLost) . " lá</span>"))
+                    ->description('Cược - payout (vé thua/nửa thua)')
+                    ->descriptionIcon('heroicon-m-arrow-trending-down')
+                    ->color($totalLost > 0 ? 'danger' : 'gray'),
                     
                 Stat::make('Tỉ lệ thắng (Win Rate)', new \Illuminate\Support\HtmlString("<span class='!text-lg sm:!text-xl md:!text-3xl font-semibold block truncate'>" . number_format($winRate, 2) . "%</span>"))
                     ->description('Vé thắng / vé đã đóng')

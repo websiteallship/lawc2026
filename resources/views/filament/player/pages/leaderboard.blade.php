@@ -51,6 +51,9 @@
                                 <th class="py-2 pr-4 text-right">Lãi/lỗ</th>
                                 <th class="py-2 pr-4 text-right">ROI</th>
                                 <th class="py-2 pr-4 text-right">Win%</th>
+                                @if($activeTab === 'exact_score')
+                                <th class="py-2 pr-4 text-right">Tỉ số đúng</th>
+                                @endif
                                 <th class="py-2 text-right">Phiếu</th>
                             </tr>
                         </thead>
@@ -74,8 +77,7 @@
                                             </span>
                                         </div>
                                     </td>
-                                    <td class="py-3 pr-4 text-right
-                                        {{ $row['net_profit'] >= 0 ? 'text-emerald-600' : 'text-red-500' }}">
+                                    <td class="py-3 pr-4 text-right {{ $row['net_profit'] >= 0 ? 'text-emerald-600' : 'text-red-500' }}">
                                         {{ $row['net_profit'] >= 0 ? '+' : '' }}{{ number_format($row['net_profit']) }}
                                     </td>
                                     <td class="py-3 pr-4 text-right text-gray-600 dark:text-gray-300">
@@ -84,10 +86,16 @@
                                     <td class="py-3 pr-4 text-right text-gray-600 dark:text-gray-300">
                                         {{ $row['win_rate'] }}%
                                     </td>
+                                    @if($activeTab === 'exact_score')
+                                    <td class="py-3 pr-4 text-right text-amber-600 font-semibold">
+                                        {{ $row['exact_score_wins'] }}
+                                    </td>
+                                    @endif
                                     <td class="py-3 text-right text-gray-500">
                                         {{ $row['bets_count'] }}
                                     </td>
                                 </tr>
+
 
                                 <!-- Alpine Modal for this specific user -->
                                 <template x-teleport="body">
@@ -235,7 +243,12 @@
                     </table>
                 </div>
                 <p class="text-xs text-gray-400 mt-3 text-center">
-                    * ROI và Win% tính trên tất cả phiếu đã settle.
+                    @if($activeTab === 'season') * Xếp theo lãi/lỗ tích lũy toàn bộ mùa giải.
+                    @elseif($activeTab === 'week') * Lãi/lỗ tính từ đầu tuần hiện tại (Thứ 2 00:00 giờ VN).
+                    @elseif($activeTab === 'round') * Lãi/lỗ tính trong 7 ngày gần nhất.
+                    @elseif($activeTab === 'roi') * Chỉ hiển thị người chơi có ≥5 phiếu đã settle. ROI = lãi ròng / tổng cược.
+                    @elseif($activeTab === 'exact_score') * Xếp theo số lần dự đoán tỉ số chính xác.
+                    @endif
                 </p>
             @endif
         </x-filament::card>
