@@ -40,3 +40,66 @@ php artisan migrate:fresh --seed
 2. Truy cập hệ thống để chạy UAT:
 - **Admin Panel:** `http://localhost:8000/admin` (Tài khoản: admin@company.com / password)
 - **Player Portal:** `http://localhost:8000/player` (Tài khoản: player1@test.com / password)
+
+## 4. Deploy lên VPS Production
+
+**1. SSH vào máy chủ VPS**
+```bash
+ssh user@dia_chi_ip_vps
+cd /var/www/thu_muc_du_an  # Đường dẫn chứa source code
+```
+
+**2. Cập nhật Source Code**
+```bash
+# Kéo code mới nhất từ nhánh đang làm việc (hiện tại là fixuiux)
+git pull origin fixuiux
+```
+
+**3. Cập nhật Dependencies (Nếu có)**
+```bash
+# Cài đặt PHP packages (bỏ qua các package dev)
+composer install --no-dev --optimize-autoloader
+
+# Cài đặt Node modules & build (nếu có cập nhật frontend/tailwind)
+npm install
+npm run build
+```
+
+**4. Chạy Migration Database**
+```bash
+# --force là bắt buộc khi chạy trên môi trường production
+php artisan migrate --force
+```
+
+**5. Tối ưu hóa & Xóa Cache**
+```bash
+# Xóa toàn bộ cache rác
+php artisan optimize:clear
+
+# Re-cache lại toàn bộ hệ thống để tăng tốc độ load
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan event:cache
+
+# Cache riêng cho Filament Admin UI
+php artisan filament:cache-components
+php artisan icons:cache
+```
+
+**6. Khởi động lại các Process chạy ngầm**
+```bash
+# Cực kỳ quan trọng: Restart queue worker để code mới có tác dụng trong Jobs
+php artisan queue:restart
+
+# (Tùy chọn) Nếu sử dụng Supervisor quản lý queue
+sudo supervisorctl restart all
+```
+
+**7. Khởi động lại Web Server/PHP (Nếu cần)**
+```bash
+# Tuỳ theo version PHP đang dùng, ví dụ PHP 8.2 hoặc 8.3
+sudo systemctl restart php8.3-fpm
+# Nếu dùng Nginx
+sudo systemctl reload nginx
+```
