@@ -7,12 +7,16 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Livewire\WithPagination;
 
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 
 class DatabaseBackup extends Page
 {
     use HasPageShield;
+    use WithPagination;
+
     protected string $view = 'filament.pages.database-backup';
 
     public static function getNavigationIcon(): string|\BackedEnum|null
@@ -71,14 +75,26 @@ class DatabaseBackup extends Page
                                 $disk->putFileAs($backupName, new \Illuminate\Http\File($zipPath), $fileName);
                                 unlink($zipPath); // Clean up temp file
                                 
+                                $this->logManualBackup($fileName);
+                                
                                 Notification::make()->title('Sao lưu Database thành công')->success()->send();
                             } else {
                                 throw new \Exception('Không thể tạo file zip');
                             }
                         } else {
+                            $diskName = config('backup.backup.destination.disks')[0] ?? 'local';
+                            $disk = Storage::disk($diskName);
+                            $backupName = config('backup.backup.name');
+                            $filesBefore = $disk->exists($backupName) ? $disk->files($backupName) : [];
+
                             $exitCode = Artisan::call('backup:run', ['--only-db' => true]);
                             $output = Artisan::output();
                             if ($exitCode === 0) {
+                                $filesAfter = $disk->exists($backupName) ? $disk->files($backupName) : [];
+                                $newFiles = array_diff($filesAfter, $filesBefore);
+                                foreach ($newFiles as $newFile) {
+                                    $this->logManualBackup(basename($newFile));
+                                }
                                 Notification::make()->title('Sao lưu Database thành công')->success()->send();
                             } else {
                                 \Illuminate\Support\Facades\Log::error('Backup DB failed', ['exit' => $exitCode, 'output' => $output]);
@@ -96,11 +112,21 @@ class DatabaseBackup extends Page
                 ->requiresConfirmation()
                 ->action(function () {
                     try {
+                        $diskName = config('backup.backup.destination.disks')[0] ?? 'local';
+                        $disk = Storage::disk($diskName);
+                        $backupName = config('backup.backup.name');
+                        $filesBefore = $disk->exists($backupName) ? $disk->files($backupName) : [];
+
                         // Chỉ backup DB để tránh timeout khi zip toàn bộ project trên VPS
                         $exitCode = Artisan::call('backup:run', ['--only-db' => true]);
                         $output = Artisan::output();
 
                         if ($exitCode === 0) {
+                            $filesAfter = $disk->exists($backupName) ? $disk->files($backupName) : [];
+                            $newFiles = array_diff($filesAfter, $filesBefore);
+                            foreach ($newFiles as $newFile) {
+                                $this->logManualBackup(basename($newFile));
+                            }
                             Notification::make()->title('Sao lưu thành công (DB)')->success()->send();
                         } else {
                             \Illuminate\Support\Facades\Log::error('Backup full failed', [
@@ -140,7 +166,18 @@ class DatabaseBackup extends Page
         ];
     }
 
-    public function getBackupsProperty()
+    protected function logManualBackup($filename)
+    {
+        $disk = Storage::disk('local');
+        $manualBackups = [];
+        if ($disk->exists('manual_backups.json')) {
+            $manualBackups = json_decode($disk->get('manual_backups.json'), true) ?? [];
+        }
+        $manualBackups[] = $filename;
+        $disk->put('manual_backups.json', json_encode($manualBackups));
+    }
+
+    public function getAllBackupsProperty()
     {
         $diskName = config('backup.backup.destination.disks')[0] ?? 'local';
         $disk = Storage::disk($diskName);
@@ -151,19 +188,56 @@ class DatabaseBackup extends Page
         }
 
         $files = $disk->files($name);
+        
+        $manualBackups = [];
+        if (Storage::disk('local')->exists('manual_backups.json')) {
+            $manualBackups = json_decode(Storage::disk('local')->get('manual_backups.json'), true) ?? [];
+        }
 
         return collect($files)
             ->filter(fn ($file) => str_ends_with($file, '.zip'))
-            ->map(function ($file) use ($disk) {
+            ->map(function ($file) use ($disk, $manualBackups) {
+                $filename = basename($file);
+                $isManual = in_array($filename, $manualBackups);
+                $carbon = \Carbon\Carbon::createFromTimestamp($disk->lastModified($file));
+                
+                $formattedDate = $carbon->format('d') . ' Thg ' . (int)$carbon->format('m') . ', ' . $carbon->format('Y');
+                $formattedTime = $carbon->format('H:i:s');
+
                 return [
-                    'name' => basename($file),
+                    'name' => $filename,
                     'path' => $file,
                     'size' => round($disk->size($file) / 1024 / 1024, 2) . ' MB',
-                    'date' => \Carbon\Carbon::createFromTimestamp($disk->lastModified($file))->format('Y-m-d H:i:s'),
+                    'date_formatted' => $formattedDate,
+                    'time_formatted' => $formattedTime,
+                    'type' => $isManual ? 'Tạo thủ công bởi Admin' : 'Tạo tự động (Cronjob)',
+                    'raw_date' => $carbon->toDateTimeString(),
                 ];
             })
-            ->sortByDesc('date')
+            ->sortByDesc('raw_date')
             ->values();
+    }
+
+    public function getBackupsProperty()
+    {
+        $currentPage = method_exists($this, 'getPage') ? $this->getPage() : ($this->page ?? 1);
+        $perPage = 10;
+        
+        return $this->all_backups->slice(($currentPage - 1) * $perPage, $perPage)->values();
+    }
+
+    public function getBackupsPaginatorProperty()
+    {
+        $currentPage = method_exists($this, 'getPage') ? $this->getPage() : ($this->page ?? 1);
+        $perPage = 10;
+        
+        return new LengthAwarePaginator(
+            $this->backups,
+            $this->all_backups->count(),
+            $perPage,
+            $currentPage,
+            ['path' => LengthAwarePaginator::resolveCurrentPath()]
+        );
     }
 
     public function downloadBackup($path)
