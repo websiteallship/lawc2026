@@ -10,22 +10,22 @@
 
         <div class="mt-4 ring-1 ring-gray-950/5 dark:ring-white/10 rounded-xl overflow-hidden">
             <div class="overflow-x-auto">
-                <table class="min-w-full text-left divide-y divide-gray-200 dark:divide-white/5">
+                <table class="w-full text-left divide-y divide-gray-200 dark:divide-white/5" style="min-width: 100%;">
                     <thead class="bg-gray-50 dark:bg-white/5">
                         <tr>
-                            <th class="px-4 py-3.5 w-10">
+                            <th class="px-4 py-3.5" style="width: 2.5rem;">
                                 <x-filament::input.checkbox disabled />
                             </th>
-                            <th class="px-4 py-3.5 font-semibold text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap min-w-[16rem]">
+                            <th class="px-4 py-3.5 font-semibold text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400" style="min-width: 16rem; white-space: nowrap;">
                                 Tên bản sao lưu
                             </th>
-                            <th class="px-4 py-3.5 font-semibold text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap w-px">
+                            <th class="px-4 py-3.5 font-semibold text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400" style="width: 1px; white-space: nowrap;">
                                 Kích thước
                             </th>
-                            <th class="px-4 py-3.5 font-semibold text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap w-px">
+                            <th class="px-4 py-3.5 font-semibold text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400" style="width: 1px; white-space: nowrap;">
                                 Ngày tạo
                             </th>
-                            <th class="px-4 py-3.5 font-semibold text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap w-px text-right">
+                            <th class="px-4 py-3.5 font-semibold text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 text-right" style="width: 1px; white-space: nowrap;">
                                 Thao tác
                             </th>
                         </tr>
@@ -33,10 +33,10 @@
                     <tbody class="divide-y divide-gray-200 dark:divide-white/5 bg-white dark:bg-gray-900">
                         @forelse($this->backups as $backup)
                             <tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition duration-75">
-                                <td class="px-4 py-4 w-10">
+                                <td class="px-4 py-4" style="width: 2.5rem;">
                                     <x-filament::input.checkbox disabled />
                                 </td>
-                                <td class="px-4 py-4 min-w-[16rem]">
+                                <td class="px-4 py-4" style="min-width: 16rem;">
                                     <div class="flex items-center gap-x-3">
                                         @if($backup['type'] === 'Tạo thủ công bởi Admin')
                                             <div class="flex items-center justify-center h-9 w-9 rounded-lg bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 shrink-0">
@@ -57,12 +57,12 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-4 py-4 whitespace-nowrap w-px">
+                                <td class="px-4 py-4" style="width: 1px; white-space: nowrap;">
                                     <x-filament::badge color="gray">
                                         {{ $backup['size'] }}
                                     </x-filament::badge>
                                 </td>
-                                <td class="px-4 py-4 whitespace-nowrap w-px">
+                                <td class="px-4 py-4" style="width: 1px; white-space: nowrap;">
                                     <div class="flex flex-col">
                                         <span class="font-medium text-sm text-gray-950 dark:text-white">
                                             {{ $backup['date_formatted'] }}
@@ -72,7 +72,7 @@
                                         </span>
                                     </div>
                                 </td>
-                                <td class="px-4 py-4 whitespace-nowrap w-px text-right">
+                                <td class="px-4 py-4 text-right" style="width: 1px; white-space: nowrap;">
                                     <div class="flex items-center justify-end gap-x-1">
                                         <x-filament::icon-button
                                             color="gray"
