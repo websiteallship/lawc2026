@@ -45,15 +45,26 @@ class PlayerCombinedStatsWidget extends BaseWidget
             // 2. Pending Bets Stats
             $pendingBetCount = Bet::where('user_id', $user->id)->where('status', 'PENDING')->count();
 
-            // 3. User Statistics (Win Rate, ROI, Streak, Net Profit)
+            // 3. User Statistics (Win Rate, ROI, Net Profit)
             $stats = UserStatistic::where('user_id', $user->id)->first();
-            $netProfit    = $stats ? $stats->net_profit : 0;
-            $winRate      = $stats ? $stats->win_rate : 0;
-            $roi          = $stats ? $stats->roi : 0;
-            $currentStreak = $stats ? $stats->current_win_streak : 0;
-            $totalPayout  = $stats ? $stats->total_payout : 0;    // tổng lá nhận về từ các vé thắng/hòa
-            $totalStaked  = $stats ? $stats->total_staked : 0;    // tổng lá đã đặt (chỉ settled)
-            $totalLost    = max(0, $totalStaked - $totalPayout);   // tổng lá bị mất
+            $netProfit  = $stats ? (int) $stats->net_profit : 0;
+            $winRate    = $stats ? $stats->win_rate : 0;
+            $roi        = $stats ? $stats->roi : 0;
+            $wonBets    = $stats ? (int) $stats->won_bets : 0;
+            $lostBets   = $stats ? (int) $stats->lost_bets : 0;
+
+            // Tính tổng lá thắng về và tổng lá đã mất từ bảng Bet trực tiếp
+            // để tránh net-out effect (người thắng tổng vẫn có tiền mất từng vé thua)
+            $betAmounts = Bet::where('user_id', $user->id)
+                ->whereNotIn('status', ['PENDING', 'VOIDED'])
+                ->selectRaw('
+                    COALESCE(SUM(gross_payout), 0) as total_payout,
+                    COALESCE(SUM(CASE WHEN net_result < 0 THEN ABS(net_result) ELSE 0 END), 0) as total_lost
+                ')
+                ->first();
+
+            $totalPayout = $betAmounts ? (int) $betAmounts->total_payout : 0;
+            $totalLost   = $betAmounts ? (int) $betAmounts->total_lost : 0;
 
             return [
                 Stat::make('Lá khả dụng', new \Illuminate\Support\HtmlString("<span class='!text-lg sm:!text-xl md:!text-3xl font-semibold block truncate'>" . number_format($available) . " lá</span>"))
@@ -66,21 +77,21 @@ class PlayerCombinedStatsWidget extends BaseWidget
                     ->descriptionIcon('heroicon-m-lock-closed')
                     ->color('warning'),
                     
-                Stat::make('Lãi ròng', new \Illuminate\Support\HtmlString("<span class='!text-lg sm:!text-xl md:!text-3xl font-semibold block truncate'>" . (($netProfit !== null) ? (($netProfit >= 0 ? '+' : '') . number_format($netProfit) . ' lá') : '0 lá') . "</span>"))
+                Stat::make('Lãi ròng', new \Illuminate\Support\HtmlString("<span class='!text-lg sm:!text-xl md:!text-3xl font-semibold block truncate'>" . (($netProfit >= 0 ? '+' : '') . number_format($netProfit) . ' lá') . "</span>"))
                     ->description('Lãi/lỗ mùa giải này')
                     ->descriptionIcon('heroicon-m-banknotes')
-                    ->color($netProfit !== null && $netProfit >= 0 ? 'success' : 'danger'),
+                    ->color($netProfit >= 0 ? 'success' : 'danger'),
 
                 Stat::make('Tổng lá thắng về', new \Illuminate\Support\HtmlString("<span class='!text-lg sm:!text-xl md:!text-3xl font-semibold block truncate'>" . number_format($totalPayout) . " lá</span>"))
-                    ->description('Tổng payout từ các vé đã settle')
+                    ->description('Tổng payout nhận về từ vé đã settle')
                     ->descriptionIcon('heroicon-m-arrow-trending-up')
                     ->color('success'),
 
                 Stat::make('Tổng lá đã mất', new \Illuminate\Support\HtmlString("<span class='!text-lg sm:!text-xl md:!text-3xl font-semibold block truncate'>" . number_format($totalLost) . " lá</span>"))
-                    ->description('Cược - payout (vé thua/nửa thua)')
+                    ->description('Tổng lỗ từ các vé thua/nửa thua')
                     ->descriptionIcon('heroicon-m-arrow-trending-down')
                     ->color($totalLost > 0 ? 'danger' : 'gray'),
-                    
+
                 Stat::make('Tỉ lệ thắng (Win Rate)', new \Illuminate\Support\HtmlString("<span class='!text-lg sm:!text-xl md:!text-3xl font-semibold block truncate'>" . number_format($winRate, 2) . "%</span>"))
                     ->description('Vé thắng / vé đã đóng')
                     ->descriptionIcon('heroicon-m-chart-bar')
@@ -90,11 +101,11 @@ class PlayerCombinedStatsWidget extends BaseWidget
                     ->description('Hiệu quả trên tổng cược')
                     ->descriptionIcon('heroicon-m-presentation-chart-line')
                     ->color($roi >= 0 ? 'success' : 'danger'),
-                    
-                Stat::make('Chuỗi thắng hiện tại', new \Illuminate\Support\HtmlString("<span class='!text-lg sm:!text-xl md:!text-3xl font-semibold block truncate'>" . $currentStreak . "</span>"))
-                    ->description('Liên tiếp: ' . $currentStreak . ' vé')
-                    ->descriptionIcon('heroicon-m-fire')
-                    ->color($currentStreak > 0 ? 'warning' : 'gray'),
+
+                Stat::make('Thắng / Thua', new \Illuminate\Support\HtmlString("<span class='!text-lg sm:!text-xl md:!text-3xl font-semibold block truncate'><span class='text-emerald-500'>" . $wonBets . "</span> / <span class='text-red-400'>" . $lostBets . "</span></span>"))
+                    ->description('Số vé thắng / số vé thua')
+                    ->descriptionIcon('heroicon-m-scale')
+                    ->color($wonBets > $lostBets ? 'success' : ($wonBets < $lostBets ? 'danger' : 'gray')),
             ];
         });
     }
