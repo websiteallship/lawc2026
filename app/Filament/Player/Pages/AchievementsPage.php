@@ -141,10 +141,11 @@ class AchievementsPage extends Page
         if (count($recentDays) > 0) {
             $dedicationStreak = 1;
             for ($i = 0; $i < count($recentDays) - 1; $i++) {
-                $d1 = \Carbon\Carbon::parse($recentDays[$i])->startOfDay();
-                $d2 = \Carbon\Carbon::parse($recentDays[$i + 1])->startOfDay();
-                // Cast to int: Carbon 3 có thể trả float, === 1 sẽ fail
-                if ((int) $d1->diffInDays($d2) === 1) {
+                // Dùng native DateTime để tránh Carbon 3 diffInDays behavior thay đổi
+                $d1 = new \DateTime(substr((string) $recentDays[$i], 0, 10));
+                $d2 = new \DateTime(substr((string) $recentDays[$i + 1], 0, 10));
+                $diff = (int) $d1->diff($d2)->days;
+                if ($diff === 1) {
                     $dedicationStreak++;
                 } else {
                     break;

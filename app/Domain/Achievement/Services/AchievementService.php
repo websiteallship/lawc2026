@@ -220,7 +220,6 @@ class AchievementService
                     break;
                 case 'DEDICATION_7_DAYS':
                     $localDate = $this->localDate();
-                    // Lấy tất cả ngày đã bet (không limit) để tính streak liên tiếp đúng
                     $allBetDays = Bet::where('user_id', $userId)
                         ->selectRaw("{$localDate} as date")
                         ->groupBy('date')
@@ -229,15 +228,16 @@ class AchievementService
                         ->toArray();
                     $dedicationStreak = 0;
                     if (count($allBetDays) > 0) {
-                        // Tính streak liên tiếp từ ngày gần nhất
                         $dedicationStreak = 1;
                         for ($i = 0; $i < count($allBetDays) - 1; $i++) {
-                            $d1 = \Carbon\Carbon::parse($allBetDays[$i])->startOfDay();
-                            $d2 = \Carbon\Carbon::parse($allBetDays[$i + 1])->startOfDay();
-                            if ((int) $d1->diffInDays($d2) === 1) {
+                            // Dùng native DateTime để tránh Carbon 3 diffInDays behavior thay đổi
+                            $d1 = new \DateTime(substr((string) $allBetDays[$i], 0, 10));
+                            $d2 = new \DateTime(substr((string) $allBetDays[$i + 1], 0, 10));
+                            $diff = (int) $d1->diff($d2)->days;
+                            if ($diff === 1) {
                                 $dedicationStreak++;
                             } else {
-                                break; // Gap → dừng
+                                break;
                             }
                         }
                     }
