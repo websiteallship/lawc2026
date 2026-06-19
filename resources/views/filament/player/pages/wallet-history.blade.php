@@ -120,7 +120,7 @@
 
             @if($ledgers instanceof \Illuminate\Contracts\Pagination\LengthAwarePaginator)
                 <div class="mt-4 border-t border-gray-100 dark:border-gray-800 pt-4">
-                    {{ $ledgers->links() }}
+                    <x-filament::pagination :paginator="$ledgers" />
                 </div>
             @endif
         </x-filament::card>
