@@ -49,6 +49,11 @@ class WalletHistoryPage extends Page
     /** @var string Flow period for stat cards & reconciliation: '7', '30', 'all' */
     public string $flowPeriod = '7';
 
+    // Advanced filters
+    public string $filterPeriod = 'all'; // all, today, yesterday, week, month
+    public string $filterTypeGroup = 'all'; // all, bet_placed, bet_win, bet_lose, bet_refund, admin_adj
+    public string $filterAmount = 'all'; // all, 1k, 10k, 100k
+
     public function updatedSearchQuery(): void
     {
         $this->resetPage();
@@ -62,6 +67,21 @@ class WalletHistoryPage extends Page
     public function updatedFlowPeriod(): void
     {
         // Triggers reactive recompute for stat cards & reconciliation
+    }
+
+    public function updatedFilterPeriod(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedFilterTypeGroup(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedFilterAmount(): void
+    {
+        $this->resetPage();
     }
 
     public function mount(): void
@@ -84,15 +104,11 @@ class WalletHistoryPage extends Page
     }
 
     // ──────────────────────────────────────────────────────────
-    // LEDGER LIST (paginated)
+    // LEDGER LIST & QUERY BUILDER
     // ──────────────────────────────────────────────────────────
 
-    public function getLedgers(): LengthAwarePaginator|Collection
+    private function buildLedgerQuery(): \Illuminate\Database\Eloquent\Builder
     {
-        if (! $this->wallet) {
-            return new Collection;
-        }
-
         $query = WalletLedger::with(['bet.market.match'])
             ->where('wallet_id', $this->wallet->id)
             ->orderByDesc('created_at');
@@ -110,11 +126,79 @@ class WalletHistoryPage extends Page
             });
         }
 
+        // Filter Type (backward compatibility / simple toggle)
         if ($this->filterType !== 'all') {
             $query->where('type', $this->filterType);
         }
 
-        return $query->paginate(10);
+        // Filter Period
+        if ($this->filterPeriod !== 'all') {
+            if ($this->filterPeriod === 'today') {
+                $query->where('created_at', '>=', now()->startOfDay());
+            } elseif ($this->filterPeriod === 'yesterday') {
+                $query->whereBetween('created_at', [now()->subDay()->startOfDay(), now()->subDay()->endOfDay()]);
+            } elseif ($this->filterPeriod === 'week') {
+                $query->where('created_at', '>=', now()->subDays(7)->startOfDay());
+            } elseif ($this->filterPeriod === 'month') {
+                $query->where('created_at', '>=', now()->subDays(30)->startOfDay());
+            }
+        }
+
+        // Filter Type Group
+        if ($this->filterTypeGroup !== 'all') {
+            switch ($this->filterTypeGroup) {
+                case 'bet_placed':
+                    $query->where('type', LedgerType::BET_PLACED);
+                    break;
+                case 'bet_win':
+                    $query->whereIn('type', [LedgerType::BET_WON, LedgerType::BET_HALF_WON]);
+                    break;
+                case 'bet_lose':
+                    $query->whereIn('type', [LedgerType::BET_LOST, LedgerType::BET_HALF_LOST]);
+                    break;
+                case 'bet_refund':
+                    $query->whereIn('type', [LedgerType::BET_PUSH, LedgerType::BET_VOIDED]);
+                    break;
+                case 'admin_adj':
+                    $query->whereIn('type', [LedgerType::ADMIN_GRANT, LedgerType::ADMIN_DEDUCT, LedgerType::SETTLEMENT_CORRECTION]);
+                    break;
+            }
+        }
+
+        // Filter Amount
+        if ($this->filterAmount !== 'all') {
+            switch ($this->filterAmount) {
+                case '1k':
+                    $query->where(function ($q) {
+                        $q->where(DB::raw('abs(amount_available)'), '>=', 1000)
+                          ->orWhere(DB::raw('abs(amount_locked)'), '>=', 1000);
+                    });
+                    break;
+                case '10k':
+                    $query->where(function ($q) {
+                        $q->where(DB::raw('abs(amount_available)'), '>=', 10000)
+                          ->orWhere(DB::raw('abs(amount_locked)'), '>=', 10000);
+                    });
+                    break;
+                case '100k':
+                    $query->where(function ($q) {
+                        $q->where(DB::raw('abs(amount_available)'), '>=', 100000)
+                          ->orWhere(DB::raw('abs(amount_locked)'), '>=', 100000);
+                    });
+                    break;
+            }
+        }
+
+        return $query;
+    }
+
+    public function getLedgers(): LengthAwarePaginator|Collection
+    {
+        if (! $this->wallet) {
+            return new Collection;
+        }
+
+        return $this->buildLedgerQuery()->paginate(10);
     }
 
     public function getLedgerTypeOptions(): array
@@ -274,14 +358,7 @@ class WalletHistoryPage extends Page
             fputcsv($handle, ['Ngày giờ', 'Loại', 'Mã phiếu', 'Trận đấu', 'Lý do', 'Nhận vào (+)', 'Chi ra (-)', 'Số dư sau']);
 
             if ($wallet) {
-                $query = WalletLedger::with(['bet.market.match'])
-                    ->where('wallet_id', $wallet->id)
-                    ->orderByDesc('created_at');
-
-                if ($this->flowPeriod !== 'all') {
-                    $days = (int) $this->flowPeriod;
-                    $query->where('created_at', '>=', now()->subDays($days)->startOfDay());
-                }
+                $query = $this->buildLedgerQuery();
 
                 $query->chunk(200, function ($ledgers) use ($handle) {
                     foreach ($ledgers as $ledger) {

@@ -12,8 +12,11 @@
                             <x-filament::icon icon="heroicon-o-banknotes" class="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                         </div>
                         <div>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">Lá khả dụng</p>
-                            <p class="text-xl font-bold text-emerald-600 dark:text-emerald-400">{{ number_format($wallet->available_balance) }} lá</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Lá khả dụng</p>
+                            <p class="text-xl font-bold text-emerald-600 dark:text-emerald-400 flex items-baseline gap-1">
+                                <span>{{ number_format($wallet->available_balance) }}</span>
+                                <span class="text-xs font-semibold text-emerald-500/75 dark:text-emerald-400/75 uppercase">lá</span>
+                            </p>
                         </div>
                     </div>
                 </x-filament::card>
@@ -24,8 +27,11 @@
                             <x-filament::icon icon="heroicon-o-lock-closed" class="w-5 h-5 text-amber-500 dark:text-amber-400" />
                         </div>
                         <div>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">Đang khóa</p>
-                            <p class="text-xl font-bold text-amber-500 dark:text-amber-400">{{ number_format($wallet->locked_balance) }} lá</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Đang khóa</p>
+                            <p class="text-xl font-bold text-amber-500 dark:text-amber-400 flex items-baseline gap-1">
+                                <span>{{ number_format($wallet->locked_balance) }}</span>
+                                <span class="text-xs font-semibold text-amber-500/75 dark:text-amber-400/75 uppercase">lá</span>
+                            </p>
                         </div>
                     </div>
                 </x-filament::card>
@@ -36,8 +42,11 @@
                             <x-filament::icon icon="heroicon-o-wallet" class="w-5 h-5 text-gray-600 dark:text-gray-300" />
                         </div>
                         <div>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">Tổng lá</p>
-                            <p class="text-xl font-bold text-gray-700 dark:text-gray-200">{{ number_format($wallet->total_balance) }} lá</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Tổng lá</p>
+                            <p class="text-xl font-bold text-gray-700 dark:text-gray-200 flex items-baseline gap-1">
+                                <span>{{ number_format($wallet->total_balance) }}</span>
+                                <span class="text-xs font-semibold text-gray-500/75 dark:text-gray-400/75 uppercase">lá</span>
+                            </p>
                         </div>
                     </div>
                 </x-filament::card>
@@ -69,34 +78,40 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {{-- Nhận vào --}}
                     <div class="rounded-xl border border-emerald-100 dark:border-emerald-900/50 bg-emerald-50/50 dark:bg-emerald-900/10 p-4">
-                        <div class="flex items-center gap-2 mb-1">
+                        <div class="flex items-center gap-2 mb-2">
                             <x-filament::icon icon="heroicon-m-arrow-down-circle" class="w-4 h-4 text-emerald-600" />
                             <span class="text-xs font-medium text-emerald-700 dark:text-emerald-400">Tổng nhận vào</span>
                         </div>
-                        <p class="text-2xl font-black text-emerald-600 dark:text-emerald-400">+{{ number_format($flow['received']) }}</p>
-                        <p class="text-xs text-emerald-600/60 mt-0.5">lá</p>
+                        <div class="flex items-baseline gap-1">
+                            <span class="text-2xl font-black text-emerald-600 dark:text-emerald-400">+{{ number_format($flow['received']) }}</span>
+                            <span class="text-xs font-semibold text-emerald-600/75 dark:text-emerald-400/75 uppercase">lá</span>
+                        </div>
                     </div>
 
                     {{-- Chi ra --}}
                     <div class="rounded-xl border border-red-100 dark:border-red-900/50 bg-red-50/50 dark:bg-red-900/10 p-4">
-                        <div class="flex items-center gap-2 mb-1">
+                        <div class="flex items-center gap-2 mb-2">
                             <x-filament::icon icon="heroicon-m-arrow-up-circle" class="w-4 h-4 text-red-500" />
                             <span class="text-xs font-medium text-red-600 dark:text-red-400">Tổng chi ra</span>
                         </div>
-                        <p class="text-2xl font-black text-red-500 dark:text-red-400">-{{ number_format($flow['spent']) }}</p>
-                        <p class="text-xs text-red-500/60 mt-0.5">lá</p>
+                        <div class="flex items-baseline gap-1">
+                            <span class="text-2xl font-black text-red-500 dark:text-red-400">-{{ number_format($flow['spent']) }}</span>
+                            <span class="text-xs font-semibold text-red-500/75 dark:text-red-400/75 uppercase">lá</span>
+                        </div>
                     </div>
 
                     {{-- Lãi ròng --}}
                     <div class="rounded-xl border {{ $flow['net'] >= 0 ? 'border-blue-100 dark:border-blue-900/50 bg-blue-50/50 dark:bg-blue-900/10' : 'border-orange-100 dark:border-orange-900/50 bg-orange-50/50 dark:bg-orange-900/10' }} p-4">
-                        <div class="flex items-center gap-2 mb-1">
+                        <div class="flex items-center gap-2 mb-2">
                             <x-filament::icon icon="heroicon-m-scale" class="w-4 h-4 {{ $flow['net'] >= 0 ? 'text-blue-500' : 'text-orange-500' }}" />
                             <span class="text-xs font-medium {{ $flow['net'] >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-orange-600 dark:text-orange-400' }}">Lãi ròng kỳ</span>
                         </div>
-                        <p class="text-2xl font-black {{ $flow['net'] >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-orange-500 dark:text-orange-400' }}">
-                            {{ $flow['net'] >= 0 ? '+' : '' }}{{ number_format($flow['net']) }}
-                        </p>
-                        <p class="text-xs opacity-60 mt-0.5">lá</p>
+                        <div class="flex items-baseline gap-1">
+                            <span class="text-2xl font-black {{ $flow['net'] >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-orange-500 dark:text-orange-400' }}">
+                                {{ $flow['net'] >= 0 ? '+' : '' }}{{ number_format($flow['net']) }}
+                            </span>
+                            <span class="text-xs font-semibold {{ $flow['net'] >= 0 ? 'text-blue-600/75 dark:text-blue-400/75' : 'text-orange-500/75 dark:text-orange-400/75' }} uppercase">lá</span>
+                        </div>
                     </div>
                 </div>
             </x-filament::card>
@@ -202,31 +217,69 @@
         ═══════════════════════════════════════════ --}}
         <x-filament::card>
             <div class="space-y-4 mb-4 border-b border-gray-100 dark:border-gray-800 pb-4">
-                <div class="flex flex-wrap items-center gap-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                     {{-- Search input --}}
-                    <div class="flex-1 min-w-[200px] max-w-md relative">
-                        <div class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                             <x-filament::icon icon="heroicon-m-magnifying-glass" class="w-4 h-4 text-gray-400" />
                         </div>
                         <input type="search" wire:model.live.debounce.500ms="searchQuery"
-                               class="block w-full py-2 pl-10 pr-4 text-sm text-gray-900 border border-gray-200 rounded-xl bg-gray-50 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 dark:bg-gray-800 dark:border-gray-700 dark:placeholder-gray-400 dark:text-white shadow-sm transition-all duration-200"
-                               placeholder="Tìm mã phiếu, đội bóng, lý do...">
+                               class="block w-full py-1.5 pl-9 pr-3 text-sm text-gray-900 border border-gray-200 rounded-xl bg-gray-50 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 dark:bg-gray-800 dark:border-gray-700 dark:placeholder-gray-400 dark:text-white shadow-sm transition-all duration-200"
+                               placeholder="Tìm mã phiếu, trận đấu...">
+                    </div>
+
+                    {{-- Period Select --}}
+                    <div>
+                        <select wire:model.live="filterPeriod"
+                                class="block w-full py-1.5 px-3 text-sm text-gray-900 border border-gray-200 rounded-xl bg-gray-50 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 dark:bg-gray-800 dark:border-gray-700 dark:text-white shadow-sm transition-all duration-200">
+                            <option value="all">Mọi thời gian</option>
+                            <option value="today">Hôm nay</option>
+                            <option value="yesterday">Hôm qua</option>
+                            <option value="week">7 ngày qua</option>
+                            <option value="month">30 ngày qua</option>
+                        </select>
+                    </div>
+
+                    {{-- Type Group Select --}}
+                    <div>
+                        <select wire:model.live="filterTypeGroup"
+                                class="block w-full py-1.5 px-3 text-sm text-gray-900 border border-gray-200 rounded-xl bg-gray-50 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 dark:bg-gray-800 dark:border-gray-700 dark:text-white shadow-sm transition-all duration-200">
+                            <option value="all">Tất cả loại giao dịch</option>
+                            <option value="bet_placed">Đặt cược</option>
+                            <option value="bet_win">Thắng cược</option>
+                            <option value="bet_lose">Thua cược</option>
+                            <option value="bet_refund">Hòa & Hủy cược</option>
+                            <option value="admin_adj">Admin cấp/trừ</option>
+                        </select>
+                    </div>
+
+                    {{-- Amount Select --}}
+                    <div>
+                        <select wire:model.live="filterAmount"
+                                class="block w-full py-1.5 px-3 text-sm text-gray-900 border border-gray-200 rounded-xl bg-gray-50 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 dark:bg-gray-800 dark:border-gray-700 dark:text-white shadow-sm transition-all duration-200">
+                            <option value="all">Mọi số tiền</option>
+                            <option value="1k">Từ 1,000 lá</option>
+                            <option value="10k">Từ 10,000 lá</option>
+                            <option value="100k">Từ 100,000 lá</option>
+                        </select>
                     </div>
                 </div>
 
-                {{-- Filter pills --}}
-                <div class="flex flex-wrap items-center gap-1.5">
-                    <span class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mr-1">Lọc:</span>
-                    @foreach($this->getLedgerTypeOptions() as $val => $label)
-                        <button
-                            wire:click="$set('filterType', '{{ $val }}')"
-                            class="text-xs px-3 py-1 rounded-full border transition-all duration-200
-                                {{ $filterType === $val
-                                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm font-semibold'
-                                    : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50 hover:text-gray-900 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700' }}"
-                        >{{ $label }}</button>
-                    @endforeach
-                </div>
+                {{-- Detailed sub-type pills --}}
+                @if($filterTypeGroup === 'all')
+                    <div class="flex flex-wrap items-center gap-1.5 pt-1">
+                        <span class="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mr-1">Chi tiết:</span>
+                        @foreach($this->getLedgerTypeOptions() as $val => $label)
+                            <button
+                                wire:click="$set('filterType', '{{ $val }}')"
+                                class="text-[11px] px-2.5 py-0.5 rounded-full border transition-all duration-200
+                                    {{ $filterType === $val
+                                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm font-semibold'
+                                        : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50 hover:text-gray-900 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700' }}"
+                            >{{ $label }}</button>
+                        @endforeach
+                    </div>
+                @endif
             </div>
 
             {{-- Ledger list --}}
