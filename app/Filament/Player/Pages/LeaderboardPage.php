@@ -61,7 +61,7 @@ class LeaderboardPage extends Page
                 $runtimeStats[$uid] = [
                     'netProfit'   => $ub->sum('net_result'),
                     'totalStaked' => $ub->sum('stake'),
-                    'wonBets'     => $ub->whereIn('status', ['WON', 'HALF_WON'])->count(),
+                    'wonBets'     => $ub->filter(fn($b) => in_array($b->status instanceof \UnitEnum ? $b->status->value : $b->status, ['WON', 'HALF_WON']))->count(),
                     'settledBets' => $ub->count(),
                 ];
             }
@@ -110,7 +110,6 @@ class LeaderboardPage extends Page
                 ->filter(fn($e) => $e->settled_bets >= 5)
                 ->sortByDesc(fn($e) => $e->roi ?? -999),
             'exact_score' => $entries
-                ->filter(fn($e) => $e->exact_score_wins > 0)
                 ->sortByDesc('exact_score_wins')
                 ->sortByDesc('net_profit'),
             default       => $entries
