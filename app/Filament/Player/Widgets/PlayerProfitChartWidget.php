@@ -18,7 +18,7 @@ class PlayerProfitChartWidget extends ChartWidget
 
     protected ?string $maxHeight = '300px';
 
-    public ?string $filter = '30';
+    public ?string $filter = 'this_week';
 
     protected function getFilters(): ?array
     {
@@ -28,7 +28,7 @@ class PlayerProfitChartWidget extends ChartWidget
     protected function getData(): array
     {
         $user = Auth::user();
-        $filter = $this->filter ?? '30';
+        $filter = $this->filter ?? 'this_week';
 
         [$start, $end] = DatePeriodFilter::resolve($filter);
 

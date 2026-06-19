@@ -16,7 +16,7 @@ class AdminBetsPerDayChart extends ApexChartWidget
 
     protected static ?int $sort = 3;
 
-    public ?string $filter = '30';
+    public ?string $filter = 'this_week';
 
     protected function getFilters(): ?array
     {

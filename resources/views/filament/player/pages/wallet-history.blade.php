@@ -241,10 +241,9 @@
                         <select wire:model.live="filterPeriod"
                                 class="block w-full py-1.5 px-3 text-sm text-gray-900 border border-gray-200 rounded-xl bg-gray-50 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 dark:bg-gray-800 dark:border-gray-700 dark:text-white shadow-sm transition-all duration-200">
                             <option value="all">Mọi thời gian</option>
-                            <option value="today">Hôm nay</option>
-                            <option value="yesterday">Hôm qua</option>
-                            <option value="week">7 ngày qua</option>
-                            <option value="month">30 ngày qua</option>
+                            @foreach(\App\Support\DatePeriodFilter::options() as $val => $lbl)
+                                <option value="{{ $val }}">{{ $lbl }}</option>
+                            @endforeach
                         </select>
                     </div>
 
