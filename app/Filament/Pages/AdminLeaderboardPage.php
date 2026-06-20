@@ -49,6 +49,18 @@ class AdminLeaderboardPage extends Page
             ->groupBy('user_achievements.user_id')
             ->get()->keyBy('user_id');
 
+        // ── Mission stats ──────────────────────────────────────────────────────
+        $missionRows = \App\Models\UserMission::join('missions', 'user_missions.mission_id', '=', 'missions.id')
+            ->whereIn('user_missions.user_id', $userIds)
+            ->where('user_missions.is_completed', true)
+            ->selectRaw("
+                user_missions.user_id,
+                COUNT(*) as total_missions,
+                SUM(CASE WHEN missions.type = 'weekly' THEN 1 ELSE 0 END) as weekly_missions
+            ")
+            ->groupBy('user_missions.user_id')
+            ->get()->keyBy('user_id');
+
         // ── Runtime stats for Week/Round tabs ──────────────────────────────────
         $runtimeStats = [];
         if (in_array($this->activeTab, ['week', 'round'])) {
@@ -78,10 +90,11 @@ class AdminLeaderboardPage extends Page
         }
 
         // ── Build entries ──────────────────────────────────────────────────────
-        $entries = $users->map(function ($user) use ($userStats, $runtimeStats, $achievementRows) {
+        $entries = $users->map(function ($user) use ($userStats, $runtimeStats, $achievementRows, $missionRows) {
             $wallet = $user->wallets->first();
             $stats  = $userStats->get($user->id);
             $achRow = $achievementRows->get($user->id);
+            $msRow  = $missionRows->get($user->id);
 
             if (in_array($this->activeTab, ['week', 'round'])) {
                 $rt          = $runtimeStats[$user->id] ?? [];
@@ -103,6 +116,11 @@ class AdminLeaderboardPage extends Page
             $winRate = $settledBets > 0 ? round($wonBets / $settledBets * 100, 1) : 0;
             $roi     = $totalStaked > 0 ? round($netProfit / $totalStaked * 100, 1) : null;
 
+            $badgeCount    = $achRow ? (int) $achRow->badge_count : 0;
+            $maxLevel      = $achRow ? (int) $achRow->max_level   : 0;
+            $totalMissions = $msRow  ? (int) $msRow->total_missions : 0;
+            $weeklyMissions= $msRow  ? (int) $msRow->weekly_missions : 0;
+
             return (object) [
                 'user_id'          => $user->id,
                 'user'             => $user,
@@ -117,8 +135,11 @@ class AdminLeaderboardPage extends Page
                 'bets_count'       => $settledBets,
                 'exact_score_wins' => $exactScoreWins,
                 'settled_bets'     => $settledBets,
-                'badge_count'      => $achRow ? (int) $achRow->badge_count : 0,
-                'max_level'        => $achRow ? (int) $achRow->max_level   : 0,
+                'badge_count'      => $badgeCount,
+                'max_level'        => $maxLevel,
+                'total_missions'   => $totalMissions,
+                'weekly_missions'  => $weeklyMissions,
+                'perfect_weeks'    => $user->perfect_weeks ?? 0,
             ];
         });
 
@@ -131,6 +152,18 @@ class AdminLeaderboardPage extends Page
                                 ['exact_score_wins', 'desc'],
                                 ['net_profit', 'desc'],
                             ]),
+            'missions'    => $entries->sortBy([
+                                ['total_missions', 'desc'],
+                                ['weekly_missions', 'desc'],
+                            ]),
+            'level'       => $entries->sortBy([
+                                ['max_level', 'desc'],
+                                ['badge_count', 'desc'],
+                            ]),
+            'badges'      => $entries->sortBy([
+                                ['badge_count', 'desc'],
+                                ['max_level', 'desc'],
+                            ]),
             default       => $entries->sortBy([
                                 ['net_profit', 'desc'],
                                 ['total_balance', 'desc'],
@@ -139,11 +172,16 @@ class AdminLeaderboardPage extends Page
 
         $entries = $entries->take(50)->values();
 
-        $this->rankings = $entries->map(function ($entry, $index) {
+        $totalWeeklyActive = \App\Models\Mission::where('type', 'weekly')->where('is_active', true)->count();
+
+        $this->rankings = $entries->map(function ($entry, $index) use ($totalWeeklyActive) {
             $userAchievements = \App\Models\UserAchievement::where('user_id', $entry->user_id)
                 ->join('achievements', 'user_achievements.achievement_id', '=', 'achievements.id')
                 ->select('achievements.*')
                 ->get();
+
+            $weeklyRate = $totalWeeklyActive > 0 ? round(($entry->weekly_missions / $totalWeeklyActive) * 100) : 0;
+            $perfectWeeks = $entry->perfect_weeks + ($weeklyRate >= 100 ? 1 : 0);
 
             return [
                 'rank'             => $index + 1,
@@ -157,6 +195,10 @@ class AdminLeaderboardPage extends Page
                 'exact_score_wins' => $entry->exact_score_wins,
                 'level'            => $entry->max_level,
                 'badge_count'      => $entry->badge_count,
+                'total_missions'   => $entry->total_missions,
+                'weekly_missions'  => $entry->weekly_missions,
+                'weekly_rate'      => $weeklyRate,
+                'perfect_weeks'    => $perfectWeeks,
                 'achievements'     => $userAchievements->map(fn($ach) => [
                     'name'        => $ach->name,
                     'description' => $ach->description,

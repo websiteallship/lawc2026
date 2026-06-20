@@ -16,6 +16,15 @@
             <x-filament::tabs.item wire:click="$set('activeTab', 'exact_score')" :active="$activeTab === 'exact_score'" icon="heroicon-o-bolt">
                 Cao thủ Tỉ số
             </x-filament::tabs.item>
+            <x-filament::tabs.item wire:click="$set('activeTab', 'missions')" :active="$activeTab === 'missions'" icon="heroicon-o-check-badge">
+                Nhiệm vụ
+            </x-filament::tabs.item>
+            <x-filament::tabs.item wire:click="$set('activeTab', 'level')" :active="$activeTab === 'level'" icon="heroicon-o-arrow-trending-up">
+                Level
+            </x-filament::tabs.item>
+            <x-filament::tabs.item wire:click="$set('activeTab', 'badges')" :active="$activeTab === 'badges'" icon="heroicon-o-shield-check">
+                Danh hiệu
+            </x-filament::tabs.item>
         </x-filament::tabs>
 
         <x-filament::card>
@@ -26,16 +35,29 @@
                     <table class="w-full text-sm">
                         <thead>
                             <tr class="text-left text-gray-500 border-b border-gray-200 dark:border-gray-700">
+                                @php $isBetting = in_array($activeTab, ['season','week','round','roi','exact_score']); @endphp
                                 <th class="py-2 pr-4 w-10">#</th>
                                 <th class="py-2 pr-4">Người chơi (Username)</th>
-                                <th class="py-2 pr-4 text-right">Tổng Lá</th>
-                                <th class="py-2 pr-4 text-right">Lãi / Lỗ</th>
-                                <th class="py-2 pr-4 text-right">ROI</th>
-                                <th class="py-2 pr-4 text-right">Win%</th>
-                                @if($activeTab === 'exact_score')
-                                <th class="py-2 pr-4 text-right">Tỉ số đúng</th>
+                                @if($isBetting)
+                                    <th class="py-2 pr-4 text-right">Tổng Lá</th>
+                                    <th class="py-2 pr-4 text-right">Lãi / Lỗ</th>
+                                    <th class="py-2 pr-4 text-right">ROI</th>
+                                    <th class="py-2 pr-4 text-right">Win%</th>
+                                    @if($activeTab === 'exact_score')
+                                    <th class="py-2 pr-4 text-right">Tỉ số đúng</th>
+                                    @endif
+                                    <th class="py-2 text-right">Phiếu</th>
+                                @elseif($activeTab === 'missions')
+                                    <th class="py-2 pr-4 text-right">NV Hoàn thành</th>
+                                    <th class="py-2 pr-4 text-right">Tiến độ tuần</th>
+                                    <th class="py-2 text-right">Tuần 100%</th>
+                                @elseif($activeTab === 'level')
+                                    <th class="py-2 pr-4 text-right">Level</th>
+                                    <th class="py-2 text-right">Danh hiệu</th>
+                                @elseif($activeTab === 'badges')
+                                    <th class="py-2 pr-4 text-right">Danh hiệu</th>
+                                    <th class="py-2 text-right">Level</th>
                                 @endif
-                                <th class="py-2 text-right">Phiếu</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -68,42 +90,54 @@
                                         </div>
                                     </td>
 
-                                    {{-- Tổng Lá --}}
-                                    <td class="py-3 pr-4 text-right font-mono text-gray-700 dark:text-gray-300">
-                                        {{ number_format($row['total_balance']) }}
-                                    </td>
+                                    @if($isBetting)
+                                        {{-- Tổng Lá --}}
+                                        <td class="py-3 pr-4 text-right font-mono text-gray-700 dark:text-gray-300">
+                                            {{ number_format($row['total_balance']) }}
+                                        </td>
 
-                                    {{-- Lãi / Lỗ — số cụ thể cho admin --}}
-                                    <td class="py-3 pr-4 text-right font-bold font-mono">
-                                        @if($row['net_profit'] > 0)
-                                            <span class="text-emerald-600 dark:text-emerald-400">+{{ number_format($row['net_profit']) }}</span>
-                                        @elseif($row['net_profit'] < 0)
-                                            <span class="text-red-500 dark:text-red-400">{{ number_format($row['net_profit']) }}</span>
-                                        @else
-                                            <span class="text-gray-400">0</span>
+                                        {{-- Lãi / Lỗ — số cụ thể cho admin --}}
+                                        <td class="py-3 pr-4 text-right font-bold font-mono">
+                                            @if($row['net_profit'] > 0)
+                                                <span class="text-emerald-600 dark:text-emerald-400">+{{ number_format($row['net_profit']) }}</span>
+                                            @elseif($row['net_profit'] < 0)
+                                                <span class="text-red-500 dark:text-red-400">{{ number_format($row['net_profit']) }}</span>
+                                            @else
+                                                <span class="text-gray-400">0</span>
+                                            @endif
+                                        </td>
+
+                                        {{-- ROI --}}
+                                        <td class="py-3 pr-4 text-right text-gray-600 dark:text-gray-300">
+                                            {{ $row['roi'] !== null ? $row['roi'].'%' : '—' }}
+                                        </td>
+
+                                        {{-- Win% --}}
+                                        <td class="py-3 pr-4 text-right text-gray-600 dark:text-gray-300">
+                                            {{ $row['win_rate'] }}%
+                                        </td>
+
+                                        @if($activeTab === 'exact_score')
+                                        <td class="py-3 pr-4 text-right text-amber-600 font-semibold">
+                                            {{ $row['exact_score_wins'] }}
+                                        </td>
                                         @endif
-                                    </td>
 
-                                    {{-- ROI --}}
-                                    <td class="py-3 pr-4 text-right text-gray-600 dark:text-gray-300">
-                                        {{ $row['roi'] !== null ? $row['roi'].'%' : '—' }}
-                                    </td>
-
-                                    {{-- Win% --}}
-                                    <td class="py-3 pr-4 text-right text-gray-600 dark:text-gray-300">
-                                        {{ $row['win_rate'] }}%
-                                    </td>
-
-                                    @if($activeTab === 'exact_score')
-                                    <td class="py-3 pr-4 text-right text-amber-600 font-semibold">
-                                        {{ $row['exact_score_wins'] }}
-                                    </td>
+                                        {{-- Phiếu --}}
+                                        <td class="py-3 text-right text-gray-500">
+                                            {{ $row['bets_count'] }}
+                                        </td>
+                                    @elseif($activeTab === 'missions')
+                                        <td class="py-3 pr-4 text-right text-primary-600 font-semibold">{{ $row['total_missions'] }}</td>
+                                        <td class="py-3 pr-4 text-right text-gray-600 dark:text-gray-300">{{ $row['weekly_rate'] }}%</td>
+                                        <td class="py-3 text-right text-amber-600 font-bold">{{ $row['perfect_weeks'] > 0 ? $row['perfect_weeks'] : '—' }}</td>
+                                    @elseif($activeTab === 'level')
+                                        <td class="py-3 pr-4 text-right text-amber-600 font-bold text-lg">LV {{ $row['level'] }}</td>
+                                        <td class="py-3 text-right text-gray-500">{{ $row['badge_count'] }}</td>
+                                    @elseif($activeTab === 'badges')
+                                        <td class="py-3 pr-4 text-right text-indigo-600 font-semibold">{{ $row['badge_count'] }}</td>
+                                        <td class="py-3 text-right text-amber-600 font-bold">LV {{ $row['level'] }}</td>
                                     @endif
-
-                                    {{-- Phiếu --}}
-                                    <td class="py-3 text-right text-gray-500">
-                                        {{ $row['bets_count'] }}
-                                    </td>
                                 </tr>
 
                                 {{-- Player Detail Modal --}}
@@ -264,6 +298,9 @@
                     @elseif($activeTab === 'round') * Hiệu suất 7 ngày gần nhất.
                     @elseif($activeTab === 'roi') * Chỉ hiển thị người chơi có ≥5 phiếu đã settle. ROI = lãi ròng / tổng cược.
                     @elseif($activeTab === 'exact_score') * Xếp theo số lần dự đoán tỉ số chính xác.
+                    @elseif($activeTab === 'missions') * Xếp theo tổng NV đã hoàn thành. Tiến độ tuần tính trên các NV Tuần hiện đang mở.
+                    @elseif($activeTab === 'level') * Xếp theo Level cao nhất đạt được từ danh hiệu chính.
+                    @elseif($activeTab === 'badges') * Xếp theo tổng số danh hiệu đạt được (chính + phụ).
                     @endif
                     <span class="ml-2 font-semibold text-amber-600">⚠ Dữ liệu nội bộ Admin — không chia sẻ bên ngoài.</span>
                 </p>
