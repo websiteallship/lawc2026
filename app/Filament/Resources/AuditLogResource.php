@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\AuditLogResource\Pages;
 use App\Models\User;
+use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
@@ -221,7 +222,7 @@ class AuditLogResource extends Resource
             ->paginationPageOptions([10, 25, 50, 100])
             ->recordAction('view')
             ->actions([
-                Tables\Actions\ViewAction::make()->label(''),
+                ViewAction::make()->label(''),
             ])
             ->bulkActions([]);
     }
