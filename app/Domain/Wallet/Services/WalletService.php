@@ -110,7 +110,6 @@ class WalletService
 
         $wallet->available_balance -= $stake;
         $wallet->locked_balance += $stake;
-        $wallet->total_staked += $stake;
         $wallet->save();
 
         $ledger = $this->createLedger($wallet, LedgerType::BET_PLACED, -$stake, $stake, null, "Đặt dự đoán #{$bet->public_code}");
@@ -144,6 +143,7 @@ class WalletService
 
         $wallet->locked_balance -= $stake;
         $wallet->available_balance += $grossPayout;
+        $wallet->total_staked += $stake;
         $wallet->total_payout += $grossPayout;
         $wallet->net_profit = $wallet->total_payout - $wallet->total_staked;
         $wallet->save();
@@ -170,7 +170,6 @@ class WalletService
 
         $wallet->locked_balance -= $stake;
         $wallet->available_balance += $stake;
-        $wallet->total_staked = max(0, $wallet->total_staked - $stake);
         $wallet->net_profit = $wallet->total_payout - $wallet->total_staked;
         $wallet->save();
 
