@@ -1,0 +1,5 @@
+@import '../../../../vendor/filament/filament/resources/css/theme.css';
+@import '../../components/modal-animations.css';
+
+@source '../../../../app/Filament/Pages/AdminLeaderboardPage.php';
+@source '../../../../resources/views/filament/pages/admin-leaderboard.blade.php';
