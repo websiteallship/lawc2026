@@ -19,17 +19,14 @@ class UserStatisticsService
         return DB::transaction(function () use ($userId) {
             $stats = UserStatistic::firstOrCreate(['user_id' => $userId]);
 
-            // All bets for user
-            $allBets = Bet::where('user_id', $userId)->get();
+            $totalBets = Bet::where('user_id', $userId)->count();
 
-            $totalBets = $allBets->count();
-            
-            // Settled bets
-            $settledBets = $allBets->filter(function ($bet) {
-                return in_array($bet->status?->value ?? $bet->status, [
-                    'WON', 'HALF_WON', 'LOST', 'HALF_LOST', 'PUSH', 'VOIDED', 'CORRECTED'
-                ]);
-            })->sortBy('settled_at'); // Need sorted for streaks
+            // Settled bets (Only select necessary columns for memory efficiency)
+            $settledBets = Bet::where('user_id', $userId)
+                ->whereIn('status', ['WON', 'HALF_WON', 'LOST', 'HALF_LOST', 'PUSH', 'VOIDED', 'CORRECTED'])
+                ->orderBy('settled_at')
+                ->select(['id', 'status', 'stake', 'gross_payout', 'market_type_snapshot', 'net_result'])
+                ->get();
 
             $settledCount = $settledBets->count();
             

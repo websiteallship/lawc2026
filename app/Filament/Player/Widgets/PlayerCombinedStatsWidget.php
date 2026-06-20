@@ -30,7 +30,7 @@ class PlayerCombinedStatsWidget extends BaseWidget
             return [];
         }
 
-        return \Illuminate\Support\Facades\Cache::remember("player_combined_stats_{$user->id}", 900, function () use ($user) {
+        return \Illuminate\Support\Facades\Cache::remember("player_combined_stats_{$user->id}", 60, function () use ($user) {
             // 1. Wallet Stats
             $activeSeason = Season::where('status', 'active')->first();
             $wallet = null;
@@ -47,7 +47,7 @@ class PlayerCombinedStatsWidget extends BaseWidget
 
             // 3. User Statistics (Win Rate, ROI, Net Profit)
             $stats = UserStatistic::where('user_id', $user->id)->first();
-            $netProfit  = $stats ? (int) $stats->net_profit : 0;
+            $netProfit  = $wallet ? (int) $wallet->net_profit : 0;
             $winRate    = $stats ? $stats->win_rate : 0;
             $roi        = $stats ? $stats->roi : 0;
             $wonBets    = $stats ? (int) $stats->won_bets : 0;
@@ -82,8 +82,8 @@ class PlayerCombinedStatsWidget extends BaseWidget
                     ->descriptionIcon('heroicon-m-banknotes')
                     ->color($netProfit >= 0 ? 'success' : 'danger'),
 
-                Stat::make('Tổng lá thắng về', new \Illuminate\Support\HtmlString("<span class='!text-lg sm:!text-xl md:!text-3xl font-semibold block truncate'>" . number_format($totalPayout) . " lá</span>"))
-                    ->description('Tổng payout nhận về từ vé đã settle')
+                Stat::make('Tổng payout nhận về', new \Illuminate\Support\HtmlString("<span class='!text-lg sm:!text-xl md:!text-3xl font-semibold block truncate'>" . number_format($totalPayout) . " lá</span>"))
+                    ->description('Bao gồm gốc và lãi từ vé đã settle')
                     ->descriptionIcon('heroicon-m-arrow-trending-up')
                     ->color('success'),
 
