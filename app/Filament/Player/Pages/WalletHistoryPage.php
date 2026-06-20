@@ -222,8 +222,8 @@ class WalletHistoryPage extends Page
             ->where('created_at', '>=', $start)
             ->where('created_at', '<=', $end)
             ->selectRaw(
-                'SUM(CASE WHEN amount_available > 0 THEN amount_available ELSE 0 END) as received,
-                 SUM(CASE WHEN amount_available < 0 THEN ABS(amount_available) ELSE 0 END) as spent'
+                'SUM(CASE WHEN (amount_available + amount_locked) > 0 THEN (amount_available + amount_locked) ELSE 0 END) as received,
+                 SUM(CASE WHEN (amount_available + amount_locked) < 0 THEN ABS(amount_available + amount_locked) ELSE 0 END) as spent'
             )->first();
 
         $received = (int) ($result->received ?? 0);
@@ -253,8 +253,8 @@ class WalletHistoryPage extends Page
             ->where('created_at', '<=', $end)
             ->select(
                 'type',
-                DB::raw('SUM(CASE WHEN amount_available > 0 THEN amount_available ELSE 0 END) as received'),
-                DB::raw('SUM(CASE WHEN amount_available < 0 THEN ABS(amount_available) ELSE 0 END) as spent')
+                DB::raw('SUM(CASE WHEN (amount_available + amount_locked) > 0 THEN (amount_available + amount_locked) ELSE 0 END) as received'),
+                DB::raw('SUM(CASE WHEN (amount_available + amount_locked) < 0 THEN ABS(amount_available + amount_locked) ELSE 0 END) as spent')
             )
             ->groupBy('type')
             ->orderBy('type')
@@ -281,10 +281,10 @@ class WalletHistoryPage extends Page
             ->first();
 
         $openingBalance = $earliest
-            ? ($earliest->balance_available_after - $earliest->amount_available)
-            : $this->wallet->available_balance;
+            ? (($earliest->balance_available_after + $earliest->balance_locked_after) - ($earliest->amount_available + $earliest->amount_locked))
+            : $this->wallet->total_balance;
 
-        $closingBalance = $this->wallet->available_balance;
+        $closingBalance = $this->wallet->total_balance;
 
         return [
             'rows'            => $rows,
@@ -356,15 +356,17 @@ class WalletHistoryPage extends Page
                             ? ($match->home_team . ' vs ' . $match->away_team)
                             : '';
 
+                        $netChange = $ledger->amount_available + $ledger->amount_locked;
+
                         fputcsv($handle, [
                             $ledger->created_at?->setTimezone('Asia/Ho_Chi_Minh')->format('d/m/Y H:i'),
                             $ledger->type instanceof LedgerType ? $ledger->type->label() : $ledger->type,
                             $ledger->bet?->public_code ?? '',
                             $matchName,
                             $ledger->reason ?? '',
-                            $ledger->amount_available > 0 ? $ledger->amount_available : 0,
-                            $ledger->amount_available < 0 ? abs($ledger->amount_available) : 0,
-                            $ledger->balance_available_after,
+                            $netChange > 0 ? $netChange : 0,
+                            $netChange < 0 ? abs($netChange) : 0,
+                            $ledger->balance_available_after + $ledger->balance_locked_after,
                         ]);
                     }
                 });
