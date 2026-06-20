@@ -4,188 +4,167 @@ namespace App\Filament\Pages;
 
 use App\Models\Bet;
 use App\Models\Season;
-use App\Models\Wallet;
-use Filament\Actions\Action;
 use Filament\Pages\Page;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Concerns\InteractsWithTable;
-use Filament\Tables\Contracts\HasTable;
-use Filament\Tables\Table;
-use Illuminate\Support\Facades\DB;
 
-class AdminLeaderboardPage extends Page implements HasTable
+class AdminLeaderboardPage extends Page
 {
-    use InteractsWithTable;
-
-    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-trophy';
-
-    protected static string|\BackedEnum|null $activeNavigationIcon = 'heroicon-s-trophy';
-
-    protected static ?string $navigationLabel = 'Bảng Xếp Hạng';
-
-    protected static ?string $title = 'Bảng Xếp Hạng Người Chơi';
-
-    protected static ?int $navigationSort = 1; // Ngay sau Dashboard (sort=0)
-
-    public function getView(): string
+    public static function getNavigationIcon(): string|\BackedEnum|null
     {
-        return 'filament.admin.pages.admin-leaderboard-page';
+        return 'heroicon-o-trophy';
     }
 
-    public function table(Table $table): Table
+    protected static ?string $navigationLabel = 'Bảng xếp hạng';
+    protected static ?string $title           = 'Bảng xếp hạng (Admin)';
+    protected static ?int    $navigationSort  = 2; // ngay dưới Dashboard
+    protected string         $view            = 'filament.pages.admin-leaderboard';
+
+    public array  $rankings  = [];
+    public string $activeTab = 'season';
+
+    public function updatedActiveTab(): void { $this->loadRankings(); }
+    public function mount(): void           { $this->loadRankings(); }
+
+    public function loadRankings(): void
     {
         $activeSeason = Season::where('status', 'active')->first();
+        if (! $activeSeason) { $this->rankings = []; return; }
 
-        $query = Wallet::query()
-            ->with('user')
-            ->when($activeSeason, fn ($q) => $q->where('season_id', $activeSeason->id))
-            ->whereHas('user', fn ($q) => $q
-                ->where('status', 'ACTIVE')
-                ->whereHas('roles', fn ($r) => $r->where('name', 'player'))
-            )
-            ->orderByDesc('net_profit')
-            ->select('wallets.*');
-
-        // Tổng hợp stats từ bet đã đóng (không tính PENDING/VOIDED)
-        $betStats = Bet::whereNotIn('status', ['PENDING', 'VOIDED'])
-            ->selectRaw("
-                user_id,
-                COUNT(*) as total_bets,
-                SUM(CASE WHEN status IN ('WON','HALF_WON') THEN 1 ELSE 0 END) as won_bets,
-                SUM(CASE WHEN status = 'LOST' THEN 1 ELSE 0 END) as lost_bets,
-                SUM(CASE WHEN status IN ('PUSH','HALF_WON','HALF_LOST') THEN 1 ELSE 0 END) as push_bets,
-                COUNT(*) as settled_bets,
-                SUM(stake) as total_staked_db,
-                SUM(gross_payout) as total_payout_db
-            ")
-            ->groupBy('user_id')
-            ->get()
-            ->keyBy('user_id');
-
-        return $table
-            ->query($query)
-            ->columns([
-                TextColumn::make('rank')
-                    ->label('#')
-                    ->badge()
-                    ->state(fn ($record, $rowLoop) => $rowLoop->iteration)
-                    ->color(fn ($state): string => match (true) {
-                        $state === 1 => 'warning',
-                        $state <= 3 => 'success',
-                        default => 'gray',
-                    }),
-
-                TextColumn::make('user.name')
-                    ->label('Người chơi')
-                    ->searchable()
-                    ->sortable(),
-
-                TextColumn::make('total_balance')
-                    ->label('Tổng Lá')
-                    ->state(fn ($record) => $record->available_balance + $record->locked_balance)
-                    ->numeric(thousandsSeparator: ',')
-                    ->sortable(false)
-                    ->color('primary'),
-
-                TextColumn::make('available_balance')
-                    ->label('Lá khả dụng')
-                    ->numeric(thousandsSeparator: ',')
-                    ->sortable(false)
-                    ->toggleable(),
-
-                TextColumn::make('locked_balance')
-                    ->label('Đang khóa')
-                    ->numeric(thousandsSeparator: ',')
-                    ->sortable(false)
-                    ->color('warning')
-                    ->toggleable(),
-
-                TextColumn::make('net_profit')
-                    ->label('Lãi / Lỗ')
-                    ->sortable()
-                    ->color(fn ($state) => $state > 0 ? 'success' : ($state < 0 ? 'danger' : 'gray'))
-                    ->weight(\Filament\Support\Enums\FontWeight::Bold)
-                    ->formatStateUsing(fn ($state) => ($state >= 0 ? '+' : '') . number_format($state) . ' lá'),
-
-                TextColumn::make('total_staked')
-                    ->label('Tổng đã cược')
-                    ->numeric(thousandsSeparator: ',')
-                    ->sortable()
-                    ->toggleable(),
-
-                TextColumn::make('total_payout')
-                    ->label('Tổng payout')
-                    ->numeric(thousandsSeparator: ',')
-                    ->sortable()
-                    ->toggleable(),
-
-                TextColumn::make('total_bets')
-                    ->label('Số phiếu')
-                    ->state(function ($record) use ($betStats) {
-                        return (int) ($betStats->get($record->user_id)?->total_bets ?? 0);
-                    }),
-
-                TextColumn::make('won_bets')
-                    ->label('Thắng')
-                    ->state(function ($record) use ($betStats) {
-                        return (int) ($betStats->get($record->user_id)?->won_bets ?? 0);
-                    })
-                    ->color('success'),
-
-                TextColumn::make('lost_bets')
-                    ->label('Thua')
-                    ->state(function ($record) use ($betStats) {
-                        return (int) ($betStats->get($record->user_id)?->lost_bets ?? 0);
-                    })
-                    ->color('danger'),
-
-                TextColumn::make('push_bets')
-                    ->label('Hòa/Hoàn')
-                    ->state(function ($record) use ($betStats) {
-                        return (int) ($betStats->get($record->user_id)?->push_bets ?? 0);
-                    })
-                    ->color('gray')
-                    ->toggleable(),
-
-                TextColumn::make('win_rate')
-                    ->label('Win rate')
-                    ->state(function ($record) use ($betStats) {
-                        $s = $betStats->get($record->user_id);
-                        if (! $s || $s->settled_bets == 0) {
-                            return '–';
-                        }
-
-                        return round($s->won_bets / $s->settled_bets * 100, 1) . '%';
-                    }),
-
-                TextColumn::make('roi')
-                    ->label('ROI')
-                    ->state(function ($record) use ($betStats) {
-                        $s = $betStats->get($record->user_id);
-                        if (! $s || $s->total_staked_db == 0) {
-                            return '–';
-                        }
-                        $roi = (($s->total_payout_db - $s->total_staked_db) / $s->total_staked_db) * 100;
-
-                        return ($roi >= 0 ? '+' : '') . round($roi, 1) . '%';
-                    })
-                    ->color(function ($record) use ($betStats) {
-                        $s = $betStats->get($record->user_id);
-                        if (! $s || $s->total_staked_db == 0) {
-                            return 'gray';
-                        }
-                        $roi = $s->total_payout_db - $s->total_staked_db;
-
-                        return $roi > 0 ? 'success' : ($roi < 0 ? 'danger' : 'gray');
-                    }),
-
-                TextColumn::make('updated_at')
-                    ->label('Cập nhật lúc')
-                    ->dateTime('d/m H:i')
-                    ->toggleable(isToggledHiddenByDefault: true),
+        $users = \App\Models\User::whereHas('roles', fn($q) => $q->where('name', 'player'))
+            ->where('status', 'ACTIVE')
+            ->with([
+                'wallets'  => fn($q) => $q->where('season_id', $activeSeason->id),
             ])
-            ->defaultSort('net_profit', 'desc')
-            ->striped()
-            ->paginated([10, 25, 50, 100]);
+            ->get();
+
+        $userIds = $users->pluck('id')->toArray();
+
+        // ── Season-wide stats ──────────────────────────────────────────────────
+        $userStats = \App\Models\UserStatistic::whereIn('user_id', $userIds)
+            ->get()->keyBy('user_id');
+
+        // ── Achievement stats ──────────────────────────────────────────────────
+        $achievementRows = \App\Models\UserAchievement::join('achievements', 'user_achievements.achievement_id', '=', 'achievements.id')
+            ->whereIn('user_achievements.user_id', $userIds)
+            ->selectRaw('user_achievements.user_id, COUNT(*) as badge_count, MAX(achievements.level) as max_level')
+            ->groupBy('user_achievements.user_id')
+            ->get()->keyBy('user_id');
+
+        // ── Runtime stats for Week/Round tabs ──────────────────────────────────
+        $runtimeStats = [];
+        if (in_array($this->activeTab, ['week', 'round'])) {
+            $since = $this->activeTab === 'week'
+                ? now()->timezone('Asia/Ho_Chi_Minh')->startOfWeek()->utc()
+                : now()->subDays(7);
+
+            $bets = Bet::whereIn('user_id', $userIds)
+                ->whereNotIn('status', ['PENDING', 'VOIDED'])
+                ->whereNotNull('settled_at')
+                ->where('settled_at', '>=', $since)
+                ->where('season_id', $activeSeason->id)
+                ->get()->groupBy('user_id');
+
+            foreach ($userIds as $uid) {
+                $ub = $bets->get($uid, collect());
+                $runtimeStats[$uid] = [
+                    'netProfit'   => $ub->sum('net_result'),
+                    'totalStaked' => $ub->sum('stake'),
+                    'wonBets'     => $ub->filter(fn($b) => in_array(
+                        $b->status instanceof \UnitEnum ? $b->status->value : $b->status,
+                        ['WON', 'HALF_WON']
+                    ))->count(),
+                    'settledBets' => $ub->count(),
+                ];
+            }
+        }
+
+        // ── Build entries ──────────────────────────────────────────────────────
+        $entries = $users->map(function ($user) use ($userStats, $runtimeStats, $achievementRows) {
+            $wallet = $user->wallets->first();
+            $stats  = $userStats->get($user->id);
+            $achRow = $achievementRows->get($user->id);
+
+            if (in_array($this->activeTab, ['week', 'round'])) {
+                $rt          = $runtimeStats[$user->id] ?? [];
+                $netProfit   = $rt['netProfit'] ?? 0;
+                $totalStaked = $rt['totalStaked'] ?? 0;
+                $wonBets     = $rt['wonBets'] ?? 0;
+                $settledBets = $rt['settledBets'] ?? 0;
+                $exactScoreWins = 0;
+            } else {
+                // Season: lấy từ Wallet (real-time, không stale)
+                $netProfit      = $wallet ? (int) $wallet->net_profit   : 0;
+                $totalStaked    = $wallet ? (int) $wallet->total_staked : 0;
+                $wonBets        = $stats  ? (int) $stats->won_bets      : 0;
+                $settledBets    = $stats  ? (int) $stats->settled_bets  : 0;
+                $exactScoreWins = $stats  ? (int) $stats->exact_score_wins : 0;
+            }
+
+            $totalBalance = $wallet ? ($wallet->available_balance + $wallet->locked_balance) : 0;
+            $winRate = $settledBets > 0 ? round($wonBets / $settledBets * 100, 1) : 0;
+            $roi     = $totalStaked > 0 ? round($netProfit / $totalStaked * 100, 1) : null;
+
+            return (object) [
+                'user_id'          => $user->id,
+                'user'             => $user,
+                'display_name'     => $user->name,
+                'total_balance'    => $totalBalance,
+                'available'        => $wallet ? $wallet->available_balance : 0,
+                'locked'           => $wallet ? $wallet->locked_balance    : 0,
+                'net_profit'       => $netProfit,
+                'total_staked'     => $totalStaked,
+                'roi'              => $roi,
+                'win_rate'         => $winRate,
+                'bets_count'       => $settledBets,
+                'exact_score_wins' => $exactScoreWins,
+                'settled_bets'     => $settledBets,
+                'badge_count'      => $achRow ? (int) $achRow->badge_count : 0,
+                'max_level'        => $achRow ? (int) $achRow->max_level   : 0,
+            ];
+        });
+
+        // ── Sort & filter ───────────────────────────────────────────────────────
+        $entries = match($this->activeTab) {
+            'roi'         => $entries
+                                ->filter(fn($e) => $e->settled_bets >= 5)
+                                ->sortByDesc(fn($e) => $e->roi ?? -999),
+            'exact_score' => $entries->sortBy([
+                                ['exact_score_wins', 'desc'],
+                                ['net_profit', 'desc'],
+                            ]),
+            default       => $entries->sortBy([
+                                ['net_profit', 'desc'],
+                                ['total_balance', 'desc'],
+                            ]),
+        };
+
+        $entries = $entries->take(50)->values();
+
+        $this->rankings = $entries->map(function ($entry, $index) {
+            $userAchievements = \App\Models\UserAchievement::where('user_id', $entry->user_id)
+                ->join('achievements', 'user_achievements.achievement_id', '=', 'achievements.id')
+                ->select('achievements.*')
+                ->get();
+
+            return [
+                'rank'             => $index + 1,
+                'user_id'          => $entry->user_id,
+                'name'             => $entry->display_name,
+                'total_balance'    => $entry->total_balance,
+                'net_profit'       => $entry->net_profit,
+                'roi'              => $entry->roi,
+                'win_rate'         => $entry->win_rate,
+                'bets_count'       => $entry->bets_count,
+                'exact_score_wins' => $entry->exact_score_wins,
+                'level'            => $entry->max_level,
+                'badge_count'      => $entry->badge_count,
+                'achievements'     => $userAchievements->map(fn($ach) => [
+                    'name'        => $ach->name,
+                    'description' => $ach->description,
+                    'icon'        => $ach->icon,
+                    'color'       => $ach->color,
+                    'is_main'     => ! is_null($ach->level),
+                ])->toArray(),
+            ];
+        })->toArray();
     }
 }
