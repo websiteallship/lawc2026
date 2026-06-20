@@ -70,6 +70,10 @@ Schedule::command('backup:run --only-db')->twiceDaily(2, 14);
 // Dọn backup cũ mỗi tuần (giữ theo strategy trong config/backup.php)
 Schedule::command('backup:clean')->weekly();
 
+// Export CSV (Bets/Markets/Settlements) → zip → backup disk 2 lần/ngày: 02:00 và 14:00 (khớp với backup:run)
+Schedule::command('csv:backup --type=all')->twiceDaily(2, 14)
+    ->appendOutputTo(storage_path('logs/csv-backup.log'));
+
 // ===================== LEADERBOARD SNAPSHOT & NOTIFY =====================
 // Snapshot leaderboard WC2026 mỗi giờ (thay đổi season_code tuỳ môi trường)
 Schedule::command('snapshot:leaderboard WC2026')->hourly();

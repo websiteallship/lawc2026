@@ -38,11 +38,23 @@
                                 </td>
                                 <td class="px-4 py-4" style="min-width: 16rem;">
                                     <div class="flex items-center gap-x-3">
-                                        @if($backup['type'] === 'Tạo thủ công bởi Admin')
+                                        @if(($backup['is_csv'] ?? false) && ($backup['is_manual'] ?? false))
+                                            {{-- CSV thủ công --}}
                                             <div class="flex items-center justify-center h-9 w-9 rounded-lg bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 shrink-0">
+                                                <x-filament::icon icon="heroicon-m-document-arrow-down" class="h-5 w-5" />
+                                            </div>
+                                        @elseif($backup['is_csv'] ?? false)
+                                            {{-- CSV tự động --}}
+                                            <div class="flex items-center justify-center h-9 w-9 rounded-lg bg-success-50 dark:bg-success-900/30 text-success-600 dark:text-success-400 shrink-0">
+                                                <x-filament::icon icon="heroicon-m-document-chart-bar" class="h-5 w-5" />
+                                            </div>
+                                        @elseif($backup['is_manual'] ?? false)
+                                            {{-- DB thủ công --}}
+                                            <div class="flex items-center justify-center h-9 w-9 rounded-lg bg-warning-50 dark:bg-warning-900/30 text-warning-600 dark:text-warning-400 shrink-0">
                                                 <x-filament::icon icon="heroicon-m-user-circle" class="h-5 w-5" />
                                             </div>
                                         @else
+                                            {{-- DB tự động --}}
                                             <div class="flex items-center justify-center h-9 w-9 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 shrink-0">
                                                 <x-filament::icon icon="heroicon-m-clock" class="h-5 w-5" />
                                             </div>

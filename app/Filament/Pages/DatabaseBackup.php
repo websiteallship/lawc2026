@@ -163,6 +163,31 @@ class DatabaseBackup extends Page
                 ->color('info')
                 ->model(\App\Models\Settlement::class)
                 ->exporter(\App\Filament\Exports\SettlementExporter::class),
+
+            Action::make('backup_csv')
+                ->label('Backup CSV (Bets/Kèo/KQ)')
+                ->icon('heroicon-o-document-arrow-down')
+                ->color('primary')
+                ->requiresConfirmation()
+                ->modalHeading('Backup CSV thủ công')
+                ->modalDescription('Xuất toàn bộ Bets, Markets và Settlements ra CSV, nén zip và lưu vào thư mục backup. Thao tác này có thể mất vài giây.')
+                ->action(function () {
+                    try {
+                        Artisan::call('csv:backup', ['--type' => 'all', '--label' => 'manual']);
+                        $this->dispatch('\$refresh');
+                        Notification::make()
+                            ->title('Backup CSV thành công')
+                            ->body('Đã tạo 3 file: bets, markets, settlements.')
+                            ->success()
+                            ->send();
+                    } catch (\Exception $e) {
+                        Notification::make()
+                            ->title('Lỗi backup CSV')
+                            ->body($e->getMessage())
+                            ->danger()
+                            ->send();
+                    }
+                }),
         ];
     }
 
@@ -188,30 +213,58 @@ class DatabaseBackup extends Page
         }
 
         $files = $disk->files($name);
-        
+
         $manualBackups = [];
         if (Storage::disk('local')->exists('manual_backups.json')) {
             $manualBackups = json_decode(Storage::disk('local')->get('manual_backups.json'), true) ?? [];
         }
 
+        $csvMeta = [];
+        if (Storage::disk('local')->exists('csv_backups.json')) {
+            $csvMeta = json_decode(Storage::disk('local')->get('csv_backups.json'), true) ?? [];
+        }
+
         return collect($files)
             ->filter(fn ($file) => str_ends_with($file, '.zip'))
-            ->map(function ($file) use ($disk, $manualBackups) {
+            ->map(function ($file) use ($disk, $manualBackups, $csvMeta) {
                 $filename = basename($file);
                 $isManual = in_array($filename, $manualBackups);
-                $carbon = \Carbon\Carbon::createFromTimestamp($disk->lastModified($file));
-                
-                $formattedDate = $carbon->format('d') . ' Thg ' . (int)$carbon->format('m') . ', ' . $carbon->format('Y');
+                $carbon   = \Carbon\Carbon::createFromTimestamp($disk->lastModified($file));
+
+                $formattedDate = $carbon->format('d') . ' Thg ' . (int) $carbon->format('m') . ', ' . $carbon->format('Y');
                 $formattedTime = $carbon->format('H:i:s');
 
+                // Detect CSV backup type
+                $isCsv    = str_contains($filename, '-csv-');
+                $csvLabel = $csvMeta[$filename]['label'] ?? 'auto';
+                $csvType  = $csvMeta[$filename]['type']  ?? null;
+
+                if ($isCsv) {
+                    $typeMap  = ['bets' => 'Vé (Bets)', 'markets' => 'Kèo (Markets)', 'settlements' => 'Kết quả'];
+                    $typeName = $typeMap[$csvType] ?? 'CSV';
+                    $backupType = $csvLabel === 'manual'
+                        ? "CSV {$typeName} — Thủ công"
+                        : "CSV {$typeName} — Tự động";
+                } elseif ($isManual) {
+                    $backupType = 'DB — Thủ công (Admin)';
+                } else {
+                    $backupType = 'DB — Tự động (Cronjob)';
+                }
+
                 return [
-                    'name' => $filename,
-                    'path' => $file,
-                    'size' => round($disk->size($file) / 1024 / 1024, 2) . ' MB',
+                    'name'           => $filename,
+                    'path'           => $file,
+                    'size'           => (function (int $bytes): string {
+                        if ($bytes >= 1024 * 1024) return round($bytes / 1024 / 1024, 2) . ' MB';
+                        if ($bytes >= 1024)         return round($bytes / 1024, 1) . ' KB';
+                        return $bytes . ' B';
+                    })($disk->size($file)),
                     'date_formatted' => $formattedDate,
                     'time_formatted' => $formattedTime,
-                    'type' => $isManual ? 'Tạo thủ công bởi Admin' : 'Tạo tự động (Cronjob)',
-                    'raw_date' => $carbon->toDateTimeString(),
+                    'type'           => $backupType,
+                    'is_manual'      => $isManual || ($isCsv && $csvLabel === 'manual'),
+                    'is_csv'         => $isCsv,
+                    'raw_date'       => $carbon->toDateTimeString(),
                 ];
             })
             ->sortByDesc('raw_date')
