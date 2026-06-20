@@ -74,8 +74,8 @@
                 
                 @if($gapToAbove > 0)
                 <div class="text-right">
-                    <div class="text-xs text-gray-500 uppercase font-semibold tracking-wider">Kém hạng trên</div>
-                    <div class="text-lg font-bold text-danger-500 mt-1">-{{ number_format($gapToAbove) }} lá</div>
+                    <div class="text-xs text-gray-500 uppercase font-semibold tracking-wider">Trạng thái</div>
+                    <div class="text-lg font-bold text-primary-500 mt-1">Còn bám đuổi</div>
                 </div>
                 @endif
             </div>
@@ -90,8 +90,14 @@
                             <span class="font-bold text-gray-400 w-4">{{ $idx + 1 }}</span>
                             <div class="font-medium text-sm text-gray-900 dark:text-gray-100">{{ $leader['name'] ?? 'User' }}</div>
                         </div>
-                        <div class="font-bold text-sm text-success-600 dark:text-success-400">
-                            +{{ number_format($leader['net_profit'] ?? 0) }}
+                        <div class="font-bold text-sm {{ ($leader['net_profit'] ?? 0) > 0 ? 'text-success-600 dark:text-success-400' : (($leader['net_profit'] ?? 0) < 0 ? 'text-danger-500' : 'text-gray-400') }}">
+                            @if(($leader['net_profit'] ?? 0) > 0)
+                                <x-filament::icon icon="heroicon-m-arrow-trending-up" class="w-5 h-5 inline" />
+                            @elseif(($leader['net_profit'] ?? 0) < 0)
+                                <x-filament::icon icon="heroicon-m-arrow-trending-down" class="w-5 h-5 inline" />
+                            @else
+                                <x-filament::icon icon="heroicon-m-minus" class="w-5 h-5 inline" />
+                            @endif
                         </div>
                     </div>
                     @endforeach

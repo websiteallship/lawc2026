@@ -39,7 +39,7 @@
                                 <th class="py-2 pr-4">#</th>
                                 <th class="py-2 pr-4">Người chơi</th>
                                 @if($isBetting)
-                                    <th class="py-2 pr-4 text-right">Lãi/lỗ</th>
+                                    <th class="py-2 pr-4 text-right">Xu hướng</th>
                                     <th class="py-2 pr-4 text-right">ROI</th>
                                     <th class="py-2 pr-4 text-right">Win%</th>
                                     @if($activeTab === 'exact_score')
@@ -80,8 +80,23 @@
                                         </div>
                                     </td>
                                     @if($isBetting)
-                                        <td class="py-3 pr-4 text-right {{ $row['net_profit'] >= 0 ? 'text-emerald-600' : 'text-red-500' }}">
-                                            {{ $row['net_profit'] >= 0 ? '+' : '' }}{{ number_format($row['net_profit']) }}
+                                        <td class="py-3 pr-4 text-right">
+                                            @if($row['profit_trend'] === 'positive')
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
+                                                    <x-filament::icon icon="heroicon-m-arrow-trending-up" class="w-4 h-4" />
+                                                    Lãi
+                                                </span>
+                                            @elseif($row['profit_trend'] === 'negative')
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-red-50 text-red-500 dark:bg-red-500/10 dark:text-red-400">
+                                                    <x-filament::icon icon="heroicon-m-arrow-trending-down" class="w-4 h-4" />
+                                                    Lỗ
+                                                </span>
+                                            @else
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                                                    <x-filament::icon icon="heroicon-m-minus" class="w-4 h-4" />
+                                                    Hòa
+                                                </span>
+                                            @endif
                                         </td>
                                         <td class="py-3 pr-4 text-right text-gray-600 dark:text-gray-300">
                                             {{ $row['roi'] !== null ? $row['roi'].'%' : '—' }}
@@ -255,9 +270,9 @@
                     </table>
                 </div>
                 <p class="text-xs text-gray-400 mt-3 text-center">
-                    @if($activeTab === 'season') * Xếp theo lãi/lỗ tích lũy toàn bộ mùa giải.
-                    @elseif($activeTab === 'week') * Lãi/lỗ tính từ đầu tuần hiện tại (Thứ 2 00:00 giờ VN).
-                    @elseif($activeTab === 'round') * Lãi/lỗ tính trong 7 ngày gần nhất.
+                    @if($activeTab === 'season') * Xếp theo hiệu suất tích lũy toàn bộ mùa giải.
+                    @elseif($activeTab === 'week') * Hiệu suất tính từ đầu tuần hiện tại (Thứ 2 00:00 giờ VN).
+                    @elseif($activeTab === 'round') * Hiệu suất tính trong 7 ngày gần nhất.
                     @elseif($activeTab === 'roi') * Chỉ hiển thị người chơi có ≥5 phiếu đã settle. ROI = lãi ròng / tổng cược.
                     @elseif($activeTab === 'exact_score') * Xếp theo số lần dự đoán tỉ số chính xác.
                     @elseif($activeTab === 'missions') * Xếp theo tổng NV đã hoàn thành. Tiến độ tuần tính trên các NV Tuần hiện đang mở.
