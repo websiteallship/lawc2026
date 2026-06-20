@@ -61,7 +61,7 @@
                         </thead>
                         <tbody>
                             @foreach($rankings as $index => $row)
-                                <tr class="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
+                                <tr class="border-b {{ $row['is_me'] ? 'bg-amber-50/50 dark:bg-amber-500/10 border-amber-100 dark:border-amber-900/50 ring-1 ring-inset ring-amber-500/20 shadow-sm relative z-10' : 'border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50' }} transition">
                                     <td class="py-3 pr-4">
                                         @if($row['rank'] === 1) <x-filament::icon icon="heroicon-s-trophy" class="h-5 w-5 text-yellow-400" />
                                         @elseif($row['rank'] === 2) <x-filament::icon icon="heroicon-s-trophy" class="h-5 w-5 text-gray-400" />
@@ -73,7 +73,12 @@
                                         <div class="flex items-center gap-2 cursor-pointer hover:opacity-80 transition"
                                              @click="openModal = {{ $index }}">
                                             <span class="text-2xl" title="Avatar">{{ $row['avatar'] }}</span>
-                                            <span class="font-medium text-gray-700 dark:text-gray-200">{{ $row['name'] }}</span>
+                                            <span class="font-medium {{ $row['is_me'] ? 'text-amber-700 dark:text-amber-500 font-bold' : 'text-gray-700 dark:text-gray-200' }}">
+                                                {{ $row['name'] }}
+                                                @if($row['is_me'])
+                                                    <span class="ml-1 px-1.5 py-0.5 rounded text-[9px] font-black tracking-wider bg-amber-500 text-white shadow-sm uppercase shrink-0">Tôi</span>
+                                                @endif
+                                            </span>
                                             <span class="ml-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-500/20 shadow-sm shrink-0">
                                                 LV {{ $row['level'] }}
                                             </span>

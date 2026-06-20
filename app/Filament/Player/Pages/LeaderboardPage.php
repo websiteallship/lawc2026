@@ -231,6 +231,7 @@ class LeaderboardPage extends Page
                 'weekly_missions'  => $entry->weekly_missions,
                 'weekly_rate'      => $weeklyRate,
                 'perfect_weeks'    => $perfectWeeks,
+                'is_me'            => $entry->user_id === auth()->id(),
                 'achievements'     => $userAchievements->map(fn($ach) => [
                     'name'        => $ach->name,
                     'description' => $ach->description,
