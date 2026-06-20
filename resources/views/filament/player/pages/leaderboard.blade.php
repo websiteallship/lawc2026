@@ -61,7 +61,7 @@
                         </thead>
                         <tbody>
                             @foreach($rankings as $index => $row)
-                                <tr class="border-b {{ $row['is_me'] ? 'bg-amber-50/50 dark:bg-amber-500/10 border-amber-100 dark:border-amber-900/50 ring-1 ring-inset ring-amber-500/20 shadow-sm relative z-10' : 'border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50' }} transition">
+                                <tr class="border-b transition {{ $row['is_me'] ? 'bg-amber-500/10 dark:bg-amber-500/15 border-amber-300/40 dark:border-amber-700/40' : 'border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50' }}">
                                     <td class="py-3 pr-4">
                                         @if($row['rank'] === 1) <x-filament::icon icon="heroicon-s-trophy" class="h-5 w-5 text-yellow-400" />
                                         @elseif($row['rank'] === 2) <x-filament::icon icon="heroicon-s-trophy" class="h-5 w-5 text-gray-400" />
