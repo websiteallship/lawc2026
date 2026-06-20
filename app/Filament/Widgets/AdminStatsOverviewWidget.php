@@ -60,8 +60,8 @@ class AdminStatsOverviewWidget extends BaseWidget
         $limit = $quotaService->getQuotaLimit() ?? 7500;
 
         if ($remaining === null) {
-            $apiStat = Stat::make(new HtmlString('<span class="text-xs sm:text-sm">API Quota</span>'), new HtmlString('<span class="text-lg sm:text-3xl font-bold">0 / ' . number_format($limit) . '</span>'))
-                ->description(new HtmlString('<span class="text-[10px] sm:text-sm">Chưa có request nào</span>'))
+            $apiStat = Stat::make('API Quota', '0 / ' . number_format($limit))
+                ->description('Chưa có request nào')
                 ->icon('heroicon-o-information-circle')
                 ->color('gray');
         } else {
@@ -73,8 +73,8 @@ class AdminStatsOverviewWidget extends BaseWidget
             } elseif ($percentage <= 30) {
                 $color = 'warning';
             }
-            $apiStat = Stat::make(new HtmlString('<span class="text-xs sm:text-sm">API Quota</span>'), new HtmlString('<span class="text-lg sm:text-3xl font-bold">' . number_format($used) . ' / ' . number_format($limit) . '</span>'))
-                ->description(new HtmlString('<span class="text-[10px] sm:text-sm">Còn lại: ' . number_format($remaining) . ' (' . round($percentage, 1) . '%)</span>'))
+            $apiStat = Stat::make('API Quota', number_format($used) . ' / ' . number_format($limit))
+                ->description('Còn lại: ' . number_format($remaining) . ' (' . round($percentage, 1) . '%)')
                 ->icon('heroicon-o-chart-pie')
                 ->color($color);
         }
@@ -82,38 +82,38 @@ class AdminStatsOverviewWidget extends BaseWidget
         return [
             $apiStat,
 
-            Stat::make(new HtmlString('<span class="text-xs sm:text-sm">Người chơi HĐ</span>'), new HtmlString('<span class="text-lg sm:text-3xl font-bold">' . number_format($activeUsers) . '</span>'))
-                ->description(new HtmlString('<span class="text-[10px] sm:text-sm">Tài khoản ACTIVE</span>'))
+            Stat::make('Người chơi HĐ', number_format($activeUsers))
+                ->description('Tài khoản ACTIVE')
                 ->icon('heroicon-o-users')
                 ->color('success'),
 
-            Stat::make(new HtmlString('<span class="text-xs sm:text-sm">Lá lưu hành</span>'), new HtmlString('<span class="text-lg sm:text-3xl font-bold">' . number_format($totalAvailable) . '</span>'))
-                ->description(new HtmlString('<span class="text-[10px] sm:text-sm">' . ($activeSeason ? "Mùa: {$activeSeason->name}" : 'Chưa có mùa giải') . '</span>'))
+            Stat::make('Lá lưu hành', number_format($totalAvailable))
+                ->description($activeSeason ? "Mùa: {$activeSeason->name}" : 'Chưa có mùa giải')
                 ->icon('heroicon-o-banknotes')
                 ->color('info'),
 
-            Stat::make(new HtmlString('<span class="text-xs sm:text-sm">Lá bị khoá</span>'), new HtmlString('<span class="text-lg sm:text-3xl font-bold">' . number_format($totalLocked) . '</span>'))
-                ->description(new HtmlString('<span class="text-[10px] sm:text-sm">Đang trong phiếu</span>'))
+            Stat::make('Lá bị khoá', number_format($totalLocked))
+                ->description('Đang trong phiếu')
                 ->icon('heroicon-o-lock-closed')
                 ->color('warning'),
 
-            Stat::make(new HtmlString('<span class="text-xs sm:text-sm">Kèo đang mở</span>'), new HtmlString('<span class="text-lg sm:text-3xl font-bold">' . number_format($openMarkets) . '</span>'))
-                ->description(new HtmlString('<span class="text-[10px] sm:text-sm">Trạng thái OPEN</span>'))
+            Stat::make('Kèo đang mở', number_format($openMarkets))
+                ->description('Trạng thái OPEN')
                 ->icon('heroicon-o-ticket')
                 ->color('primary'),
 
-            Stat::make(new HtmlString('<span class="text-xs sm:text-sm">Kèo chờ KQ</span>'), new HtmlString('<span class="text-lg sm:text-3xl font-bold">' . number_format($settleNeeded) . '</span>'))
-                ->description(new HtmlString('<span class="text-[10px] sm:text-sm">LOCKED — cần Execute</span>'))
+            Stat::make('Kèo chờ KQ', number_format($settleNeeded))
+                ->description('LOCKED — cần Execute')
                 ->icon('heroicon-o-clock')
                 ->color($settleNeeded > 0 ? 'danger' : 'gray'),
                 
-            Stat::make(new HtmlString('<span class="text-xs sm:text-sm">Cảnh báo Ví âm</span>'), new HtmlString('<span class="text-lg sm:text-3xl font-bold">' . number_format($negativeWallets) . '</span>'))
-                ->description(new HtmlString('<span class="text-[10px] sm:text-sm">Do Correction</span>'))
+            Stat::make('Cảnh báo Ví âm', number_format($negativeWallets))
+                ->description('Do Correction')
                 ->icon('heroicon-o-exclamation-triangle')
                 ->color($negativeWallets > 0 ? 'danger' : 'success'),
                 
-            Stat::make(new HtmlString('<span class="text-xs sm:text-sm">Lỗi Failed Jobs</span>'), new HtmlString('<span class="text-lg sm:text-3xl font-bold">' . number_format($failedJobs) . '</span>'))
-                ->description(new HtmlString('<span class="text-[10px] sm:text-sm">Queue Health</span>'))
+            Stat::make('Lỗi Failed Jobs', number_format($failedJobs))
+                ->description('Queue Health')
                 ->icon('heroicon-o-server-stack')
                 ->color($failedJobs > 0 ? 'danger' : 'success'),
         ];
