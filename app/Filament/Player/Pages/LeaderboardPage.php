@@ -216,6 +216,28 @@ class LeaderboardPage extends Page
             $dbPerfectWeeks = $entry->perfect_weeks ?? 0;
             $perfectWeeks = $dbPerfectWeeks + ($weeklyRate >= 100 ? 1 : 0);
 
+            $achievementsArray = $userAchievements->map(fn($ach) => [
+                'name'        => $ach->name,
+                'description' => $ach->description,
+                'icon'        => $ach->icon,
+                'color'       => $ach->color,
+                'is_main'     => !is_null($ach->level),
+                'level'       => $ach->level,
+            ])->toArray();
+
+            $defaultAchIndex = 0;
+            $maxLevel = -1;
+            foreach ($achievementsArray as $i => $ach) {
+                if ($ach['is_main'] && $ach['level'] > $maxLevel) {
+                    $maxLevel = $ach['level'];
+                    $defaultAchIndex = $i;
+                }
+            }
+
+            if ($maxLevel === -1 && count($achievementsArray) > 0) {
+                $defaultAchIndex = count($achievementsArray) - 1;
+            }
+
             return [
                 'rank'             => $index + 1,
                 'name'             => $animal['name'] . ' ' . strtolower($adjective),
@@ -232,13 +254,8 @@ class LeaderboardPage extends Page
                 'weekly_rate'      => $weeklyRate,
                 'perfect_weeks'    => $perfectWeeks,
                 'is_me'            => $entry->user_id === auth()->id(),
-                'achievements'     => $userAchievements->map(fn($ach) => [
-                    'name'        => $ach->name,
-                    'description' => $ach->description,
-                    'icon'        => $ach->icon,
-                    'color'       => $ach->color,
-                    'is_main'     => !is_null($ach->level),
-                ])->toArray(),
+                'achievements'     => $achievementsArray,
+                'default_ach_index'=> $defaultAchIndex,
             ];
         })->toArray();
     }

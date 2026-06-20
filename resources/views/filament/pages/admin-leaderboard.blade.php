@@ -152,7 +152,7 @@
                                              @click="openModal = null"></div>
 
                                         <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-lg border border-gray-200 dark:border-gray-800 flex flex-col max-h-[85vh] relative z-10"
-                                             x-data="{ activeAchIndex: 0 }"
+                                             x-data="{ activeAchIndex: {{ $row['default_ach_index'] ?? 0 }} }"
                                              x-show="openModal === {{ $index }}"
                                              x-transition:enter="transition ease-out duration-200"
                                              x-transition:enter-start="opacity-0 scale-95"

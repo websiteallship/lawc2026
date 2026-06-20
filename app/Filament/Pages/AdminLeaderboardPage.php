@@ -183,6 +183,28 @@ class AdminLeaderboardPage extends Page
             $weeklyRate = $totalWeeklyActive > 0 ? round(($entry->weekly_missions / $totalWeeklyActive) * 100) : 0;
             $perfectWeeks = $entry->perfect_weeks + ($weeklyRate >= 100 ? 1 : 0);
 
+            $achievementsArray = $userAchievements->map(fn($ach) => [
+                'name'        => $ach->name,
+                'description' => $ach->description,
+                'icon'        => $ach->icon,
+                'color'       => $ach->color,
+                'is_main'     => ! is_null($ach->level),
+                'level'       => $ach->level,
+            ])->toArray();
+
+            $defaultAchIndex = 0;
+            $maxLevel = -1;
+            foreach ($achievementsArray as $i => $ach) {
+                if ($ach['is_main'] && $ach['level'] > $maxLevel) {
+                    $maxLevel = $ach['level'];
+                    $defaultAchIndex = $i;
+                }
+            }
+
+            if ($maxLevel === -1 && count($achievementsArray) > 0) {
+                $defaultAchIndex = count($achievementsArray) - 1;
+            }
+
             return [
                 'rank'             => $index + 1,
                 'user_id'          => $entry->user_id,
@@ -199,13 +221,8 @@ class AdminLeaderboardPage extends Page
                 'weekly_missions'  => $entry->weekly_missions,
                 'weekly_rate'      => $weeklyRate,
                 'perfect_weeks'    => $perfectWeeks,
-                'achievements'     => $userAchievements->map(fn($ach) => [
-                    'name'        => $ach->name,
-                    'description' => $ach->description,
-                    'icon'        => $ach->icon,
-                    'color'       => $ach->color,
-                    'is_main'     => ! is_null($ach->level),
-                ])->toArray(),
+                'achievements'     => $achievementsArray,
+                'default_ach_index'=> $defaultAchIndex,
             ];
         })->toArray();
     }
