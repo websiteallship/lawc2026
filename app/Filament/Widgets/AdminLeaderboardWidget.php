@@ -73,10 +73,10 @@ class AdminLeaderboardWidget extends BaseWidget
                     ->formatStateUsing(fn ($state) => ($state >= 0 ? '+' : '').number_format($state)),
                 Tables\Columns\TextColumn::make('total_bets')
                     ->label('Số phiếu')
-                    ->state(fn ($record) use ($betStats) => (int) ($betStats->get($record->user_id)?->total_bets ?? 0)),
+                    ->state(function ($record) use ($betStats) { return (int) ($betStats->get($record->user_id)?->total_bets ?? 0); }),
                 Tables\Columns\TextColumn::make('won_bets')
                     ->label('Thắng')
-                    ->state(fn ($record) use ($betStats) => (int) ($betStats->get($record->user_id)?->won_bets ?? 0)),
+                    ->state(function ($record) use ($betStats) { return (int) ($betStats->get($record->user_id)?->won_bets ?? 0); }),
                 Tables\Columns\TextColumn::make('win_rate')
                     ->label('Win rate')
                     ->state(function ($record) use ($betStats) {
