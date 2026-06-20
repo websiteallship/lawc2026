@@ -268,6 +268,8 @@ class WalletHistoryPage extends Page
                     'net'      => (int) $row->received - (int) $row->spent,
                 ];
             })
+            ->filter(fn ($row) => $row['received'] > 0 || $row['spent'] > 0)
+            ->values()
             ->toArray();
 
         $totalReceived = array_sum(array_column($rows, 'received'));
