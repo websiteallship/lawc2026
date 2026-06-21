@@ -8,6 +8,9 @@ use App\Models\Bet;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
+use Filament\Tables\Filters\Filter;
+use Filament\Forms\Components\DatePicker;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
 class AdminLeaderboardWidget extends BaseWidget
@@ -29,14 +32,12 @@ class AdminLeaderboardWidget extends BaseWidget
                 ->where('status', 'ACTIVE')
                 ->whereHas('roles', fn ($r) => $r->where('name', 'player'))
             )
-            ->orderByDesc('net_profit')
-            ->limit(10)
             ->select([
                 'wallets.*',
                 DB::raw('(available_balance + locked_balance) as total_balance_live'),
             ]);
 
-        // Attach settled bet counts via subquery for each wallet user
+        // Static stats fallback for when no date filter is applied
         $betStats = Bet::whereNotIn('status', ['PENDING', 'VOIDED'])
             ->selectRaw('user_id,
                 COUNT(*) as total_bets,
@@ -48,6 +49,52 @@ class AdminLeaderboardWidget extends BaseWidget
 
         return $table
             ->query($query)
+            ->defaultSort('net_profit', 'desc')
+            ->filters([
+                Filter::make('date_range')
+                    ->form([
+                        DatePicker::make('date_from')->label('Từ ngày'),
+                        DatePicker::make('date_to')->label('Đến ngày'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        $from = $data['date_from'] ?? null;
+                        $to = $data['date_to'] ?? null;
+
+                        $query->addSelect([
+                            'period_profit' => DB::table('bets')
+                                ->selectRaw('COALESCE(SUM(net_result), 0)')
+                                ->whereColumn('wallet_id', 'wallets.id')
+                                ->whereNotIn('status', ['PENDING', 'VOIDED'])
+                                ->when($from, fn ($q) => $q->where('settled_at', '>=', $from))
+                                ->when($to, fn ($q) => $q->where('settled_at', '<=', $to . ' 23:59:59')),
+                            'calc_total_bets' => DB::table('bets')
+                                ->selectRaw('COUNT(*)')
+                                ->whereColumn('wallet_id', 'wallets.id')
+                                ->whereNotIn('status', ['PENDING', 'VOIDED'])
+                                ->when($from, fn ($q) => $q->where('settled_at', '>=', $from))
+                                ->when($to, fn ($q) => $q->where('settled_at', '<=', $to . ' 23:59:59')),
+                            'calc_won_bets' => DB::table('bets')
+                                ->selectRaw('SUM(CASE WHEN status IN (\'WON\',\'HALF_WON\') THEN 1 ELSE 0 END)')
+                                ->whereColumn('wallet_id', 'wallets.id')
+                                ->whereNotIn('status', ['PENDING', 'VOIDED'])
+                                ->when($from, fn ($q) => $q->where('settled_at', '>=', $from))
+                                ->when($to, fn ($q) => $q->where('settled_at', '<=', $to . ' 23:59:59')),
+                            'calc_settled_bets' => DB::table('bets')
+                                ->selectRaw('COUNT(*)')
+                                ->whereColumn('wallet_id', 'wallets.id')
+                                ->whereNotIn('status', ['PENDING', 'VOIDED'])
+                                ->when($from, fn ($q) => $q->where('settled_at', '>=', $from))
+                                ->when($to, fn ($q) => $q->where('settled_at', '<=', $to . ' 23:59:59')),
+                        ]);
+
+                        if ($from || $to) {
+                            $query->getQuery()->orders = null; // Xóa order mặc định
+                            $query->orderByDesc('period_profit');
+                        }
+
+                        return $query;
+                    })
+            ])
             ->columns([
                 Tables\Columns\TextColumn::make('rank')
                     ->label('#')
@@ -69,26 +116,29 @@ class AdminLeaderboardWidget extends BaseWidget
                 Tables\Columns\TextColumn::make('net_profit')
                     ->label('Lãi/Lỗ')
                     ->numeric()
+                    ->state(fn ($record) => $record->period_profit ?? $record->net_profit)
                     ->color(fn ($state) => $state > 0 ? 'success' : ($state < 0 ? 'danger' : 'gray'))
-                    ->formatStateUsing(fn ($state) => ($state >= 0 ? '+' : '').number_format($state)),
+                    ->formatStateUsing(fn ($state) => ($state >= 0 ? '+' : '').number_format((float)$state)),
                 Tables\Columns\TextColumn::make('total_bets')
                     ->label('Số phiếu')
-                    ->state(function ($record) use ($betStats) { return (int) ($betStats->get($record->user_id)?->total_bets ?? 0); }),
+                    ->state(fn ($record) => isset($record->calc_total_bets) ? (int) $record->calc_total_bets : (int) ($betStats->get($record->user_id)?->total_bets ?? 0)),
                 Tables\Columns\TextColumn::make('won_bets')
                     ->label('Thắng')
-                    ->state(function ($record) use ($betStats) { return (int) ($betStats->get($record->user_id)?->won_bets ?? 0); }),
+                    ->state(fn ($record) => isset($record->calc_won_bets) ? (int) $record->calc_won_bets : (int) ($betStats->get($record->user_id)?->won_bets ?? 0)),
                 Tables\Columns\TextColumn::make('win_rate')
                     ->label('Win rate')
                     ->state(function ($record) use ($betStats) {
-                        $s = $betStats->get($record->user_id);
-                        if (!$s || $s->settled_bets == 0) return '–';
-                        return round($s->won_bets / $s->settled_bets * 100, 1).'%';
+                        $settled = isset($record->calc_settled_bets) ? (int) $record->calc_settled_bets : (int) ($betStats->get($record->user_id)?->settled_bets ?? 0);
+                        $won = isset($record->calc_won_bets) ? (int) $record->calc_won_bets : (int) ($betStats->get($record->user_id)?->won_bets ?? 0);
+                        if ($settled == 0) return '–';
+                        return round($won / $settled * 100, 1).'%';
                     }),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->label('Cập nhật lúc')
                     ->dateTime('d/m H:i')
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->modifyQueryUsing(fn (Builder $query) => $query->limit(10))
             ->paginated(false);
     }
 }
