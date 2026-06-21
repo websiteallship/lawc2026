@@ -109,13 +109,15 @@
             </div>
 
             @if($this->backupsPaginator->hasPages())
-                <div class="px-4 py-3 border-t border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 flex items-center justify-between">
-                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                <div class="px-4 py-3 border-t border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
+                    <p class="text-sm text-gray-500 dark:text-gray-400 shrink-0">
                         Hiển thị <span class="font-medium text-gray-950 dark:text-white">{{ $this->backupsPaginator->firstItem() }}</span> 
                         đến <span class="font-medium text-gray-950 dark:text-white">{{ $this->backupsPaginator->lastItem() }}</span> 
                         của <span class="font-medium text-gray-950 dark:text-white">{{ $this->backupsPaginator->total() }}</span> bản sao lưu
                     </p>
-                    <x-filament::pagination :paginator="$this->backupsPaginator" />
+                    <div class="flex-1 w-full md:w-auto flex justify-end">
+                        <x-filament::pagination :paginator="$this->backupsPaginator" />
+                    </div>
                 </div>
             @else
                 <div class="px-4 py-3 border-t border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5">
