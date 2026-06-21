@@ -64,9 +64,9 @@ class AdminLeaderboardWidget extends BaseWidget
                         'last_90'    => '90 ngày qua',
                         'all'        => 'Toàn mùa',
                     ])
-                    ->default('this_week')
+                    ->default('all')
                     ->query(function (Builder $query, array $data): Builder {
-                        $period = $data['value'] ?? 'this_week';
+                        $period = $data['value'] ?? 'all';
 
                         [$from, $to] = match ($period) {
                             'today'      => [Carbon::today(), Carbon::today()->endOfDay()],
