@@ -14,8 +14,9 @@ class FootballMatch extends Model
     protected $table = 'matches';
 
     protected $fillable = [
-        'api_id', 'season_id', 'match_code', 'stage', 'group', 'home_team', 'away_team',
-        'home_score', 'away_score', 'kickoff_at', 'finished_at', 'timezone', 'venue', 'status', 'created_by',
+        'api_id', 'season_id', 'match_code', 'stage', 'group', 'api_round', 'bracket_position',
+        'home_team', 'away_team', 'home_score', 'away_score',
+        'kickoff_at', 'finished_at', 'timezone', 'venue', 'status', 'created_by',
         'odds_fetch_status',
     ];
 
@@ -23,6 +24,7 @@ class FootballMatch extends Model
         'kickoff_at' => 'datetime',
         'finished_at' => 'datetime',
         'odds_fetch_status' => 'array',
+        'bracket_position' => 'integer',
     ];
 
     public function season(): BelongsTo

@@ -22,7 +22,25 @@ class ApiMatchDto
         public readonly bool $hasEventsData = true,
         public readonly string $detailedStatus = '',
         public readonly ?int $elapsed = null,
+        public readonly ?string $apiRound = null,
+        public readonly ?int $bracketPosition = null,
     ) {}
+
+    /**
+     * Parse bracket_position from API round string.
+     * e.g. "Round of 16 - 3" => 3, "Quarter-finals - 1" => 1, "Group Stage - 12" => null
+     */
+    public static function parseBracketPosition(?string $round): ?int
+    {
+        if (empty($round)) {
+            return null;
+        }
+        // Only extract position for knockout rounds (those with " - {number}" suffix)
+        if (preg_match('/-\s*(\d+)\s*$/', $round, $matches)) {
+            return (int) $matches[1];
+        }
+        return null;
+    }
 
     public static function fromArray(array $data): self
     {
@@ -124,6 +142,8 @@ class ApiMatchDto
             'away' => $goalsData['away'] ?? $score['fulltime']['away'] ?? null,
         ];
 
+        $apiRound = $data['league']['round'] ?? null;
+
         return new self(
             apiId: (string) ($fixture['id'] ?? ''),
             homeTeamName: $teams['home']['name'] ?? 'TBD',
@@ -140,6 +160,8 @@ class ApiMatchDto
             hasEventsData: array_key_exists('events', $data),
             detailedStatus: $statusShort,
             elapsed: $fixture['status']['elapsed'] ?? null,
+            apiRound: $apiRound,
+            bracketPosition: self::parseBracketPosition($apiRound),
         );
     }
 }

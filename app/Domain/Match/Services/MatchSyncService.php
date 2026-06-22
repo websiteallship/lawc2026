@@ -271,6 +271,14 @@ class MatchSyncService
         $match->detailed_status = $apiMatch->detailedStatus;
         $match->elapsed_minutes = $apiMatch->elapsed;
 
+        // Sync bracket metadata from API round string
+        if ($apiMatch->apiRound !== null) {
+            $match->api_round = $apiMatch->apiRound;
+            if ($apiMatch->bracketPosition !== null) {
+                $match->bracket_position = $apiMatch->bracketPosition;
+            }
+        }
+
         // Cập nhật lại giờ bắt đầu nếu có sự thay đổi từ API (Ví dụ: bị dời lại 15 phút)
         if ($match->kickoff_at->notEqualTo($apiMatch->kickoffAt)) {
             $match->kickoff_at = $apiMatch->kickoffAt;

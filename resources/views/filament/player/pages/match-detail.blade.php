@@ -40,8 +40,8 @@
                 
                 <div class="flex items-start justify-between w-full max-w-xl gap-1 sm:gap-8 px-1 sm:px-0">
                     <div class="flex flex-col items-center flex-1 min-w-0">
-                        <div class="text-6xl mb-2 sm:mb-3 shadow-md rounded-lg overflow-hidden flex items-center justify-center w-14 h-10 sm:w-28 sm:h-20 bg-gray-100 dark:bg-gray-700 shrink-0">
-                            {!! App\Helpers\CountryFlagHelper::renderHtml($match->home_team) !!}
+                        <div class="shadow-md rounded-lg overflow-hidden flex items-center justify-center w-14 h-10 sm:w-28 sm:h-20 bg-gray-100 dark:bg-gray-700 shrink-0">
+                            {!! App\Helpers\CountryFlagHelper::renderFlagOnly($match->home_team) !!}
                         </div>
                         <span class="font-bold text-xs sm:text-xl text-center leading-tight line-clamp-2 text-gray-800 dark:text-white">{{ $match->home_team }}</span>
                     </div>
@@ -73,8 +73,8 @@
                     </div>
 
                     <div class="flex flex-col items-center flex-1 min-w-0">
-                        <div class="text-6xl mb-2 sm:mb-3 shadow-md rounded-lg overflow-hidden flex items-center justify-center w-14 h-10 sm:w-28 sm:h-20 bg-gray-100 dark:bg-gray-700 shrink-0">
-                            {!! App\Helpers\CountryFlagHelper::renderHtml($match->away_team) !!}
+                        <div class="shadow-md rounded-lg overflow-hidden flex items-center justify-center w-14 h-10 sm:w-28 sm:h-20 bg-gray-100 dark:bg-gray-700 shrink-0">
+                            {!! App\Helpers\CountryFlagHelper::renderFlagOnly($match->away_team) !!}
                         </div>
                         <span class="font-bold text-xs sm:text-xl text-center leading-tight line-clamp-2 text-gray-800 dark:text-white">{{ $match->away_team }}</span>
                     </div>
@@ -567,18 +567,7 @@
         </div>
     </div>
 
-    {{-- Fix lỗi CSS cho svg do CountryFlagHelper render thẻ img/svg không dùng class tailwind --}}
-    <style>
-        .flex-1 .w-14.h-10 svg, .flex-1 .w-20.h-14 svg, .flex-1 .w-28.h-20 svg {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            margin: 0 !important;
-        }
-        .flex-1 .w-14.h-10 span, .flex-1 .w-20.h-14 span, .flex-1 .w-28.h-20 span {
-            display: none;
-        }
-    </style>
+
 
     @livewire(\App\Filament\Player\Livewire\PlaceBetModal::class)
     @livewire(\App\Filament\Player\Livewire\EditBetModal::class)
