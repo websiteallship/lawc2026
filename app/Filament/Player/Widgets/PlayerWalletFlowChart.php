@@ -21,7 +21,7 @@ class PlayerWalletFlowChart extends ApexChartWidget
 
     protected int|string|array $columnSpan = 'full';
 
-    public ?string $filter = 'this_week';
+    public ?string $filter = 'season';
 
     protected function getFilters(): ?array
     {
