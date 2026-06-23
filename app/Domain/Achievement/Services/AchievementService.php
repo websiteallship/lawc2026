@@ -113,9 +113,8 @@ class AchievementService
                         ->count() >= $achievement->target_value;
                     break;
                 case 'LV8_COSMIC':
-                    $shouldAward = Bet::where('user_id', $userId)
-                        ->whereIn('status', ['WON', 'HALF_WON'])
-                        ->count() >= 50;
+                    $longestWinStreakLv8 = \App\Models\UserStatistic::where('user_id', $userId)->value('longest_win_streak') ?? 0;
+                    $shouldAward = $longestWinStreakLv8 >= $achievement->target_value;
                     break;
                 case 'LV9_OMNISCIENT':
                     $shouldAward = Bet::where('user_id', $userId)
