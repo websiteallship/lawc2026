@@ -39,9 +39,9 @@ foreach ($bets as $bet) {
     $correctResult = $calculator->calculate($bet, $matchResult);
     
     // Nếu kết quả hiện tại khác với kết quả đúng
-    if ($bet->status->value !== $correctResult->status->value || $bet->gross_payout !== $correctResult->payout) {
+    if ($bet->status->value !== $correctResult->status->value || $bet->gross_payout !== $correctResult->grossPayout) {
         $oldPayout = $bet->gross_payout;
-        $newPayout = $correctResult->payout;
+        $newPayout = $correctResult->grossPayout;
         $adjustment = $newPayout - $oldPayout;
 
         echo "Vé {$bet->public_code}: Đang {$bet->status->value} (nhận {$oldPayout}) -> Đúng: {$correctResult->status->value} (nhận {$newPayout}). Lệch: {$adjustment} lá\n";
@@ -58,8 +58,8 @@ foreach ($bets as $bet) {
             // Cập nhật lại status và gross_payout cho vé
             $bet->update([
                 'status' => $correctResult->status->value,
-                'gross_payout' => $correctResult->payout,
-                'net_result' => $correctResult->payout - $bet->stake
+                'gross_payout' => $correctResult->grossPayout,
+                'net_result' => $correctResult->grossPayout - $bet->stake
             ]);
         });
 
