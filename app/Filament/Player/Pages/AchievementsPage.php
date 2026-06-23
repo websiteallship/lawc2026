@@ -164,12 +164,11 @@ class AchievementsPage extends Page
         $hasExact = \App\Models\Bet::where('user_id', $user->id)->where('market_type_snapshot', 'EXACT_SCORE')->exists();
         $typesCount = ($hasAsian ? 1 : 0) + ($hasOU ? 1 : 0) + ($hasExact ? 1 : 0);
 
-        $totalNet = \App\Models\Bet::where('user_id', $user->id)->whereNotNull('net_result')->sum('net_result');
-        $totalStaked = \App\Models\Bet::where('user_id', $user->id)->sum('stake');
-        $roi = $totalStaked > 0 ? ($totalNet / $totalStaked * 100) : 0;
-        
+        $totalStake = \App\Models\Bet::where('user_id', $user->id)->sum('stake');
+        $totalNet   = \App\Models\Bet::where('user_id', $user->id)->whereNotNull('net_result')->sum('net_result');
         $totalSettled = \App\Models\Bet::where('user_id', $user->id)->whereNotIn('status', ['PENDING', 'VOIDED'])->count();
-        $winRate = $totalSettled > 0 ? ($totalWins / $totalSettled * 100) : 0;
+        $winRatePct   = $totalSettled >= 100 ? round($totalWins / $totalSettled * 100, 1) : 0;
+        $roiPct       = $totalStake > 0 ? round($totalNet / $totalStake * 100, 1) : 0;
 
         $progressMap = [
             'LV1_APPRENTICE' => ['current' => $totalBets, 'target' => 1],
@@ -177,45 +176,49 @@ class AchievementsPage extends Page
             'LV3_DECODER' => ['current' => $exactScoreWins, 'target' => 1],
             'LV4_EXPERT' => ['current' => $longestMatchStreak, 'target' => 3],
             'LV5_PROPHET' => [
-                'current' => $totalWins, 
-                'target' => 20,
-                'subs' => [
-                    ['label' => 'Đã cược đủ 3 loại kèo', 'current' => $typesCount, 'target' => 3, 'is_boolean' => false],
-                ]
+                'current' => $totalWins, 'target' => 20,
+                'sub_conditions' => [
+                    ['label' => 'Vé thắng',       'current' => $totalWins, 'target' => 20],
+                    ['label' => 'Kèo Chấp',       'current' => (int) $hasAsian, 'target' => 1, 'bool' => true],
+                    ['label' => 'Tài/Xỉu',         'current' => (int) $hasOU, 'target' => 1, 'bool' => true],
+                    ['label' => 'Tỉ số',            'current' => (int) $hasExact, 'target' => 1, 'bool' => true],
+                ],
             ],
             'LV6_FUTURE_ENVOY' => [
-                'current' => $totalWins, 
-                'target' => 50,
-                'subs' => [
-                    ['label' => 'Lợi nhuận (ROI > 0)', 'current' => round($roi, 1), 'target' => 0.1, 'unit' => '%'],
-                ]
+                'current' => $totalWins, 'target' => 50,
+                'sub_conditions' => [
+                    ['label' => 'Vé thắng',  'current' => $totalWins,           'target' => 50],
+                    ['label' => 'ROI dương', 'current' => $totalNet > 0 ? 1 : 0, 'target' => 1, 'bool' => true],
+                ],
             ],
             'LV7_LORD_OF_DESTINY' => ['current' => $exactScoreWins, 'target' => 15],
             'LV8_COSMIC' => [
-                'current' => $longestMatchStreak, 
-                'target' => 15,
-                'subs' => [
-                    ['label' => 'Tỷ lệ thắng (Win-rate)', 'current' => round($winRate, 1), 'target' => 75, 'unit' => '%'],
-                    ['label' => 'Số vé tối thiểu (Settle)', 'current' => $totalSettled, 'target' => 100],
-                ]
+                'current' => $longestMatchStreak, 'target' => 15,
+                'sub_conditions' => [
+                    ['label' => 'Streak trận', 'current' => $longestMatchStreak, 'target' => 15],
+                    ['label' => 'Win-rate',    'current' => $winRatePct,          'target' => 75,  'suffix' => '%'],
+                    ['label' => 'Vé đã settle','current' => $totalSettled,        'target' => 100],
+                ],
             ],
             'LV9_OMNISCIENT' => [
-                'current' => $totalWins, 
-                'target' => 100,
-                'subs' => [
-                    ['label' => 'Tỷ suất sinh lời (ROI)', 'current' => round($roi, 1), 'target' => 20, 'unit' => '%'],
-                    ['label' => 'Đoán đúng tỉ số', 'current' => $exactScoreWins, 'target' => 10],
-                ]
+                'current' => $totalWins, 'target' => 100,
+                'sub_conditions' => [
+                    ['label' => 'Vé thắng',    'current' => $totalWins,      'target' => 100],
+                    ['label' => 'ROI',         'current' => $roiPct,          'target' => 20,  'suffix' => '%'],
+                    ['label' => 'Tỉ số đúng',  'current' => $exactScoreWins, 'target' => 10],
+                ],
             ],
             'LV10_LEGEND' => [
-                'current' => $totalWins, 
-                'target' => 200,
-                'subs' => [
-                    ['label' => 'Chuỗi thắng (Trận)', 'current' => $longestMatchStreak, 'target' => 12],
-                    ['label' => 'Đoán đúng tỉ số', 'current' => $exactScoreWins, 'target' => 10],
-                    ['label' => 'Tỷ suất sinh lời (ROI)', 'current' => round($roi, 1), 'target' => 20, 'unit' => '%'],
-                    ['label' => 'Đã cược đủ 3 loại kèo', 'current' => $typesCount, 'target' => 3],
-                ]
+                'current' => $totalWins, 'target' => 200,
+                'sub_conditions' => [
+                    ['label' => 'Vé thắng',     'current' => $totalWins,           'target' => 200],
+                    ['label' => 'Streak trận',  'current' => $longestMatchStreak,   'target' => 12],
+                    ['label' => 'Tỉ số đúng',   'current' => $exactScoreWins,       'target' => 10],
+                    ['label' => 'ROI',          'current' => $roiPct,               'target' => 20,  'suffix' => '%'],
+                    ['label' => 'Kèo Chấp',     'current' => (int) $hasAsian,       'target' => 1, 'bool' => true],
+                    ['label' => 'Tài/Xỉu',      'current' => (int) $hasOU,          'target' => 1, 'bool' => true],
+                    ['label' => 'Tỉ số kèo',    'current' => (int) $hasExact,       'target' => 1, 'bool' => true],
+                ],
             ],
             
             // Side quests
