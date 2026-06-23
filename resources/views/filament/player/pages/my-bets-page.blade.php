@@ -74,6 +74,11 @@
                                     title="Sửa dự đoán">
                                     <x-filament::icon icon="heroicon-o-pencil-square" class="w-4 h-4" />
                                 </button>
+                                <button wire:click="$dispatch('openCancelBetModal', { betId: {{ $bet->id }} })"
+                                    class="bg-red-100 hover:bg-red-200 text-red-700 dark:bg-red-900/50 dark:hover:bg-red-900/70 dark:text-red-400 p-1.5 rounded-lg shadow-sm border border-red-200 dark:border-red-800 transition-colors"
+                                    title="Huỷ phiếu">
+                                    <x-filament::icon icon="heroicon-o-x-circle" class="w-4 h-4" />
+                                </button>
                             @endif
                         </div>
                     </div>
@@ -160,4 +165,5 @@
     </div>
     
     @livewire(\App\Filament\Player\Livewire\EditBetModal::class)
+    @livewire(\App\Filament\Player\Livewire\CancelBetModal::class)
 </x-filament-panels::page>
