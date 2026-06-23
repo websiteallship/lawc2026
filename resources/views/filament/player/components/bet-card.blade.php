@@ -88,17 +88,6 @@
         </p>
     </div>
 
-    @php
-        $correctionAmount = 0;
-        if ($bet->status->value === 'CORRECTED') {
-            $correctionAmount = \App\Models\WalletLedger::where('bet_id', $bet->id)
-                ->where('type', 'SETTLEMENT_CORRECTION')
-                ->sum('amount_available');
-        }
-        $effectivePayout = $bet->gross_payout + $correctionAmount;
-        $effectiveNet    = $effectivePayout - $bet->stake;
-    @endphp
-
     <div class="flex justify-between items-end">
         <div class="space-y-1">
             <p class="text-xs text-gray-500">Đặt lúc: {{ $bet->placed_at?->format('d/m/Y H:i') }}</p>
@@ -107,24 +96,13 @@
 
         @if($bet->status->isSettled())
             <div class="text-right">
-                @if($bet->status->value === 'CORRECTED' && $correctionAmount !== 0)
-                    <p class="text-xs text-gray-500">Nhận về (sau điều chỉnh)</p>
-                    <p class="font-black text-lg {{ $effectiveNet > 0 ? 'text-emerald-600 dark:text-emerald-400' : ($effectiveNet < 0 ? 'text-red-500' : 'text-gray-700 dark:text-gray-300') }}">
-                        {{ number_format($effectivePayout) }}
-                    </p>
-                    <p class="text-[10px] font-bold {{ $effectiveNet > 0 ? 'text-emerald-600' : ($effectiveNet < 0 ? 'text-red-500' : 'text-gray-500') }}">
-                        ({{ $effectiveNet > 0 ? '+' : '' }}{{ number_format($effectiveNet) }})
-                    </p>
-                    <p class="text-[10px] text-amber-500 mt-0.5">Điều chỉnh: {{ $correctionAmount >= 0 ? '+' : '' }}{{ number_format($correctionAmount) }} lá</p>
-                @else
-                    <p class="text-xs text-gray-500">Nhận về</p>
-                    <p class="font-black text-lg {{ $bet->net_result > 0 ? 'text-emerald-600 dark:text-emerald-400' : ($bet->net_result < 0 ? 'text-red-500' : 'text-gray-700 dark:text-gray-300') }}">
-                        {{ number_format($bet->gross_payout) }}
-                    </p>
-                    <p class="text-[10px] font-bold {{ $bet->net_result > 0 ? 'text-emerald-600' : ($bet->net_result < 0 ? 'text-red-500' : 'text-gray-500') }}">
-                        ({{ $bet->net_result > 0 ? '+' : '' }}{{ number_format($bet->net_result) }})
-                    </p>
-                @endif
+                <p class="text-xs text-gray-500">Nhận về</p>
+                <p class="font-black text-lg {{ $bet->net_result > 0 ? 'text-emerald-600 dark:text-emerald-400' : ($bet->net_result < 0 ? 'text-red-500' : 'text-gray-700 dark:text-gray-300') }}">
+                    {{ number_format($bet->gross_payout) }}
+                </p>
+                <p class="text-[10px] font-bold {{ $bet->net_result > 0 ? 'text-emerald-600' : ($bet->net_result < 0 ? 'text-red-500' : 'text-gray-500') }}">
+                    ({{ $bet->net_result > 0 ? '+' : '' }}{{ number_format($bet->net_result) }})
+                </p>
             </div>
         @else
             <div class="text-right">
