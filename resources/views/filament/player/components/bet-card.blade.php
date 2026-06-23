@@ -23,6 +23,7 @@
                     'LOST', 'HALF_LOST', 'VOIDED' => 'danger',
                     'PUSH' => 'info',
                     'PENDING' => 'gray',
+                    'CORRECTED' => 'warning',
                     default => 'gray'
                 }"
             >
@@ -34,7 +35,12 @@
                     'HALF_LOST' => 'Thua nửa',
                     'PUSH' => 'Hòa (Hoàn)',
                     'VOIDED' => 'Hoàn',
-                    'CORRECTED' => 'Đã điều chỉnh',
+                    'CORRECTED' => match(true) {
+                        $bet->net_result > 0 => 'Điều chỉnh (Thắng)',
+                        $bet->net_result < 0 && $bet->gross_payout == 0 => 'Điều chỉnh (Thua)',
+                        $bet->net_result == 0 && $bet->gross_payout > 0 => 'Điều chỉnh (Hòa)',
+                        default => 'Đã điều chỉnh'
+                    },
                     default => $bet->status->value
                 } }}
             </x-filament::badge>

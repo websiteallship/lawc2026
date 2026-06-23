@@ -105,9 +105,10 @@ class BetResource extends Resource
                         'LOST', 'HALF_LOST', 'VOIDED' => 'danger',
                         'PUSH' => 'info',
                         'PENDING' => 'gray',
+                        'CORRECTED' => 'warning',
                         default => 'warning',
                     })
-                    ->formatStateUsing(fn (BetStatus $state) => match ($state->value) {
+                    ->formatStateUsing(fn (BetStatus $state, Bet $record) => match ($state->value) {
                         'PENDING' => 'Chưa mở',
                         'WON' => 'Thắng đủ',
                         'HALF_WON' => 'Thắng nửa',
@@ -115,7 +116,12 @@ class BetResource extends Resource
                         'HALF_LOST' => 'Thua nửa',
                         'PUSH' => 'Hòa',
                         'VOIDED' => 'Hoàn',
-                        'CORRECTED' => 'Điều chỉnh',
+                        'CORRECTED' => match(true) {
+                            $record->net_result > 0 => 'Điều chỉnh (Thắng)',
+                            $record->net_result < 0 && $record->gross_payout == 0 => 'Điều chỉnh (Thua)',
+                            $record->net_result == 0 && $record->gross_payout > 0 => 'Điều chỉnh (Hòa)',
+                            default => 'Điều chỉnh',
+                        },
                         default => $state->value,
                     }),
                 Tables\Columns\TextColumn::make('gross_payout')
@@ -323,9 +329,10 @@ class BetResource extends Resource
                                 'LOST', 'HALF_LOST', 'VOIDED' => 'danger',
                                 'PUSH' => 'info',
                                 'PENDING' => 'gray',
+                                'CORRECTED' => 'warning',
                                 default => 'warning',
                             })
-                            ->formatStateUsing(fn (BetStatus $state) => match ($state->value) {
+                            ->formatStateUsing(fn (BetStatus $state, Bet $record) => match ($state->value) {
                                 'PENDING' => 'Chưa mở',
                                 'WON' => 'Thắng đủ',
                                 'HALF_WON' => 'Thắng nửa',
@@ -333,7 +340,12 @@ class BetResource extends Resource
                                 'HALF_LOST' => 'Thua nửa',
                                 'PUSH' => 'Hòa',
                                 'VOIDED' => 'Hoàn',
-                                'CORRECTED' => 'Điều chỉnh',
+                                'CORRECTED' => match(true) {
+                                    $record->net_result > 0 => 'Điều chỉnh (Thắng)',
+                                    $record->net_result < 0 && $record->gross_payout == 0 => 'Điều chỉnh (Thua)',
+                                    $record->net_result == 0 && $record->gross_payout > 0 => 'Điều chỉnh (Hòa)',
+                                    default => 'Điều chỉnh',
+                                },
                                 default => $state->value,
                             }),
                     ])->columns(4),
