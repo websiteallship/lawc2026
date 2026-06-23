@@ -58,11 +58,17 @@ class LeaderboardPage extends Page
         // Đọc từ bảng lịch sử lũy kế (không bị reset)
         $currentWeekKey = \App\Models\UserMissionCompletion::weekKey();
 
+        // Chỉ đếm weekly missions đang active để weekly_rate khớp mẫu số
+        $activeWeeklyIds = \App\Models\Mission::where('type', 'weekly')
+            ->where('is_active', true)
+            ->pluck('id');
+        $activeIdsList = $activeWeeklyIds->isNotEmpty() ? $activeWeeklyIds->implode(',') : '0';
+
         $missionRows = \App\Models\UserMissionCompletion::whereIn('user_id', $userIds)
             ->selectRaw("
                 user_id,
                 COUNT(*) as total_missions,
-                SUM(CASE WHEN mission_type = 'weekly' AND week_key = ? THEN 1 ELSE 0 END) as weekly_missions
+                SUM(CASE WHEN week_key = ? AND mission_id IN ({$activeIdsList}) THEN 1 ELSE 0 END) as weekly_missions
             ", [$currentWeekKey])
             ->groupBy('user_id')
             ->get()->keyBy('user_id');
@@ -210,11 +216,16 @@ class LeaderboardPage extends Page
                 ->select('achievements.*')
                 ->get();
 
-            $weeklyRate = $totalWeeklyActive > 0 ? round(($entry->weekly_missions / $totalWeeklyActive) * 100) : 0;
+            $weeklyRate = $totalWeeklyActive > 0 ? min(100, round(($entry->weekly_missions / $totalWeeklyActive) * 100)) : 0;
             
-            // perfect_weeks placeholder: nếu chưa có trong DB nhưng tuần này đã 100% thì tính là 1
-            $dbPerfectWeeks = $entry->perfect_weeks ?? 0;
-            $perfectWeeks = $dbPerfectWeeks + ($weeklyRate >= 100 ? 1 : 0);
+            // perfect_weeks: đếm tuần nào user hoàn thành >= totalWeeklyActive missions
+            $perfectWeeksCount = \App\Models\UserMissionCompletion::where('user_id', $entry->user_id)
+                ->where('mission_type', 'weekly')
+                ->selectRaw('week_key, COUNT(*) as cnt')
+                ->groupBy('week_key')
+                ->havingRaw('COUNT(*) >= ?', [$totalWeeklyActive > 0 ? $totalWeeklyActive : 999])
+                ->count();
+            $perfectWeeks = $perfectWeeksCount;
 
             $achievementsArray = $userAchievements->map(fn($ach) => [
                 'name'        => $ach->name,
