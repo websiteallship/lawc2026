@@ -30,8 +30,12 @@ class MatchListPage extends Page
     {
         $userId = auth()->id();
         if ($userId) {
-            $dismissedKey = 'feature_bracket_2026_06_22_dismissed_' . $userId;
+            $featureKey   = 'feature_bracket_2026_06_22';
+            $dismissedKey = "{$featureKey}_dismissed_{$userId}";
             cache()->put($dismissedKey, true, now()->addYears(1));
+            // Xóa luôn các key tracking để không bao giờ hiện lại
+            cache()->forget("{$featureKey}_first_seen_{$userId}");
+            cache()->forget("{$featureKey}_count_{$userId}");
         }
         $this->showFeaturePopup = false;
     }
@@ -59,9 +63,10 @@ class MatchListPage extends Page
             if (now()->diffInHours($firstSeen) < 24) {
                 $count = cache()->get($countKey, 0);
                 if ($count < 3) {
-                    cache()->put($countKey, $count + 1, now()->addDays(1));
+                    // Dùng TTL 2 ngày (khớp với firstSeenKey) để không bị reset khi đóng browser
+                    cache()->put($countKey, $count + 1, now()->addDays(2));
                     $this->showFeaturePopup = true;
-                    $this->showDismissButton = $count >= 1; // lần thứ 2 trở đi
+                    $this->showDismissButton = true; // luôn hiển thị từ lần đầu
                 }
             }
         }
