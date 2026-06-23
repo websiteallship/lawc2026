@@ -14,36 +14,45 @@ class SyncMissionProgressCommand extends Command
 {
     protected $signature = 'app:sync-missions
                             {--user= : Chỉ sync 1 user_id cụ thể}
+                            {--weeks=1 : Số tuần cần sync (1=tuần này, 4=4 tuần gần nhất)}
                             {--dry-run : Chạy thử, không ghi DB}';
 
-    protected $description = 'Tính lại toàn bộ mission progress từ lịch sử vé đã settle (retroactive sync)';
+    protected $description = 'Tính lại toàn bộ mission progress từ lịch sử bets (retroactive sync)';
 
     public function handle(): int
     {
-        $dryRun = $this->option('dry-run');
+        $dryRun       = $this->option('dry-run');
         $targetUserId = $this->option('user');
+        $weeksBack    = max(1, (int) $this->option('weeks'));
 
-        // ← BẮT BUỘC dùng timezone VN để weekStart = thứ 2 00:00 giờ VN
-        $weekStart = now('Asia/Ho_Chi_Minh')->startOfWeek()->utc();
-        $weekEnd   = now('Asia/Ho_Chi_Minh')->endOfWeek()->utc();
+        $totalUpdated = 0;
 
-        $this->info("Tuần: {$weekStart->format('Y-m-d H:i')} UTC → {$weekEnd->format('Y-m-d H:i')} UTC");
+        for ($w = $weeksBack - 1; $w >= 0; $w--) {
+            $weekStart = now('Asia/Ho_Chi_Minh')->subWeeks($w)->startOfWeek()->utc();
+            $weekEnd   = now('Asia/Ho_Chi_Minh')->subWeeks($w)->endOfWeek()->utc();
+            $weekKey   = \App\Models\UserMissionCompletion::weekKey(
+                now('Asia/Ho_Chi_Minh')->subWeeks($w)->startOfWeek()
+            );
 
+            $this->info("=== Sync tuần {$weekKey}: {$weekStart->format('Y-m-d')} → {$weekEnd->format('Y-m-d')} ===");
+            $totalUpdated += $this->syncWeek($weekStart, $weekEnd, $weekKey, $targetUserId, $dryRun);
+            $this->newLine();
+        }
 
-        // Lấy danh sách mission đang active cần sync
-        $missions = Mission::where('is_active', true)
-            ->get()
-            ->keyBy('code');
+        $this->info("Tổng tất cả tuần: {$totalUpdated} bản ghi" . ($dryRun ? ' (DRY RUN)' : ''));
+        return 0;
+    }
+
+    private function syncWeek($weekStart, $weekEnd, string $weekKey, ?string $targetUserId, bool $dryRun): int
+    {
+        // Lấy missions đang active (dùng tất cả missions để retroactive — không chỉ is_active)
+        $missions = Mission::get()->keyBy('code');
 
         if ($missions->isEmpty()) {
-            $this->warn('Không có mission nào đang active để sync.');
+            $this->warn('Không có mission nào.');
             return 0;
         }
 
-        $this->info('Mission đang active: ' . $missions->keys()->implode(', '));
-        $this->newLine();
-
-        // Query users
         $usersQuery = User::whereIn('id', function ($q) use ($weekStart, $weekEnd) {
             $q->select('user_id')
               ->from('bets')
@@ -56,12 +65,10 @@ class SyncMissionProgressCommand extends Command
         }
 
         $users = $usersQuery->pluck('id');
-        $this->info("Tổng user cần sync: {$users->count()}");
-        $this->newLine();
+        $this->line("  Tổng user cần sync: {$users->count()}");
 
         $bar = $this->output->createProgressBar($users->count());
         $bar->start();
-
         $updated = 0;
 
         foreach ($users as $userId) {
@@ -172,12 +179,8 @@ class SyncMissionProgressCommand extends Command
                         ]
                     );
 
-                    // Ghi lịch sử lũy kế khi hoàn thành
+                    // Ghi lịch sử lũy kế khi hoàn thành (dùng $weekKey của tuần đang sync)
                     if ($isCompleted) {
-                        $weekKey = $mission->type === 'weekly'
-                            ? UserMissionCompletion::weekKey()
-                            : ($mission->type === 'daily' ? now('Asia/Ho_Chi_Minh')->format('Y-m-d') : null);
-
                         UserMissionCompletion::firstOrCreate(
                             ['user_id' => $userId, 'mission_id' => $mission->id, 'week_key' => $weekKey],
                             ['mission_code' => $mission->code, 'mission_type' => $mission->type, 'completed_at' => now()]
@@ -193,8 +196,8 @@ class SyncMissionProgressCommand extends Command
 
         $bar->finish();
         $this->newLine(2);
-        $this->info("Sync hoàn tất. Tổng bản ghi cập nhật: {$updated}" . ($dryRun ? ' (DRY RUN - không ghi DB)' : ''));
+        $this->line("  Sync xong. Cập nhật: {$updated} bản ghi" . ($dryRun ? ' (DRY RUN)' : ''));
 
-        return 0;
+        return $updated;
     }
 }
