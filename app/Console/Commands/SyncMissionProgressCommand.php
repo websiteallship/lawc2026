@@ -28,7 +28,6 @@ class SyncMissionProgressCommand extends Command
 
         // Lấy danh sách mission đang active cần sync
         $missions = Mission::where('is_active', true)
-            ->whereIn('code', ['WEEKLY_W5', 'WEEKLY_W6', 'WEEKLY_W7', 'WEEKLY_W9', 'WEEKLY_W10'])
             ->get()
             ->keyBy('code');
 
@@ -41,12 +40,11 @@ class SyncMissionProgressCommand extends Command
         $this->newLine();
 
         // Query users
-        // Query users có vé settle trong tuần
         $usersQuery = User::whereIn('id', function ($q) use ($weekStart, $weekEnd) {
             $q->select('user_id')
               ->from('bets')
-              ->whereIn('status', ['WON', 'HALF_WON', 'LOST', 'HALF_LOST', 'PUSH'])
-              ->whereBetween('settled_at', [$weekStart, $weekEnd]);
+              ->whereBetween('created_at', [$weekStart, $weekEnd])
+              ->orWhereBetween('settled_at', [$weekStart, $weekEnd]);
         });
 
         if ($targetUserId) {
@@ -67,6 +65,26 @@ class SyncMissionProgressCommand extends Command
             $stats = UserStatistic::where('user_id', $userId)->first();
             $currentStreak = $stats?->current_win_streak ?? 0;
 
+            // Tất cả vé đã tạo trong tuần
+            $weeklyBets = collect(DB::select("SELECT id, created_at, market_type_snapshot FROM bets WHERE user_id = ? AND created_at BETWEEN ? AND ?", [$userId, $weekStart, $weekEnd]));
+            
+            // Số ngày đặt cược khác nhau
+            $distinctDays = $weeklyBets->map(fn($b) => date('Y-m-d', strtotime($b->created_at)))->unique()->count();
+            
+            // Số loại kèo khác nhau
+            $distinctMarkets = $weeklyBets->pluck('market_type_snapshot')->unique()->count();
+
+            // Số trận khác nhau (dựa vào group by market_id)
+            $distinctMatchBets = DB::select("SELECT COUNT(DISTINCT m.match_id) as cnt FROM bets b JOIN markets m ON b.market_id = m.id WHERE b.user_id = ? AND b.created_at BETWEEN ? AND ?", [$userId, $weekStart, $weekEnd]);
+            $distinctMatches = $distinctMatchBets[0]->cnt ?? 0;
+
+            // Đặt cược sau 23:00 (Cú đêm)
+            $nightBets = $weeklyBets->filter(function($b) {
+                $hour = (int)date('H', strtotime($b->created_at));
+                return $hour >= 23 || $hour <= 5;
+            })->count();
+
+            // Lấy vé thắng
             $weeklyWins = Bet::where('user_id', $userId)
                 ->whereIn('status', ['WON', 'HALF_WON'])
                 ->whereBetween('settled_at', [$weekStart, $weekEnd])
@@ -78,16 +96,24 @@ class SyncMissionProgressCommand extends Command
                 ->whereBetween('settled_at', [$weekStart, $weekEnd])
                 ->exists();
 
-            $updates = [
-                'WEEKLY_W5'  => $weeklyWins,       // thắng >= 3
-                'WEEKLY_W6'  => $currentStreak,     // chuỗi >= 3
-                'WEEKLY_W7'  => $weeklyWins,        // thắng >= 5
-                'WEEKLY_W10' => $currentStreak,     // chuỗi >= 5
-            ];
+            $maxStakeBet = DB::select("SELECT MAX(stake) as max_stake FROM bets WHERE user_id = ? AND created_at BETWEEN ? AND ?", [$userId, $weekStart, $weekEnd]);
+            $maxStake = $maxStakeBet[0]->max_stake ?? 0;
 
-            if ($hasExactScoreWin) {
-                $updates['WEEKLY_W9'] = 1;
-            }
+            $updates = [
+                'WEEKLY_ACTIVE_PLAYER'   => $weeklyBets->count(),
+                'WEEKLY_MARKET_EXPLORER' => $distinctMarkets,
+                'SMART_STAKE'            => $weeklyBets->count(),
+                'WEEKLY_W1'              => $distinctMatches,
+                'WEEKLY_W2'              => $nightBets,
+                'WEEKLY_W3'              => $distinctMarkets,
+                'WEEKLY_W4'              => $distinctDays,
+                'WEEKLY_W5'              => $weeklyWins,
+                'WEEKLY_W6'              => $currentStreak,
+                'WEEKLY_W7'              => $weeklyWins,
+                'WEEKLY_W8'              => $maxStake,
+                'WEEKLY_W9'              => $hasExactScoreWin ? 1 : 0,
+                'WEEKLY_W10'             => $currentStreak,
+            ];
 
             foreach ($updates as $code => $value) {
                 if (!$missions->has($code)) continue;
