@@ -24,17 +24,33 @@ class MatchListPage extends Page
     protected string $view = 'filament.player.pages.match-list';
 
     public bool $showFeaturePopup = false;
+    public bool $showDismissButton = false;
+
+    public function dismissFeaturePopupForever(): void
+    {
+        $userId = auth()->id();
+        if ($userId) {
+            $dismissedKey = 'feature_bracket_2026_06_22_dismissed_' . $userId;
+            cache()->put($dismissedKey, true, now()->addYears(1));
+        }
+        $this->showFeaturePopup = false;
+    }
 
     public function mount(): void
     {
         $userId = auth()->id();
         if ($userId) {
-            $featureKey = 'feature_bracket_2026_06_22';
-            $firstSeenKey = "{$featureKey}_first_seen_{$userId}";
-            $countKey = "{$featureKey}_count_{$userId}";
+            $featureKey     = 'feature_bracket_2026_06_22';
+            $dismissedKey   = "{$featureKey}_dismissed_{$userId}";
+            $firstSeenKey   = "{$featureKey}_first_seen_{$userId}";
+            $countKey       = "{$featureKey}_count_{$userId}";
+
+            // Đã bấm "Không hiển thị lại" → bỏ qua hoàn toàn
+            if (cache()->get($dismissedKey)) {
+                return;
+            }
 
             $firstSeen = cache()->get($firstSeenKey);
-
             if (! $firstSeen) {
                 $firstSeen = now();
                 cache()->put($firstSeenKey, $firstSeen, now()->addDays(2));
@@ -45,6 +61,7 @@ class MatchListPage extends Page
                 if ($count < 3) {
                     cache()->put($countKey, $count + 1, now()->addDays(1));
                     $this->showFeaturePopup = true;
+                    $this->showDismissButton = $count >= 1; // lần thứ 2 trở đi
                 }
             }
         }

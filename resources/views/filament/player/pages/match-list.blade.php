@@ -303,6 +303,13 @@
                     <span x-show="countdown > 0">Đóng thông báo sau <span x-text="countdown"></span>s</span>
                     <span x-show="countdown === 0">Đã hiểu & Trải nghiệm ngay</span>
                 </button>
+
+                @if($this->showDismissButton)
+                    <button wire:click="dismissFeaturePopupForever"
+                            class="mt-3 w-full py-2 rounded-xl text-xs font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all">
+                        Không hiển thị lại
+                    </button>
+                @endif
             </div>
         </div>
     @endif
