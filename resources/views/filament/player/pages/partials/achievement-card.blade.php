@@ -114,14 +114,58 @@
                 </a>
             </div>
         @elseif(!$isUnlocked && $progress)
-            <div class="space-y-1.5 mb-4">
-                <div class="flex justify-between text-[10px] font-semibold text-gray-500 dark:text-gray-400">
-                    <span>Tiến độ</span>
-                    <span>{{ $current }}/{{ $target }} ({{ $percent }}%)</span>
+            <div class="space-y-3 mb-4">
+                <!-- Main Progress -->
+                <div class="space-y-1.5 text-left">
+                    <div class="flex justify-between text-[10px] font-semibold text-gray-500 dark:text-gray-400">
+                        <span>Tiến độ chính</span>
+                        <span>{{ $current }}/{{ $target }} ({{ $percent }}%)</span>
+                    </div>
+                    <div class="w-full bg-gray-100 dark:bg-gray-850 h-2 rounded-full overflow-hidden">
+                        <div class="bg-gray-400 dark:bg-gray-600 h-full rounded-full transition-all duration-500" style="width: {{ $percent }}%"></div>
+                    </div>
                 </div>
-                <div class="w-full bg-gray-100 dark:bg-gray-850 h-2 rounded-full overflow-hidden">
-                    <div class="bg-gray-400 dark:bg-gray-600 h-full rounded-full transition-all duration-500" style="width: {{ $percent }}%"></div>
-                </div>
+
+                <!-- Sub requirements -->
+                @if(isset($progress['subs']) && count($progress['subs']) > 0)
+                    <div class="space-y-2 mt-3 pt-3 border-t border-gray-100 dark:border-gray-800 text-left">
+                        @foreach($progress['subs'] as $sub)
+                            @php
+                                $sCurrent = $sub['current'] ?? 0;
+                                $sTarget = $sub['target'] ?? 1;
+                                $sUnit = $sub['unit'] ?? '';
+                                $isBool = $sub['is_boolean'] ?? false;
+                                
+                                $sPercent = min(100, $sTarget > 0 ? round(($sCurrent / $sTarget) * 100) : 0);
+                                $isDone = $sCurrent >= $sTarget;
+                            @endphp
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-[9px] font-medium {{ $isDone ? 'text-success-600 dark:text-success-400' : 'text-gray-500 dark:text-gray-400' }}">
+                                    <span class="truncate flex items-center gap-1">
+                                        @if($isDone)
+                                            <x-filament::icon icon="heroicon-m-check-circle" class="w-3 h-3" />
+                                        @else
+                                            <div class="w-3 h-3 rounded-full border border-gray-300 dark:border-gray-600"></div>
+                                        @endif
+                                        {{ $sub['label'] }}
+                                    </span>
+                                    <span>
+                                        @if($isBool)
+                                            {{ $isDone ? 'Đạt' : '0/1' }}
+                                        @else
+                                            {{ $sCurrent }}{{ $sUnit }}/{{ $sTarget }}{{ $sUnit }}
+                                        @endif
+                                    </span>
+                                </div>
+                                @if(!$isBool)
+                                    <div class="w-full bg-gray-100 dark:bg-gray-850 h-1 rounded-full overflow-hidden">
+                                        <div class="{{ $isDone ? 'bg-success-500' : 'bg-gray-300 dark:bg-gray-600' }} h-full rounded-full transition-all duration-500" style="width: {{ $sPercent }}%"></div>
+                                    </div>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
             </div>
         @endif
 

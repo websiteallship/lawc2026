@@ -165,18 +165,58 @@ class AchievementsPage extends Page
         $typesCount = ($hasAsian ? 1 : 0) + ($hasOU ? 1 : 0) + ($hasExact ? 1 : 0);
 
         $totalNet = \App\Models\Bet::where('user_id', $user->id)->whereNotNull('net_result')->sum('net_result');
+        $totalStaked = \App\Models\Bet::where('user_id', $user->id)->sum('stake');
+        $roi = $totalStaked > 0 ? ($totalNet / $totalStaked * 100) : 0;
+        
+        $totalSettled = \App\Models\Bet::where('user_id', $user->id)->whereNotIn('status', ['PENDING', 'VOIDED'])->count();
+        $winRate = $totalSettled > 0 ? ($totalWins / $totalSettled * 100) : 0;
 
         $progressMap = [
             'LV1_APPRENTICE' => ['current' => $totalBets, 'target' => 1],
             'LV2_LUCKY_HUNTER' => ['current' => $totalWins, 'target' => 5],
             'LV3_DECODER' => ['current' => $exactScoreWins, 'target' => 1],
             'LV4_EXPERT' => ['current' => $longestMatchStreak, 'target' => 3],
-            'LV5_PROPHET' => ['current' => $totalWins, 'target' => 20],
-            'LV6_FUTURE_ENVOY' => ['current' => $totalWins, 'target' => 50],
+            'LV5_PROPHET' => [
+                'current' => $totalWins, 
+                'target' => 20,
+                'subs' => [
+                    ['label' => 'Đã cược đủ 3 loại kèo', 'current' => $typesCount, 'target' => 3, 'is_boolean' => false],
+                ]
+            ],
+            'LV6_FUTURE_ENVOY' => [
+                'current' => $totalWins, 
+                'target' => 50,
+                'subs' => [
+                    ['label' => 'Lợi nhuận (ROI > 0)', 'current' => round($roi, 1), 'target' => 0.1, 'unit' => '%'],
+                ]
+            ],
             'LV7_LORD_OF_DESTINY' => ['current' => $exactScoreWins, 'target' => 15],
-            'LV8_COSMIC' => ['current' => $longestMatchStreak, 'target' => 15],
-            'LV9_OMNISCIENT' => ['current' => $totalWins, 'target' => 100],
-            'LV10_LEGEND' => ['current' => $totalWins, 'target' => 200],
+            'LV8_COSMIC' => [
+                'current' => $longestMatchStreak, 
+                'target' => 15,
+                'subs' => [
+                    ['label' => 'Tỷ lệ thắng (Win-rate)', 'current' => round($winRate, 1), 'target' => 75, 'unit' => '%'],
+                    ['label' => 'Số vé tối thiểu (Settle)', 'current' => $totalSettled, 'target' => 100],
+                ]
+            ],
+            'LV9_OMNISCIENT' => [
+                'current' => $totalWins, 
+                'target' => 100,
+                'subs' => [
+                    ['label' => 'Tỷ suất sinh lời (ROI)', 'current' => round($roi, 1), 'target' => 20, 'unit' => '%'],
+                    ['label' => 'Đoán đúng tỉ số', 'current' => $exactScoreWins, 'target' => 10],
+                ]
+            ],
+            'LV10_LEGEND' => [
+                'current' => $totalWins, 
+                'target' => 200,
+                'subs' => [
+                    ['label' => 'Chuỗi thắng (Trận)', 'current' => $longestMatchStreak, 'target' => 12],
+                    ['label' => 'Đoán đúng tỉ số', 'current' => $exactScoreWins, 'target' => 10],
+                    ['label' => 'Tỷ suất sinh lời (ROI)', 'current' => round($roi, 1), 'target' => 20, 'unit' => '%'],
+                    ['label' => 'Đã cược đủ 3 loại kèo', 'current' => $typesCount, 'target' => 3],
+                ]
+            ],
             
             // Side quests
             'WIN_STREAK_3' => ['current' => $longestWinStreak, 'target' => 3],
