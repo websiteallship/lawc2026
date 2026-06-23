@@ -113,13 +113,38 @@ class AchievementService
                         ->count() >= $achievement->target_value;
                     break;
                 case 'LV8_COSMIC':
-                    $longestWinStreakLv8 = \App\Models\UserStatistic::where('user_id', $userId)->value('longest_win_streak') ?? 0;
-                    $shouldAward = $longestWinStreakLv8 >= $achievement->target_value;
+                    // Streak >= 15 AND win-rate >= 75% AND settled >= 100
+                    $longestStreakLv8 = \App\Models\UserStatistic::where('user_id', $userId)->value('longest_win_streak') ?? 0;
+                    $settledLv8 = Bet::where('user_id', $userId)->whereNotIn('status', ['PENDING', 'VOIDED'])->count();
+                    $winsLv8    = Bet::where('user_id', $userId)->whereIn('status', ['WON', 'HALF_WON'])->count();
+                    $wrLv8      = $settledLv8 >= 100 ? ($winsLv8 / $settledLv8 * 100) : 0;
+                    $shouldAward = $longestStreakLv8 >= $achievement->target_value && $wrLv8 >= 75 && $settledLv8 >= 100;
                     break;
                 case 'LV9_OMNISCIENT':
-                    $shouldAward = Bet::where('user_id', $userId)
-                        ->whereIn('status', ['WON', 'HALF_WON'])
-                        ->count() >= $achievement->target_value;
+                    // 100 wins AND ROI >= 20% AND exact score >= 10
+                    $winsLv9   = Bet::where('user_id', $userId)->whereIn('status', ['WON', 'HALF_WON'])->count();
+                    $stakedLv9 = Bet::where('user_id', $userId)->sum('stake');
+                    $netLv9    = Bet::where('user_id', $userId)->whereNotNull('net_result')->sum('net_result');
+                    $roiLv9    = $stakedLv9 > 0 ? ($netLv9 / $stakedLv9 * 100) : 0;
+                    $exactLv9  = Bet::where('user_id', $userId)->where('market_type_snapshot', 'EXACT_SCORE')->where('status', 'WON')->count();
+                    $shouldAward = $winsLv9 >= $achievement->target_value && $roiLv9 >= 20 && $exactLv9 >= 10;
+                    break;
+                case 'LV10_LEGEND':
+                    // 200 wins + streak >= 12 + 10 exact + ROI >= 20% + 3 kèo
+                    $winsLv10   = Bet::where('user_id', $userId)->whereIn('status', ['WON', 'HALF_WON'])->count();
+                    $streakLv10 = \App\Models\UserStatistic::where('user_id', $userId)->value('longest_win_streak') ?? 0;
+                    $exactLv10  = Bet::where('user_id', $userId)->where('market_type_snapshot', 'EXACT_SCORE')->where('status', 'WON')->count();
+                    $stakedLv10 = Bet::where('user_id', $userId)->sum('stake');
+                    $netLv10    = Bet::where('user_id', $userId)->whereNotNull('net_result')->sum('net_result');
+                    $roiLv10    = $stakedLv10 > 0 ? ($netLv10 / $stakedLv10 * 100) : 0;
+                    $hasAH10    = Bet::where('user_id', $userId)->where('market_type_snapshot', 'ASIAN_HANDICAP')->exists();
+                    $hasOU10    = Bet::where('user_id', $userId)->where('market_type_snapshot', 'OVER_UNDER')->exists();
+                    $hasES10    = Bet::where('user_id', $userId)->where('market_type_snapshot', 'EXACT_SCORE')->exists();
+                    $shouldAward = $winsLv10 >= $achievement->target_value
+                        && $streakLv10 >= 12
+                        && $exactLv10 >= 10
+                        && $roiLv10 >= 20
+                        && $hasAH10 && $hasOU10 && $hasES10;
                     break;
                 case 'DEDICATION_100_BETS':
                     $shouldAward = Bet::where('user_id', $userId)->count() >= 100;

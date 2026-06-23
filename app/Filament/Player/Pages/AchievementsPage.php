@@ -168,9 +168,10 @@ class AchievementsPage extends Page
             'LV4_EXPERT' => ['current' => $longestWinStreak, 'target' => 3],
             'LV5_PROPHET' => ['current' => $totalWins, 'target' => 20], // UI can also show "3/3 loại kèo"
             'LV6_FUTURE_ENVOY' => ['current' => $totalWins, 'target' => 50],
-            'LV7_LORD_OF_DESTINY' => ['current' => $exactScoreWins, 'target' => 5],
-            'LV8_COSMIC' => ['current' => $longestWinStreak, 'target' => 7],
+            'LV7_LORD_OF_DESTINY' => ['current' => $exactScoreWins, 'target' => 15],
+            'LV8_COSMIC' => ['current' => $longestWinStreak, 'target' => 15],
             'LV9_OMNISCIENT' => ['current' => $totalWins, 'target' => 100],
+            'LV10_LEGEND' => ['current' => $totalWins, 'target' => 200],
             
             // Side quests
             'WIN_STREAK_3' => ['current' => $longestWinStreak, 'target' => 3],
