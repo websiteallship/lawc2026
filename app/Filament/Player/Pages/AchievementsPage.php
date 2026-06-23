@@ -87,9 +87,14 @@ class AchievementsPage extends Page
             }
         }
 
-        // Lấy longest streak từ UserStatistic (không bị reset khi thua)
+        // Lấy longest streak từ UserStatistic (không bị reset khi thua) - dùng cho side quests
         $stats = \App\Models\UserStatistic::where('user_id', $user->id)->first();
         $longestWinStreak = $stats?->longest_win_streak ?? $winStreak;
+
+        // Match-based streak cho LEVELS: mỗi trận chỉ tính 1 lần
+        $matchStreak = app(\App\Domain\Achievement\Services\AchievementService::class)
+            ->computeMatchStreak($user->id);
+        $longestMatchStreak = $matchStreak['longest'];
 
         // Calculate Lose Streak (cho BAD_LUCK_5)
         $loseStreak = 0;
@@ -165,11 +170,11 @@ class AchievementsPage extends Page
             'LV1_APPRENTICE' => ['current' => $totalBets, 'target' => 1],
             'LV2_LUCKY_HUNTER' => ['current' => $totalWins, 'target' => 5],
             'LV3_DECODER' => ['current' => $exactScoreWins, 'target' => 1],
-            'LV4_EXPERT' => ['current' => $longestWinStreak, 'target' => 3],
-            'LV5_PROPHET' => ['current' => $totalWins, 'target' => 20], // UI can also show "3/3 loại kèo"
+            'LV4_EXPERT' => ['current' => $longestMatchStreak, 'target' => 3],
+            'LV5_PROPHET' => ['current' => $totalWins, 'target' => 20],
             'LV6_FUTURE_ENVOY' => ['current' => $totalWins, 'target' => 50],
             'LV7_LORD_OF_DESTINY' => ['current' => $exactScoreWins, 'target' => 15],
-            'LV8_COSMIC' => ['current' => $longestWinStreak, 'target' => 15],
+            'LV8_COSMIC' => ['current' => $longestMatchStreak, 'target' => 15],
             'LV9_OMNISCIENT' => ['current' => $totalWins, 'target' => 100],
             'LV10_LEGEND' => ['current' => $totalWins, 'target' => 200],
             

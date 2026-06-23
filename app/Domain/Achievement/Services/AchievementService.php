@@ -38,6 +38,43 @@ class AchievementService
     }
 
     /**
+     * Tính chuỗi thắng theo TRẬN (distinct match).
+     * Mỗi trận chỉ đếm 1 lần: nếu bất kỳ vé nào trong trận thắng → trận đó = WIN.
+     * Nếu tất cả vé trong trận thua/hòa → trận đó = LOSS → reset streak.
+     *
+     * @return array{current: int, longest: int}
+     */
+    public function computeMatchStreak(int $userId): array
+    {
+        $matches = \Illuminate\Support\Facades\DB::select("
+            SELECT
+                b.match_id,
+                m.kickoff_at,
+                MAX(CASE WHEN b.status IN ('WON', 'HALF_WON') THEN 1 ELSE 0 END) as has_win
+            FROM bets b
+            JOIN matches m ON b.match_id = m.id
+            WHERE b.user_id = ?
+            AND b.status NOT IN ('PENDING', 'VOIDED')
+            GROUP BY b.match_id, m.kickoff_at
+            ORDER BY m.kickoff_at ASC
+        ", [$userId]);
+
+        $currentStreak = 0;
+        $longestStreak = 0;
+
+        foreach ($matches as $match) {
+            if ((int) $match->has_win === 1) {
+                $currentStreak++;
+                $longestStreak = max($longestStreak, $currentStreak);
+            } else {
+                $currentStreak = 0;
+            }
+        }
+
+        return ['current' => $currentStreak, 'longest' => $longestStreak];
+    }
+
+    /**
      * Kiểm tra và trao các thành tựu cho người dùng.
      */
     public function checkAndAward(int $userId): void
@@ -56,6 +93,13 @@ class AchievementService
         $maxUnlockedLevel = Achievement::whereIn('id', $userAchievements)->max('level') ?? 0;
 
         foreach ($achievements as $achievement) {
+            // Lazy-load match streak (chỉ tính 1 lần)
+            static $matchStreakCache = [];
+            if (!isset($matchStreakCache[$userId])) {
+                $matchStreakCache[$userId] = $this->computeMatchStreak($userId);
+            }
+            $matchStreak = $matchStreakCache[$userId];
+
             // Nếu không lặp lại và đã nhận rồi thì bỏ qua
             if (!$achievement->is_repeatable && in_array($achievement->id, $userAchievements)) {
                 continue;
@@ -86,8 +130,8 @@ class AchievementService
                         ->count() >= $achievement->target_value;
                     break;
                 case 'LV4_EXPERT':
-                    $longestWinStreak = \App\Models\UserStatistic::where('user_id', $userId)->value('longest_win_streak') ?? 0;
-                    $shouldAward = $longestWinStreak >= 3;
+                    // Streak theo trận: mỗi trận chỉ tính 1 lần
+                    $shouldAward = $matchStreak['longest'] >= 3;
                     break;
                 case 'LV5_PROPHET':
                     $wins = Bet::where('user_id', $userId)
@@ -113,12 +157,11 @@ class AchievementService
                         ->count() >= $achievement->target_value;
                     break;
                 case 'LV8_COSMIC':
-                    // Streak >= 15 AND win-rate >= 75% AND settled >= 100
-                    $longestStreakLv8 = \App\Models\UserStatistic::where('user_id', $userId)->value('longest_win_streak') ?? 0;
+                    // Streak theo trận >= 15 AND win-rate >= 75% AND settled >= 100
                     $settledLv8 = Bet::where('user_id', $userId)->whereNotIn('status', ['PENDING', 'VOIDED'])->count();
                     $winsLv8    = Bet::where('user_id', $userId)->whereIn('status', ['WON', 'HALF_WON'])->count();
                     $wrLv8      = $settledLv8 >= 100 ? ($winsLv8 / $settledLv8 * 100) : 0;
-                    $shouldAward = $longestStreakLv8 >= $achievement->target_value && $wrLv8 >= 75 && $settledLv8 >= 100;
+                    $shouldAward = $matchStreak['longest'] >= $achievement->target_value && $wrLv8 >= 75 && $settledLv8 >= 100;
                     break;
                 case 'LV9_OMNISCIENT':
                     // 100 wins AND ROI >= 20% AND exact score >= 10
@@ -130,9 +173,8 @@ class AchievementService
                     $shouldAward = $winsLv9 >= $achievement->target_value && $roiLv9 >= 20 && $exactLv9 >= 10;
                     break;
                 case 'LV10_LEGEND':
-                    // 200 wins + streak >= 12 + 10 exact + ROI >= 20% + 3 kèo
+                    // 200 wins + streak theo trận >= 12 + 10 exact + ROI >= 20% + 3 kèo
                     $winsLv10   = Bet::where('user_id', $userId)->whereIn('status', ['WON', 'HALF_WON'])->count();
-                    $streakLv10 = \App\Models\UserStatistic::where('user_id', $userId)->value('longest_win_streak') ?? 0;
                     $exactLv10  = Bet::where('user_id', $userId)->where('market_type_snapshot', 'EXACT_SCORE')->where('status', 'WON')->count();
                     $stakedLv10 = Bet::where('user_id', $userId)->sum('stake');
                     $netLv10    = Bet::where('user_id', $userId)->whereNotNull('net_result')->sum('net_result');
@@ -141,7 +183,7 @@ class AchievementService
                     $hasOU10    = Bet::where('user_id', $userId)->where('market_type_snapshot', 'OVER_UNDER')->exists();
                     $hasES10    = Bet::where('user_id', $userId)->where('market_type_snapshot', 'EXACT_SCORE')->exists();
                     $shouldAward = $winsLv10 >= $achievement->target_value
-                        && $streakLv10 >= 12
+                        && $matchStreak['longest'] >= 12
                         && $exactLv10 >= 10
                         && $roiLv10 >= 20
                         && $hasAH10 && $hasOU10 && $hasES10;
