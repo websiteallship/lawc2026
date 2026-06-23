@@ -86,7 +86,19 @@
                                 \App\Enums\BetStatus::LOST       => ['bg'=>'bg-red-50 dark:bg-red-900/20','border'=>'border-red-200 dark:border-red-700/50','icon'=>'heroicon-s-x-circle','iconColor'=>'text-red-500','label'=>'THUA','labelColor'=>'text-red-600 dark:text-red-400'],
                                 \App\Enums\BetStatus::HALF_LOST  => ['bg'=>'bg-red-50/60 dark:bg-red-900/10','border'=>'border-red-200/60 dark:border-red-700/30','icon'=>'heroicon-s-x-circle','iconColor'=>'text-red-400','label'=>'THUA ½','labelColor'=>'text-red-500 dark:text-red-400'],
                                 \App\Enums\BetStatus::PUSH       => ['bg'=>'bg-gray-50 dark:bg-gray-700/30','border'=>'border-gray-200 dark:border-gray-600','icon'=>'heroicon-s-minus-circle','iconColor'=>'text-gray-400','label'=>'HOÀ VỐN','labelColor'=>'text-gray-500 dark:text-gray-400'],
-                                \App\Enums\BetStatus::CORRECTED  => ['bg'=>'bg-amber-50 dark:bg-amber-900/20','border'=>'border-amber-200 dark:border-amber-700/50','icon'=>'heroicon-s-arrow-path','iconColor'=>'text-amber-500','label'=>'ĐIỀU CHỈNH','labelColor'=>'text-amber-600 dark:text-amber-400'],
+                                \App\Enums\BetStatus::CORRECTED  => [
+                                    'bg'=>'bg-amber-50 dark:bg-amber-900/20',
+                                    'border'=>'border-amber-200 dark:border-amber-700/50',
+                                    'icon'=>'heroicon-s-arrow-path',
+                                    'iconColor'=>'text-amber-500',
+                                    'label'=> match(true) {
+                                        $bet->net_result > 0 => 'ĐIỀU CHỈNH (THẮNG)',
+                                        $bet->net_result < 0 && $bet->gross_payout == 0 => 'ĐIỀU CHỈNH (THUA)',
+                                        $bet->net_result == 0 && $bet->gross_payout > 0 => 'ĐIỀU CHỈNH (HÒA)',
+                                        default => 'ĐIỀU CHỈNH'
+                                    },
+                                    'labelColor'=>'text-amber-600 dark:text-amber-400'
+                                ],
                                 default                          => ['bg'=>'bg-gray-50 dark:bg-gray-700/30','border'=>'border-gray-200 dark:border-gray-600','icon'=>'heroicon-s-clock','iconColor'=>'text-gray-400','label'=> is_string($bet->status) ? $bet->status : ($bStatus?->value ?? 'UNKNOWN'),'labelColor'=>'text-gray-500'],
                             };
                         @endphp
