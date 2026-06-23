@@ -6,7 +6,7 @@ use App\Models\Bet;
 use App\Models\Mission;
 use App\Models\User;
 use App\Models\UserMission;
-use App\Models\UserStatistic;
+
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -23,8 +23,12 @@ class SyncMissionProgressCommand extends Command
         $dryRun = $this->option('dry-run');
         $targetUserId = $this->option('user');
 
-        $weekStart = now()->startOfWeek();
-        $weekEnd   = now()->endOfWeek();
+        // ← BẮT BUỘC dùng timezone VN để weekStart = thứ 2 00:00 giờ VN
+        $weekStart = now('Asia/Ho_Chi_Minh')->startOfWeek()->utc();
+        $weekEnd   = now('Asia/Ho_Chi_Minh')->endOfWeek()->utc();
+
+        $this->info("Tuần: {$weekStart->format('Y-m-d H:i')} UTC → {$weekEnd->format('Y-m-d H:i')} UTC");
+
 
         // Lấy danh sách mission đang active cần sync
         $missions = Mission::where('is_active', true)
@@ -62,8 +66,28 @@ class SyncMissionProgressCommand extends Command
 
         foreach ($users as $userId) {
             // Dữ liệu từ DB, không dùng cache
-            $stats = UserStatistic::where('user_id', $userId)->first();
-            $currentStreak = $stats?->current_win_streak ?? 0;
+            // Tính streak trong tuần từ bets đã settle (theo thứ tự settled_at)
+            $settledThisWeek = Bet::where('user_id', $userId)
+                ->whereIn('status', ['WON', 'HALF_WON', 'LOST', 'HALF_LOST', 'PUSH'])
+                ->whereBetween('settled_at', [$weekStart, $weekEnd])
+                ->orderBy('settled_at')
+                ->pluck('status')
+                ->map(fn($s) => is_object($s) ? $s->value : $s);
+
+            $currentStreak = 0;
+            $maxStreakThisWeek = 0;
+            foreach ($settledThisWeek as $status) {
+                if (in_array($status, ['WON', 'HALF_WON'])) {
+                    $currentStreak++;
+                    $maxStreakThisWeek = max($maxStreakThisWeek, $currentStreak);
+                } elseif (in_array($status, ['LOST', 'HALF_LOST'])) {
+                    $currentStreak = 0;
+                }
+                // PUSH không reset streak
+            }
+            // Dùng chuỗi thắng dài nhất trong tuần để check mission
+            $weeklyStreak = $maxStreakThisWeek;
+
 
             // Tất cả vé đã tạo trong tuần
             $weeklyBets = collect(DB::select("SELECT id, created_at, market_type_snapshot FROM bets WHERE user_id = ? AND created_at BETWEEN ? AND ?", [$userId, $weekStart, $weekEnd]));
@@ -108,11 +132,11 @@ class SyncMissionProgressCommand extends Command
                 'WEEKLY_W3'              => $distinctMarkets,
                 'WEEKLY_W4'              => $distinctDays,
                 'WEEKLY_W5'              => $weeklyWins,
-                'WEEKLY_W6'              => $currentStreak,
+                'WEEKLY_W6'              => $weeklyStreak,
                 'WEEKLY_W7'              => $weeklyWins,
                 'WEEKLY_W8'              => $maxStake,
                 'WEEKLY_W9'              => $hasExactScoreWin ? 1 : 0,
-                'WEEKLY_W10'             => $currentStreak,
+                'WEEKLY_W10'             => $weeklyStreak,
             ];
 
             foreach ($updates as $code => $value) {
