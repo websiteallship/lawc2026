@@ -91,7 +91,7 @@
     @php
         $correctionAmount = 0;
         if ($bet->status->value === 'CORRECTED') {
-            $correctionAmount = (int) \App\Models\WalletLedger::where('bet_id', $bet->id)
+            $correctionAmount = \App\Models\WalletLedger::where('bet_id', $bet->id)
                 ->where('type', 'SETTLEMENT_CORRECTION')
                 ->sum('amount_available');
         }
@@ -113,9 +113,12 @@
                     ({{ $bet->net_result > 0 ? '+' : '' }}{{ number_format($bet->net_result) }})
                 </p>
                 @if($correctionAmount !== 0)
-                    <p class="text-[10px] font-semibold text-amber-600 dark:text-amber-400 mt-0.5">
-                        Điều chỉnh: {{ $correctionAmount >= 0 ? '+' : '' }}{{ number_format($correctionAmount) }} lá
-                    </p>
+                    <div class="mt-1.5 pt-1.5 border-t border-gray-100 dark:border-gray-800">
+                        <p class="text-[9px] text-gray-400 uppercase tracking-wider mb-0.5">Kế toán điều chỉnh ví</p>
+                        <p class="text-xs font-black {{ $correctionAmount > 0 ? 'text-emerald-500' : 'text-red-500' }}">
+                            {{ $correctionAmount > 0 ? '+' : '' }}{{ number_format($correctionAmount) }}
+                        </p>
+                    </div>
                 @endif
             </div>
         @else
@@ -127,17 +130,6 @@
             </div>
         @endif
     </div>
-
-    @if($bet->status->value === 'CORRECTED' && $correctionAmount !== 0)
-        <div class="mt-3 px-3 py-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-700/40 flex items-start gap-2">
-            <x-filament::icon icon="heroicon-s-exclamation-triangle" class="w-3.5 h-3.5 text-amber-500 flex-shrink-0 mt-0.5" />
-            <p class="text-[11px] leading-relaxed text-amber-700 dark:text-amber-400">
-                Kết quả đã được hệ thống điều chỉnh. 
-                <span class="font-bold">{{ $correctionAmount >= 0 ? '+' : '' }}{{ number_format($correctionAmount) }} lá</span>
-                đã được {{ $correctionAmount >= 0 ? 'bổ sung' : 'thu hồi' }} từ phiên quyết toán trước.
-            </p>
-        </div>
-    @endif
 
     @if($isAdmin)
         <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800 space-y-2">

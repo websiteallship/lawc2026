@@ -127,6 +127,18 @@ class BetResource extends Resource
                 Tables\Columns\TextColumn::make('gross_payout')
                     ->label('Trả thưởng')
                     ->numeric()
+                    ->description(function (Bet $record) {
+                        if ($record->status->value === 'CORRECTED') {
+                            $correction = \App\Models\WalletLedger::where('bet_id', $record->id)
+                                ->where('type', 'SETTLEMENT_CORRECTION')
+                                ->sum('amount_available');
+                            if ($correction) {
+                                $sign = $correction > 0 ? '+' : '';
+                                return "Điều chỉnh ví: {$sign}" . number_format($correction);
+                            }
+                        }
+                        return null;
+                    })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('placed_at')
                     ->label('Đặt lúc')
@@ -366,6 +378,22 @@ class BetResource extends Resource
                         TextEntry::make('display_odds_snapshot')->label('Lựa chọn (Tỉ lệ)'),
                         TextEntry::make('stake')->label('Tiền cược (Lá)')->numeric(),
                         TextEntry::make('gross_payout')->label('Trả thưởng (Lá)')->numeric(),
+                        TextEntry::make('correction_amount')
+                            ->label('Điều chỉnh ví (Lá)')
+                            ->state(function (Bet $record) {
+                                $correction = \App\Models\WalletLedger::where('bet_id', $record->id)
+                                    ->where('type', 'SETTLEMENT_CORRECTION')
+                                    ->sum('amount_available');
+                                $sign = $correction > 0 ? '+' : '';
+                                return $correction ? "{$sign}" . number_format($correction) : '-';
+                            })
+                            ->visible(fn (Bet $record) => $record->status->value === 'CORRECTED')
+                            ->color(function (Bet $record) {
+                                $correction = \App\Models\WalletLedger::where('bet_id', $record->id)
+                                    ->where('type', 'SETTLEMENT_CORRECTION')
+                                    ->sum('amount_available');
+                                return $correction > 0 ? 'success' : ($correction < 0 ? 'danger' : 'gray');
+                            }),
                         TextEntry::make('net_result')->label('Lãi / Lỗ')->numeric(),
                     ])->columns(3),
             ]);
