@@ -48,10 +48,10 @@ class WalletHistoryPage extends Page
     public string $searchQuery = '';
 
     /** @var string Flow period for stat cards & reconciliation — see DatePeriodFilter::options() */
-    public string $flowPeriod = 'this_week';
+    public string $flowPeriod = 'season';
 
     // Advanced filters
-    public string $filterPeriod = 'this_week'; // all, or keys from DatePeriodFilter::options()
+    public string $filterPeriod = 'season'; // season, or keys from DatePeriodFilter::options()
     public string $filterTypeGroup = 'all'; // all, bet_placed, bet_win, bet_lose, bet_refund, admin_adj
     public string $filterAmount = 'all'; // all, 1k, 10k, 100k
 
