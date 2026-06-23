@@ -88,6 +88,15 @@
         </p>
     </div>
 
+    @php
+        $correctionAmount = 0;
+        if ($bet->status->value === 'CORRECTED') {
+            $correctionAmount = (int) \App\Models\WalletLedger::where('bet_id', $bet->id)
+                ->where('type', 'SETTLEMENT_CORRECTION')
+                ->sum('amount_available');
+        }
+    @endphp
+
     <div class="flex justify-between items-end">
         <div class="space-y-1">
             <p class="text-xs text-gray-500">Đặt lúc: {{ $bet->placed_at?->format('d/m/Y H:i') }}</p>
@@ -103,6 +112,11 @@
                 <p class="text-[10px] font-bold {{ $bet->net_result > 0 ? 'text-emerald-600' : ($bet->net_result < 0 ? 'text-red-500' : 'text-gray-500') }}">
                     ({{ $bet->net_result > 0 ? '+' : '' }}{{ number_format($bet->net_result) }})
                 </p>
+                @if($correctionAmount !== 0)
+                    <p class="text-[10px] font-semibold text-amber-600 dark:text-amber-400 mt-0.5">
+                        Điều chỉnh: {{ $correctionAmount >= 0 ? '+' : '' }}{{ number_format($correctionAmount) }} lá
+                    </p>
+                @endif
             </div>
         @else
             <div class="text-right">
@@ -113,6 +127,17 @@
             </div>
         @endif
     </div>
+
+    @if($bet->status->value === 'CORRECTED' && $correctionAmount !== 0)
+        <div class="mt-3 px-3 py-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-700/40 flex items-start gap-2">
+            <x-filament::icon icon="heroicon-s-exclamation-triangle" class="w-3.5 h-3.5 text-amber-500 flex-shrink-0 mt-0.5" />
+            <p class="text-[11px] leading-relaxed text-amber-700 dark:text-amber-400">
+                Kết quả đã được hệ thống điều chỉnh. 
+                <span class="font-bold">{{ $correctionAmount >= 0 ? '+' : '' }}{{ number_format($correctionAmount) }} lá</span>
+                đã được {{ $correctionAmount >= 0 ? 'bổ sung' : 'thu hồi' }} từ phiên quyết toán trước.
+            </p>
+        </div>
+    @endif
 
     @if($isAdmin)
         <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800 space-y-2">
