@@ -27,7 +27,8 @@ class AdminBetsPerDayChart extends ApexChartWidget
     {
         [$start, $end, $days] = DatePeriodFilter::resolve($this->filter);
 
-        $data = Bet::select(
+        $data = Bet::whereHas('user', fn ($q) => $q->where('is_test_user', false))
+            ->select(
             DB::raw('date(created_at) as date'),
             DB::raw('count(*) as aggregate')
         )

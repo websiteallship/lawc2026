@@ -14,7 +14,8 @@ class AdminMarketTypeChart extends ChartWidget
 
     protected function getData(): array
     {
-        $data = Bet::select(
+        $data = Bet::whereHas('user', fn ($q) => $q->where('is_test_user', false))
+            ->select(
             'market_type_snapshot',
             DB::raw('count(*) as aggregate')
         )
