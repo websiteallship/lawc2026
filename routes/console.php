@@ -83,3 +83,14 @@ Schedule::command('notify:leaderboard --type=daily')->dailyAt('08:00');
 
 // Thông báo bảng xếp hạng hằng tuần vào sáng thứ 2 lúc 8:00 sáng
 Schedule::command('notify:leaderboard --type=weekly')->weeklyOn(1, '08:00');
+
+// ===================== MISSIONS =====================
+// Reset nhiệm vụ hằng ngày lúc 00:00 (giờ VN)
+Schedule::command('app:evaluate-missions --type=daily')
+    ->dailyAt('00:00')
+    ->timezone('Asia/Ho_Chi_Minh');
+
+// Reset và rotate nhiệm vụ hằng tuần lúc 00:00 thứ Hai (giờ VN)
+Schedule::command('app:evaluate-missions --type=weekly')
+    ->weeklyOn(1, '00:00')
+    ->timezone('Asia/Ho_Chi_Minh');

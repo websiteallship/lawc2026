@@ -109,16 +109,29 @@ class MissionService
 
     public function evaluateWeeklyMissions(): void
     {
-        $weeklyMissions = Mission::where('type', 'weekly')->pluck('id');
-        UserMission::whereIn('mission_id', $weeklyMissions)->delete();
+        // 1. Reset toàn bộ user_missions weekly (xoá progress tuần cũ)
+        $weeklyMissionIds = Mission::where('type', 'weekly')->pluck('id');
+        UserMission::whereIn('mission_id', $weeklyMissionIds)->delete();
 
-        // Reset all weekly missions to inactive
-        Mission::where('type', 'weekly')->update(['is_active' => false]);
+        // 2. Chỉ deactivate pool rotation (WEEKLY_W*), không động vào always-on missions
+        Mission::where('type', 'weekly')
+            ->where('code', 'like', 'WEEKLY_W%')
+            ->update(['is_active' => false]);
 
-        // Randomly activate 5 weekly missions
-        $randomWeeklyIds = Mission::where('type', 'weekly')->inRandomOrder()->limit(5)->pluck('id');
+        // 3. Activate lại 5 missions ngẫu nhiên từ rotation pool
+        $randomWeeklyIds = Mission::where('type', 'weekly')
+            ->where('code', 'like', 'WEEKLY_W%')
+            ->inRandomOrder()
+            ->limit(5)
+            ->pluck('id');
+
         if ($randomWeeklyIds->isNotEmpty()) {
             Mission::whereIn('id', $randomWeeklyIds)->update(['is_active' => true]);
         }
+
+        // 4. Đảm bảo always-on missions (không có code WEEKLY_W*) luôn active
+        Mission::where('type', 'weekly')
+            ->where('code', 'not like', 'WEEKLY_W%')
+            ->update(['is_active' => true]);
     }
 }
