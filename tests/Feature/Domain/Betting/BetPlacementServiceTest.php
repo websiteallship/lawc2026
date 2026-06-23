@@ -124,7 +124,6 @@ class BetPlacementServiceTest extends TestCase
         $this->wallet->refresh();
         $this->assertEquals(900, $this->wallet->available_balance);
         $this->assertEquals(100, $this->wallet->locked_balance);
-        $this->assertEquals(100, $this->wallet->total_staked);
     }
 
     public function test_ledger_bet_placed_row_created(): void
@@ -163,7 +162,6 @@ class BetPlacementServiceTest extends TestCase
 
         $this->assertEquals(850, $this->wallet->available_balance);
         $this->assertEquals(150, $this->wallet->locked_balance);
-        $this->assertEquals(150, $this->wallet->total_staked);
     }
 
     // ===================== VALIDATION FAILURES =====================

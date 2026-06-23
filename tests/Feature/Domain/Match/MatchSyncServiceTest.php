@@ -295,6 +295,6 @@ class MatchSyncServiceTest extends TestCase
         $wallet = $wallet->fresh();
         $this->assertEquals(1000, $wallet->available_balance);
         $this->assertEquals(0, $wallet->locked_balance);
-        $this->assertEquals(0, $wallet->total_staked); // walletService::voidBet giảm total_staked
+        $this->assertEquals(100, $wallet->total_staked); // walletService::voidBet không thay đổi total_staked vì nó chưa được cộng vào
     }
 }

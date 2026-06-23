@@ -126,17 +126,35 @@ class BetPlacementService
 
             // ---- Bước 11: Snapshot tất cả giá trị cần lưu ----
             $profitRate = (float) $outcome->profit_rate;
-            $label = $outcome->label;
-            if (str_starts_with(strtolower($label), 'over ')) {
-                $label = preg_replace('/^over /i', 'Tài ', $label);
-            } elseif (str_starts_with(strtolower($label), 'under ')) {
-                $label = preg_replace('/^under /i', 'Xỉu ', $label);
-            } elseif (strtolower($label) === 'over') {
-                $label = 'Tài';
-            } elseif (strtolower($label) === 'under') {
-                $label = 'Xỉu';
+            $displayLabel = $outcome->label;
+            if (str_starts_with(strtolower($displayLabel), 'over ')) {
+                $displayLabel = preg_replace('/^over /i', 'Tài ', $displayLabel);
+            } elseif (str_starts_with(strtolower($displayLabel), 'under ')) {
+                $displayLabel = preg_replace('/^under /i', 'Xỉu ', $displayLabel);
+            } elseif (strtolower($displayLabel) === 'over') {
+                $displayLabel = 'Tài';
+            } elseif (strtolower($displayLabel) === 'under') {
+                $displayLabel = 'Xỉu';
             }
-            $displayOdds = "{$label} ăn ".number_format($profitRate, 2);
+
+            if (in_array($market->market_type, ['ASIAN_HANDICAP', 'OVER_UNDER']) && !is_null($outcome->line_value)) {
+                $displayLine = (float) $outcome->line_value;
+                if ($market->market_type === 'ASIAN_HANDICAP') {
+                    if ($displayLine > 0) {
+                        $displayLine = '+' . $displayLine;
+                    }
+                    $displayLabel = $outcome->selection_side === 'HOME' ? 'Đội Nhà' : 'Đội Khách';
+                }
+                
+                if (str_starts_with($displayLabel, 'Tài') || str_starts_with($displayLabel, 'Xỉu')) {
+                    $labelPrefix = str_starts_with($displayLabel, 'Tài') ? 'Tài' : 'Xỉu';
+                    $displayOdds = "{$labelPrefix} {$displayLine} ăn ".number_format($profitRate, 2);
+                } else {
+                    $displayOdds = "{$displayLabel} {$displayLine} ăn ".number_format($profitRate, 2);
+                }
+            } else {
+                $displayOdds = "{$displayLabel} ăn ".number_format($profitRate, 2);
+            }
 
             // ---- Bước 12: Tạo Bet PENDING ----
             $bet = Bet::create([
@@ -150,7 +168,7 @@ class BetPlacementService
                 'stake' => $input->stake,
                 'profit_rate_snapshot' => $profitRate,
                 'line_snapshot' => $outcome->line_value,
-                'label_snapshot' => $label,
+                'label_snapshot' => $outcome->label,
                 'display_odds_snapshot' => $displayOdds,
                 'close_at_snapshot' => $market->close_at,
                 'market_type_snapshot' => $market->market_type,

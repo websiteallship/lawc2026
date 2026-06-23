@@ -41,7 +41,7 @@ class AsianHandicapSettlementCalculator extends AbstractSettlementCalculator
         // Nếu đặt AWAY, đảo chiều
         if ($side === 'AWAY') {
             $goalDiff = -$goalDiff;
-            $lineValue = -$lineValue;
+            // Không đảo chiều $lineValue vì trong DB nó ĐÃ là giá trị tương đối cho side này rồi
         }
 
         // Kiểm tra quarter line bằng thuật toán: (line * 4) là số lẻ => quarter line

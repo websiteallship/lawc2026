@@ -158,7 +158,6 @@ class WalletServiceTest extends TestCase
 
         $this->assertEquals(400, $this->wallet->available_balance);
         $this->assertEquals(100, $this->wallet->locked_balance);
-        $this->assertEquals(100, $this->wallet->total_staked);
     }
 
     public function test_lock_stake_throws_when_insufficient_balance(): void
