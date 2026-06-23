@@ -4,6 +4,7 @@ namespace App\Domain\Mission\Services;
 
 use App\Models\Mission;
 use App\Models\UserMission;
+use App\Models\UserMissionCompletion;
 use App\Domain\Achievement\Services\AchievementService;
 
 class MissionService
@@ -91,6 +92,24 @@ class MissionService
                 'current_value' => $mission->target_value,
             ]);
         }
+
+        // ── Ghi lịch sử lũy kế — KHÔNG bao giờ xóa ──
+        $weekKey = $mission->type === 'weekly'
+            ? UserMissionCompletion::weekKey()
+            : ($mission->type === 'daily' ? now('Asia/Ho_Chi_Minh')->format('Y-m-d') : null);
+
+        UserMissionCompletion::firstOrCreate(
+            [
+                'user_id'    => $userId,
+                'mission_id' => $missionId,
+                'week_key'   => $weekKey,
+            ],
+            [
+                'mission_code' => $mission->code,
+                'mission_type' => $mission->type,
+                'completed_at' => now(),
+            ]
+        );
 
         if ($mission->reward_achievement_id) {
             $achievement = \App\Models\Achievement::find($mission->reward_achievement_id);

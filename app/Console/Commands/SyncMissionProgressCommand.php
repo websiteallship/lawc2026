@@ -6,7 +6,7 @@ use App\Models\Bet;
 use App\Models\Mission;
 use App\Models\User;
 use App\Models\UserMission;
-
+use App\Models\UserMissionCompletion;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -171,6 +171,18 @@ class SyncMissionProgressCommand extends Command
                             'completed_at'  => $isCompleted ? now() : null,
                         ]
                     );
+
+                    // Ghi lịch sử lũy kế khi hoàn thành
+                    if ($isCompleted) {
+                        $weekKey = $mission->type === 'weekly'
+                            ? UserMissionCompletion::weekKey()
+                            : ($mission->type === 'daily' ? now('Asia/Ho_Chi_Minh')->format('Y-m-d') : null);
+
+                        UserMissionCompletion::firstOrCreate(
+                            ['user_id' => $userId, 'mission_id' => $mission->id, 'week_key' => $weekKey],
+                            ['mission_code' => $mission->code, 'mission_type' => $mission->type, 'completed_at' => now()]
+                        );
+                    }
                 }
 
                 $updated++;

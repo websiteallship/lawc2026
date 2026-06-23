@@ -54,17 +54,17 @@ class LeaderboardPage extends Page
             ->groupBy('user_achievements.user_id')
             ->get()->keyBy('user_id');
 
-        // ── Mission stats ─────────────────────────────────────────────────────
-        // Lấy các nhiệm vụ theo type để tính count
-        $missionRows = \App\Models\UserMission::join('missions', 'user_missions.mission_id', '=', 'missions.id')
-            ->whereIn('user_missions.user_id', $userIds)
-            ->where('user_missions.is_completed', true)
+        // ── Mission stats ──────────────────────────────────────────────────────
+        // Đọc từ bảng lịch sử lũy kế (không bị reset)
+        $currentWeekKey = \App\Models\UserMissionCompletion::weekKey();
+
+        $missionRows = \App\Models\UserMissionCompletion::whereIn('user_id', $userIds)
             ->selectRaw("
-                user_missions.user_id,
+                user_id,
                 COUNT(*) as total_missions,
-                SUM(CASE WHEN missions.type = 'weekly' THEN 1 ELSE 0 END) as weekly_missions
-            ")
-            ->groupBy('user_missions.user_id')
+                SUM(CASE WHEN mission_type = 'weekly' AND week_key = ? THEN 1 ELSE 0 END) as weekly_missions
+            ", [$currentWeekKey])
+            ->groupBy('user_id')
             ->get()->keyBy('user_id');
 
         // ── Runtime stats cho tab Tuần và Vòng đấu ──────────────────────────
