@@ -168,6 +168,22 @@ class UserResource extends Resource
                     })
                     ->badge()
                     ->color('success'),
+                Tables\Columns\TextColumn::make('total_granted_leaves')
+                    ->label('Tổng lá nạp')
+                    ->state(function (User $record): string {
+                        $activeSeason = Season::where('status', 'active')->first();
+                        if (! $activeSeason) {
+                            return '0';
+                        }
+                        $total = \App\Models\WalletLedger::where('user_id', $record->id)
+                            ->where('season_id', $activeSeason->id)
+                            ->where('type', \App\Enums\LedgerType::ADMIN_GRANT)
+                            ->sum('amount_available');
+
+                        return number_format($total);
+                    })
+                    ->badge()
+                    ->color('info'),
                 Tables\Columns\IconColumn::make('accepted_rules_at')
                     ->label('Đồng ý Rules')
                     ->boolean()
