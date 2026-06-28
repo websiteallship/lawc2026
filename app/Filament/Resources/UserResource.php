@@ -184,6 +184,29 @@ class UserResource extends Resource
                     })
                     ->badge()
                     ->color('info'),
+                Tables\Columns\TextColumn::make('settlement_amount')
+                    ->label('Tổng thanh toán')
+                    ->state(function (User $record): string {
+                        $activeSeason = Season::where('status', 'active')->first();
+                        if (! $activeSeason) {
+                            return '0';
+                        }
+                        
+                        $wallet = $record->wallets()->where('season_id', $activeSeason->id)->first();
+                        $available = $wallet ? $wallet->available_balance : 0;
+                        
+                        $totalGranted = \App\Models\WalletLedger::where('user_id', $record->id)
+                            ->where('season_id', $activeSeason->id)
+                            ->where('type', \App\Enums\LedgerType::ADMIN_GRANT)
+                            ->sum('amount_available');
+
+                        $settlement = $available - $totalGranted;
+                        $prefix = $settlement > 0 ? '+' : '';
+                        
+                        return $prefix . number_format($settlement);
+                    })
+                    ->badge()
+                    ->color(fn (string $state): string => str_starts_with($state, '+') ? 'success' : (str_starts_with($state, '-') ? 'danger' : 'gray')),
                 Tables\Columns\IconColumn::make('accepted_rules_at')
                     ->label('Đồng ý Rules')
                     ->boolean()
