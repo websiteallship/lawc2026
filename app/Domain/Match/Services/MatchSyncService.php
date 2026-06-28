@@ -42,24 +42,30 @@ class MatchSyncService
         }
 
         foreach ($apiMatches as $apiMatch) {
-            // For RapidAPI, status is mapped inside RapidApiMatchService, 
-            // but we might need to map it if using FootballDataApiService
             $status = $provider === 'football_data' ? $this->apiService->mapApiStatusToDomain($apiMatch->status) : $apiMatch->status;
 
             $match = FootballMatch::where('api_id', $apiMatch->apiId)->first();
 
-            // Auto-mapping logic cho 104 trận có sẵn
             if (! $match) {
+                // Fallback 1: match theo tên đội (Group Stage)
                 $match = FootballMatch::where(function ($q) use ($apiMatch) {
                         $q->where('home_team', 'LIKE', '%'.$this->normalizeName($apiMatch->homeTeamName).'%')
                           ->where('away_team', 'LIKE', '%'.$this->normalizeName($apiMatch->awayTeamName).'%');
                     })->first();
 
-
+                // Fallback 2: match theo kickoff_at ± 5 phút (cho vòng Knockout khi tên đội là placeholder)
+                if (! $match && $apiMatch->kickoffAt) {
+                    $match = FootballMatch::whereNull('api_id')
+                        ->where('kickoff_at', '>=', $apiMatch->kickoffAt->copy()->subMinutes(5))
+                        ->where('kickoff_at', '<=', $apiMatch->kickoffAt->copy()->addMinutes(5))
+                        ->whereNotIn('stage', ['GROUP_STAGE'])
+                        ->first();
+                }
 
                 if ($match) {
                     $match->api_id = $apiMatch->apiId;
                     $match->save();
+                    Log::info("Auto-mapped match {$match->match_code} → api_id {$apiMatch->apiId} via kickoff_at");
                 }
             }
 
@@ -72,6 +78,7 @@ class MatchSyncService
             }
         }
     }
+
 
     /**
      * Lấy các trận đấu đang LIVE từ DB và đồng bộ tỉ số
@@ -270,6 +277,16 @@ class MatchSyncService
         $match->away_score = $apiMatch->getCurrentAwayScore() ?? $match->away_score;
         $match->detailed_status = $apiMatch->detailedStatus;
         $match->elapsed_minutes = $apiMatch->elapsed;
+
+        // Tự động cập nhật tên đội ở vòng Knockout nếu API trả về tên quốc gia thực tế thay vì placeholder
+        if ($match->stage !== 'GROUP_STAGE') {
+            if ($apiMatch->homeTeamName && !str_contains(strtolower($apiMatch->homeTeamName), 'winner') && !str_contains(strtolower($apiMatch->homeTeamName), 'group') && !str_contains(strtolower($apiMatch->homeTeamName), 'runner')) {
+                $match->home_team = $this->normalizeName($apiMatch->homeTeamName);
+            }
+            if ($apiMatch->awayTeamName && !str_contains(strtolower($apiMatch->awayTeamName), 'winner') && !str_contains(strtolower($apiMatch->awayTeamName), 'group') && !str_contains(strtolower($apiMatch->awayTeamName), 'runner')) {
+                $match->away_team = $this->normalizeName($apiMatch->awayTeamName);
+            }
+        }
 
         // Sync bracket metadata from API round string
         if ($apiMatch->apiRound !== null) {

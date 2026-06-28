@@ -69,6 +69,12 @@ class FootballMatchResource extends Resource
                 ->maxLength(50)
                 ->placeholder('M001'),
 
+            Forms\Components\TextInput::make('api_id')
+                ->label('API ID')
+                ->numeric()
+                ->nullable()
+                ->helperText('Nhập ID trận đấu từ API để map (cho vòng Knockout)'),
+
             Forms\Components\TextInput::make('stage')
                 ->label('Vòng đấu')
                 ->required()
@@ -134,6 +140,7 @@ class FootballMatchResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('match_code')->label('Mã')->sortable()->searchable(),
+                Tables\Columns\TextColumn::make('api_id')->label('API ID')->sortable()->searchable()->toggleable(),
                 Tables\Columns\TextColumn::make('stage')->label('Vòng')->sortable(),
                 Tables\Columns\TextColumn::make('home_team')
                     ->label('Nhà')
