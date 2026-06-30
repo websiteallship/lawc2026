@@ -407,7 +407,7 @@ class MatchSyncService
         }
 
         // Khóa tất cả các market chưa khóa
-        $markets = Market::where('match_id', $match->id)->where('status', MarketStatus::OPEN->value)->get();
+        $markets = Market::where('match_id', $match->id)->where('status', MarketStatus::OPEN->value)->where('is_manual_lock', false)->get();
         foreach ($markets as $market) {
             $this->marketLockService->transition($market, MarketStatus::LOCKED);
         }
@@ -558,6 +558,7 @@ class MatchSyncService
         $markets = Market::where('match_id', $match->id)
             ->whereIn('period_type', $periodTypes)
             ->where('status', MarketStatus::OPEN->value)
+            ->where('is_manual_lock', false)
             ->get();
 
         foreach ($markets as $market) {
