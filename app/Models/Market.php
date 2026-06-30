@@ -15,6 +15,7 @@ class Market extends Model
         'match_id', 'period_type', 'market_type', 'name',
         'open_at', 'close_at', 'status', 'display_order', 'created_by',
         'locked_at', 'settled_at', 'voided_at', 'void_reason',
+        'is_manual_lock',
     ];
 
     protected $casts = [
@@ -23,6 +24,7 @@ class Market extends Model
         'locked_at' => 'datetime',
         'settled_at' => 'datetime',
         'voided_at' => 'datetime',
+        'is_manual_lock' => 'boolean',
     ];
 
     public function match(): BelongsTo

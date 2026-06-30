@@ -228,6 +228,10 @@ class MarketResource extends Resource
                 ->numeric()
                 ->default(0),
 
+            Forms\Components\Toggle::make('is_manual_lock')
+                ->label('Bật tắt thủ công (Không tự đóng)')
+                ->default(false),
+
             Fieldset::make('Cấu hình Kèo (Chấp / Tài Xỉu)')
                 ->schema([
                     Forms\Components\Select::make('favorite_side')
@@ -357,6 +361,10 @@ class MarketResource extends Resource
                     ->dateTime('d/m H:i')
                     ->timezone('Asia/Ho_Chi_Minh')
                     ->sortable(),
+                Tables\Columns\IconColumn::make('is_manual_lock')
+                    ->label('Manual')
+                    ->boolean()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('status')
                     ->label('Trạng thái')
                     ->badge()

@@ -113,6 +113,7 @@ class MarketLockService
     {
         $expired = Market::where('status', 'OPEN')
             ->where('close_at', '<=', now())
+            ->where('is_manual_lock', false)
             ->get();
 
         $count = 0;
