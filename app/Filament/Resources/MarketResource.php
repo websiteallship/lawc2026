@@ -401,6 +401,15 @@ class MarketResource extends Resource
                     ->toggleable(),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('match_id')
+                    ->label('Trận đấu')
+                    ->options(fn () => \App\Models\FootballMatch::query()
+                        ->orderBy('kickoff_at', 'desc')
+                        ->get()
+                        ->mapWithKeys(fn ($m) => [$m->id => "{$m->match_code} | {$m->home_team} vs {$m->away_team}"])
+                        ->toArray()
+                    )
+                    ->searchable(),
                 Tables\Filters\SelectFilter::make('status')
                     ->options([
                         'DRAFT' => 'Nháp',
