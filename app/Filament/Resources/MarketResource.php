@@ -341,6 +341,7 @@ class MarketResource extends Resource
     {
         return $table
             ->modifyQueryUsing(fn (\Illuminate\Database\Eloquent\Builder $query) => $query->orderByRaw("CASE WHEN status = 'OPEN' THEN 1 WHEN status = 'LOCKED' THEN 2 ELSE 3 END"))
+            ->recordAction('edit')
             ->columns([
                 Tables\Columns\TextColumn::make('match.match_code')
                     ->label('Trận')
