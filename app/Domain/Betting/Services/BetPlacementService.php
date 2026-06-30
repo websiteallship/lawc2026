@@ -58,7 +58,7 @@ class BetPlacementService
             }
 
             // ---- Bước 5: now < close_at? ----
-            if (now()->gte($market->close_at)) {
+            if (!$market->is_manual_lock && now()->gte($market->close_at)) {
                 throw new BetPlacementException(
                     "Kèo [{$market->name}] đã hết giờ đặt (close_at: {$market->close_at->format('d/m/Y H:i')}).",
                     'MARKET_CLOSED'
