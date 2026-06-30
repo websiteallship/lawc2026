@@ -268,14 +268,16 @@ class MatchSyncService
     {
         $status = $this->apiService->mapApiStatusToDomain($apiMatch->status);
         $oldStatus = $match->status;
+        $oldDetailedStatus = $match->detailed_status;
+        
         $match->status = $status;
+        $match->detailed_status = $apiMatch->detailedStatus;
 
-        if ($oldStatus !== $status) {
+        if ($oldStatus !== $status || $oldDetailedStatus !== $match->detailed_status) {
             MatchStatusChanged::dispatch($match, $oldStatus);
         }
         $match->home_score = $apiMatch->getCurrentHomeScore() ?? $match->home_score;
         $match->away_score = $apiMatch->getCurrentAwayScore() ?? $match->away_score;
-        $match->detailed_status = $apiMatch->detailedStatus;
         $match->elapsed_minutes = $apiMatch->elapsed;
 
         // Tự động cập nhật tên đội ở vòng Knockout nếu API trả về tên quốc gia thực tế thay vì placeholder

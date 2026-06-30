@@ -17,7 +17,11 @@ class MarketSyncService
 
     public function syncOddsForMatch(FootballMatch $match, OddsResponseDto $dto): void
     {
-        if (in_array($match->status, ['FINISHED', 'FT', 'AET', 'PEN', 'SETTLED', 'POSTPONED', 'CANCELLED'])) {
+        if (in_array($match->status, ['POSTPONED', 'CANCELLED'])) {
+            return;
+        }
+
+        if (!app()->runningInConsole() && in_array($match->status, ['FINISHED', 'FT', 'AET', 'PEN', 'SETTLED'])) {
             return;
         }
 

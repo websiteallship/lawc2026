@@ -18,15 +18,15 @@ class FetchLiveOddsListener implements ShouldQueue
     public function handle(MatchStatusChanged $event): void
     {
         $match = $event->match;
-        $status = $match->status;
+        $detailedStatus = $match->detailed_status;
 
-        $targetStatuses = ['HALFTIME', 'REGULAR_TIME_FINISHED', 'EXTRA_TIME_FINISHED'];
+        $targetStatuses = ['HT', 'BT', 'ET', 'P', 'INT', 'HALFTIME', 'REGULAR_TIME_FINISHED', 'EXTRA_TIME_FINISHED'];
 
-        if (! in_array($status, $targetStatuses)) {
+        if (! in_array($detailedStatus, $targetStatuses)) {
             return;
         }
 
-        $milestone = strtolower($status);
+        $milestone = strtolower($detailedStatus);
         $fetchStatus = $match->odds_fetch_status ?? [];
 
         if (in_array($milestone, $fetchStatus)) {
@@ -48,7 +48,7 @@ class FetchLiveOddsListener implements ShouldQueue
                 }
             }
         } catch (\Exception $e) {
-            Log::error("Failed to fetch live odds for match {$match->id} at $status: ".$e->getMessage());
+            Log::error("Failed to fetch live odds for match {$match->id} at $detailedStatus: ".$e->getMessage());
         }
     }
 }
