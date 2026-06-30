@@ -42,34 +42,9 @@ class MatchListPage extends Page
 
     public function mount(): void
     {
-        $userId = auth()->id();
-        if ($userId) {
-            $featureKey     = 'feature_bracket_2026_06_22';
-            $dismissedKey   = "{$featureKey}_dismissed_{$userId}";
-            $firstSeenKey   = "{$featureKey}_first_seen_{$userId}";
-            $countKey       = "{$featureKey}_count_{$userId}";
-
-            // Đã bấm "Không hiển thị lại" → bỏ qua hoàn toàn
-            if (cache()->get($dismissedKey)) {
-                return;
-            }
-
-            $firstSeen = cache()->get($firstSeenKey);
-            if (! $firstSeen) {
-                $firstSeen = now();
-                cache()->put($firstSeenKey, $firstSeen, now()->addDays(2));
-            }
-
-            if (now()->diffInHours($firstSeen) < 24) {
-                $count = cache()->get($countKey, 0);
-                if ($count < 3) {
-                    // Dùng TTL 2 ngày (khớp với firstSeenKey) để không bị reset khi đóng browser
-                    cache()->put($countKey, $count + 1, now()->addDays(2));
-                    $this->showFeaturePopup = true;
-                    $this->showDismissButton = true; // luôn hiển thị từ lần đầu
-                }
-            }
-        }
+        // Tắt popup thông báo tính năng mới
+        $this->showFeaturePopup = false;
+        $this->showDismissButton = false;
     }
 
     // View modes: 'list' | 'groups' | 'bracket'
