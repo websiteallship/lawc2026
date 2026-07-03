@@ -107,32 +107,20 @@ class MatchListPage extends Page
     }
 
     /**
-     * Knockout Bracket view: matches by stage in tournament order
+     * Knockout Bracket view: matches by stage in tournament order.
+     *
+     * Sorting strategy:
+     *   1. bracket_position (populated by API sync from "Round of 16 - 3" etc.)
+     *      This is the AUTHORITATIVE visual bracket position from FIFA API.
+     *   2. Fallback to kickoff_at when bracket_position is NULL (pre-sync).
      */
     public function getKnockoutDataProperty(): \Illuminate\Support\Collection
     {
-        $stageOrder = [
-            'ROUND_OF_32'         => 1,
-            'ROUND_OF_16'         => 2,
-            'QUARTER_FINAL'       => 3,
-            'SEMI_FINAL'          => 4,
-            'THIRD_PLACE_PLAYOFF' => 5,
-            'FINAL'               => 6,
-        ];
-
-        // Official visual bracket layout order based on match_code
-        // This ensures nth-child CSS correctly draws lines between the actual opponents
-        $bracketOrder = [
-            'ROUND_OF_32' => ['M073', 'M075', 'M074', 'M077', 'M083', 'M084', 'M081', 'M082', 'M076', 'M078', 'M079', 'M080', 'M086', 'M088', 'M085', 'M087'],
-            'ROUND_OF_16' => ['M089', 'M090', 'M093', 'M094', 'M091', 'M092', 'M095', 'M096'],
-            'QUARTER_FINAL' => ['M097', 'M098', 'M099', 'M100'],
-            'SEMI_FINAL'    => ['M101', 'M102'],
-            'THIRD_PLACE_PLAYOFF' => ['M103'],
-            'FINAL'         => ['M104'],
-        ];
-
         $matches = FootballMatch::query()
-            ->whereIn('stage', array_keys($stageOrder))
+            ->whereIn('stage', [
+                'ROUND_OF_32', 'ROUND_OF_16', 'QUARTER_FINAL',
+                'SEMI_FINAL', 'THIRD_PLACE_PLAYOFF', 'FINAL',
+            ])
             ->withCount(['markets' => fn ($q) => $q->where('status', 'OPEN')])
             ->orderByRaw("CASE stage
                 WHEN 'ROUND_OF_32' THEN 1
@@ -142,22 +130,10 @@ class MatchListPage extends Page
                 WHEN 'THIRD_PLACE_PLAYOFF' THEN 5
                 WHEN 'FINAL' THEN 6
                 ELSE 99 END")
-            ->orderBy('bracket_position')
+            ->orderByRaw('COALESCE(bracket_position, 999999) ASC')
             ->orderBy('kickoff_at')
             ->get();
 
-        $grouped = $matches->groupBy('stage');
-
-        // Apply strict visual bracket ordering if match_code is available
-        foreach ($grouped as $stage => $stageMatches) {
-            if (isset($bracketOrder[$stage])) {
-                $orderMap = array_flip($bracketOrder[$stage]);
-                $grouped[$stage] = $stageMatches->sortBy(function ($match) use ($orderMap) {
-                    return $orderMap[$match->match_code] ?? 999;
-                })->values();
-            }
-        }
-
-        return $grouped;
+        return $matches->groupBy('stage');
     }
 }
