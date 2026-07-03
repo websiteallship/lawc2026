@@ -58,7 +58,7 @@
                     $missionProgress = $userMissions->get($mission->id) ?? null;
                     $mCurrent = $missionProgress ? $missionProgress->current_value : 0;
                     $mTarget = $mission->target_value;
-                    $mPercent = min(100, $mTarget > 0 ? round(($mCurrent / $mTarget) * 100) : 0);
+                    $mPercent = max(0, min(100, $mTarget > 0 ? round(($mCurrent / $mTarget) * 100) : 0));
                     $mCompleted = false;
                     
                     $diffColor = match($mission->difficulty) {
@@ -217,7 +217,7 @@
                         $missionProgress = $userMissions->get($mission->id) ?? null;
                         $mCurrent = $missionProgress ? $missionProgress->current_value : 0;
                         $mTarget = $mission->target_value;
-                        $mPercent = min(100, $mTarget > 0 ? round(($mCurrent / $mTarget) * 100) : 0);
+                        $mPercent = max(0, min(100, $mTarget > 0 ? round(($mCurrent / $mTarget) * 100) : 0));
                         $mCompleted = $missionProgress ? $missionProgress->is_completed : false;
                     @endphp
                     <div class="p-4 rounded-xl ring-1 {{ $mCompleted ? 'bg-success-50 ring-success-200 dark:bg-success-900/20' : 'bg-white ring-gray-950/5 dark:bg-gray-900' }} flex items-center justify-between gap-4">
@@ -249,7 +249,7 @@
                         $missionProgress = $userMissions->get($mission->id) ?? null;
                         $mCurrent = $missionProgress ? $missionProgress->current_value : 0;
                         $mTarget = $mission->target_value;
-                        $mPercent = min(100, $mTarget > 0 ? round(($mCurrent / $mTarget) * 100) : 0);
+                        $mPercent = max(0, min(100, $mTarget > 0 ? round(($mCurrent / $mTarget) * 100) : 0));
                         $mCompleted = $missionProgress ? $missionProgress->is_completed : false;
                     @endphp
                     <div class="p-4 rounded-xl ring-1 {{ $mCompleted ? 'bg-success-50 ring-success-200 dark:bg-success-900/20' : 'bg-white ring-gray-950/5 dark:bg-gray-900' }} flex items-center justify-between gap-4">

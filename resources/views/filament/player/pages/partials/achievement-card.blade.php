@@ -5,7 +5,7 @@
     // progress calculations
     $current = $progress['current'] ?? 0;
     $target = $progress['target'] ?? 1;
-    $percent = min(100, $target > 0 ? round(($current / $target) * 100) : 0);
+    $percent = max(0, min(100, $target > 0 ? round(($current / $target) * 100) : 0));
     
     $compact = $compact ?? false;
 
@@ -96,7 +96,7 @@
             $missionProgress = $mission ? ($userMissions->get($mission->id) ?? null) : null;
             $mCurrent = $missionProgress ? $missionProgress->current_value : 0;
             $mTarget = $mission ? $mission->target_value : 1;
-            $mPercent = $mission ? min(100, $mTarget > 0 ? round(($mCurrent / $mTarget) * 100) : 0) : 0;
+            $mPercent = $mission ? max(0, min(100, $mTarget > 0 ? round(($mCurrent / $mTarget) * 100) : 0)) : 0;
         @endphp
 
         <!-- Progress bar shown when locked -->
@@ -125,7 +125,7 @@
                             $cSuffix  = $cond['suffix'] ?? '';
                             $cCurrent = $cond['current'];
                             $cTarget  = $cond['target'];
-                            $cPct     = min(100, $cTarget > 0 ? round($cCurrent / $cTarget * 100) : 0);
+                            $cPct     = max(0, min(100, $cTarget > 0 ? round($cCurrent / $cTarget * 100) : 0));
                             $cDone    = $cCurrent >= $cTarget;
                         @endphp
                         <div>

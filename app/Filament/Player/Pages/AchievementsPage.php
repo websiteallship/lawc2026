@@ -272,7 +272,7 @@ class AchievementsPage extends Page
             $nextProg = $progressMap[$nextLevelAchievement->code] ?? ['current' => 0, 'target' => 1];
             $nextLevelCurrent = $nextProg['current'];
             $nextLevelTarget = $nextProg['target'];
-            $nextLevelPercent = min(100, $nextLevelTarget > 0 ? round(($nextLevelCurrent / $nextLevelTarget) * 100) : 0);
+            $nextLevelPercent = max(0, min(100, $nextLevelTarget > 0 ? round(($nextLevelCurrent / $nextLevelTarget) * 100) : 0));
         }
 
         $missions = \App\Models\Mission::where('is_active', true)->get();

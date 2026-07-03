@@ -59,7 +59,7 @@
                             <div class="text-xs text-gray-500 dark:text-gray-400">{{ $mission['description'] ?? '' }}</div>
                             @if(!($mission['user_mission']['is_completed'] ?? false))
                                 <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 mt-1">
-                                    <div class="bg-primary-500 h-1.5 rounded-full" style="width: {{ min(100, (($mission['user_mission']['current_value'] ?? 0) / max(1, $mission['target_value'] ?? 1)) * 100) }}%"></div>
+                                    <div class="bg-primary-500 h-1.5 rounded-full" style="width: {{ max(0, min(100, (($mission['user_mission']['current_value'] ?? 0) / max(1, $mission['target_value'] ?? 1)) * 100)) }}%"></div>
                                 </div>
                             @endif
                         </div>

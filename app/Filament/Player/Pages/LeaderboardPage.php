@@ -216,7 +216,7 @@ class LeaderboardPage extends Page
                 ->select('achievements.*')
                 ->get();
 
-            $weeklyRate = $totalWeeklyActive > 0 ? min(100, round(($entry->weekly_missions / $totalWeeklyActive) * 100)) : 0;
+            $weeklyRate = $totalWeeklyActive > 0 ? max(0, min(100, round(($entry->weekly_missions / $totalWeeklyActive) * 100))) : 0;
             
             // perfect_weeks: đếm tuần nào user hoàn thành >= totalWeeklyActive missions
             $perfectWeeksCount = \App\Models\UserMissionCompletion::where('user_id', $entry->user_id)

@@ -19,11 +19,11 @@
             <!-- Progress bar -->
             <div class="w-full md:w-64 space-y-1">
                 <div class="w-full bg-gray-200 dark:bg-gray-800 h-2.5 rounded-full overflow-hidden">
-                    <div class="h-full bg-success-500 rounded-full transition-all duration-500" style="width: {{ min(100, round(($completedCount / $totalCount) * 100)) }}%"></div>
+                    <div class="h-full bg-success-500 rounded-full transition-all duration-500" style="width: {{ max(0, min(100, round(($completedCount / $totalCount) * 100))) }}%"></div>
                 </div>
                 <div class="flex justify-between text-[10px] font-bold text-gray-500 dark:text-gray-400">
                     <span>Tiến độ tuần</span>
-                    <span>{{ min(100, round(($completedCount / $totalCount) * 100)) }}%</span>
+                    <span>{{ max(0, min(100, round(($completedCount / $totalCount) * 100))) }}%</span>
                 </div>
             </div>
             <a href="{{ \App\Filament\Player\Pages\MissionsPage::getUrl() }}" class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-success-600 hover:bg-success-500 shadow-sm transition-colors duration-200 shrink-0">

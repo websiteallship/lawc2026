@@ -82,7 +82,7 @@ class PlayerMissionsWidget extends BaseWidget
                             $userMission = $record->userMissions->first();
                             $current = $userMission ? $userMission->current_value : 0;
                             $target = $record->target_value;
-                            $percent = min(100, round(($current / $target) * 100));
+                            $percent = max(0, min(100, round(($current / $target) * 100)));
 
                             return "
                                 <div class='flex flex-col gap-1 w-full my-2'>
