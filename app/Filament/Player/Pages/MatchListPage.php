@@ -120,6 +120,17 @@ class MatchListPage extends Page
             'FINAL'               => 6,
         ];
 
+        // Official visual bracket layout order based on match_code
+        // This ensures nth-child CSS correctly draws lines between the actual opponents
+        $bracketOrder = [
+            'ROUND_OF_32' => ['M073', 'M075', 'M074', 'M077', 'M083', 'M084', 'M081', 'M082', 'M076', 'M078', 'M079', 'M080', 'M086', 'M088', 'M085', 'M087'],
+            'ROUND_OF_16' => ['M089', 'M090', 'M093', 'M094', 'M091', 'M092', 'M095', 'M096'],
+            'QUARTER_FINAL' => ['M097', 'M098', 'M099', 'M100'],
+            'SEMI_FINAL'    => ['M101', 'M102'],
+            'THIRD_PLACE_PLAYOFF' => ['M103'],
+            'FINAL'         => ['M104'],
+        ];
+
         $matches = FootballMatch::query()
             ->whereIn('stage', array_keys($stageOrder))
             ->withCount(['markets' => fn ($q) => $q->where('status', 'OPEN')])
@@ -135,6 +146,18 @@ class MatchListPage extends Page
             ->orderBy('kickoff_at')
             ->get();
 
-        return $matches->groupBy('stage');
+        $grouped = $matches->groupBy('stage');
+
+        // Apply strict visual bracket ordering if match_code is available
+        foreach ($grouped as $stage => $stageMatches) {
+            if (isset($bracketOrder[$stage])) {
+                $orderMap = array_flip($bracketOrder[$stage]);
+                $grouped[$stage] = $stageMatches->sortBy(function ($match) use ($orderMap) {
+                    return $orderMap[$match->match_code] ?? 999;
+                })->values();
+            }
+        }
+
+        return $grouped;
     }
 }
