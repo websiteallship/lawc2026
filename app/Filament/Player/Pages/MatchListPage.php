@@ -122,18 +122,46 @@ class MatchListPage extends Page
                 'SEMI_FINAL', 'THIRD_PLACE_PLAYOFF', 'FINAL',
             ])
             ->withCount(['markets' => fn ($q) => $q->where('status', 'OPEN')])
-            ->orderByRaw("CASE stage
-                WHEN 'ROUND_OF_32' THEN 1
-                WHEN 'ROUND_OF_16' THEN 2
-                WHEN 'QUARTER_FINAL' THEN 3
-                WHEN 'SEMI_FINAL' THEN 4
-                WHEN 'THIRD_PLACE_PLAYOFF' THEN 5
-                WHEN 'FINAL' THEN 6
-                ELSE 99 END")
-            ->orderByRaw('COALESCE(bracket_position, 999999) ASC')
-            ->orderBy('kickoff_at')
             ->get();
 
-        return $matches->groupBy('stage');
+        // Correct visual bracket order for WC 2026.
+        // Each pair of R32 matches must be adjacent so CSS nth-child lines connect them
+        // to the correct R16 match. Order verified from actual match results on VPS.
+        // R32: pairs (1,2), (3,4), (5,6), (7,8), (9,10), (11,12), (13,14), (15,16)
+        // feed R16 positions 1,2,3,4,5,6,7,8 respectively.
+        $displayOrder = [
+            // R32 — pairs feed R16 in this order
+            'M073' => 1,  'M076' => 2,  // → M089
+            'M075' => 3,  'M078' => 4,  // → M090
+            'M074' => 5,  'M077' => 6,  // → M091
+            'M079' => 7,  'M080' => 8,  // → M092
+            'M083' => 9,  'M084' => 10, // → M093
+            'M081' => 11, 'M082' => 12, // → M094
+            'M086' => 13, 'M088' => 14, // → M095
+            'M085' => 15, 'M087' => 16, // → M096
+            // R16
+            'M089' => 1,  'M090' => 2,  // → M097
+            'M091' => 3,  'M092' => 4,  // → M098 (verify QF pairing)
+            'M093' => 5,  'M094' => 6,  // → M099
+            'M095' => 7,  'M096' => 8,  // → M100
+            // QF
+            'M097' => 1,  'M098' => 2,
+            'M099' => 3,  'M100' => 4,
+            // SF
+            'M101' => 1,  'M102' => 2,
+            // 3rd place & Final
+            'M103' => 1,
+            'M104' => 1,
+        ];
+
+        $grouped = $matches->groupBy('stage');
+
+        foreach ($grouped as $stage => $stageMatches) {
+            $grouped[$stage] = $stageMatches->sortBy(function ($match) use ($displayOrder) {
+                return $displayOrder[$match->match_code] ?? 999;
+            })->values();
+        }
+
+        return $grouped;
     }
 }
