@@ -107,12 +107,16 @@ class MatchListPage extends Page
     }
 
     /**
-     * Knockout Bracket view: matches by stage in tournament order.
+     * Knockout Bracket view: matches sorted for correct visual bracket display.
      *
-     * Sorting strategy:
-     *   1. bracket_position (populated by API sync from "Round of 16 - 3" etc.)
-     *      This is the AUTHORITATIVE visual bracket position from FIFA API.
-     *   2. Fallback to kickoff_at when bracket_position is NULL (pre-sync).
+     * Order is inferred dynamically from DB data — no hardcoding:
+     *   - For each parent-round match (R16, QF, SF, Final), we find which
+     *     previous-round matches fed into it by:
+     *     (a) Matching team names to previous-round participants, OR
+     *     (b) Parsing "Match N winners" placeholder text → match_code lookup
+     *   - Previous-round matches are then placed adjacent (pairs) in the order
+     *     their parent-round match appears.
+     *   - Remaining unlinked matches (future rounds) fall to kickoff_at order.
      */
     public function getKnockoutDataProperty(): \Illuminate\Support\Collection
     {
@@ -124,44 +128,116 @@ class MatchListPage extends Page
             ->withCount(['markets' => fn ($q) => $q->where('status', 'OPEN')])
             ->get();
 
-        // Correct visual bracket order for WC 2026.
-        // Each pair of R32 matches must be adjacent so CSS nth-child lines connect them
-        // to the correct R16 match. Order verified from actual match results on VPS.
-        // R32: pairs (1,2), (3,4), (5,6), (7,8), (9,10), (11,12), (13,14), (15,16)
-        // feed R16 positions 1,2,3,4,5,6,7,8 respectively.
-        $displayOrder = [
-            // R32 — pairs feed R16 in this order
-            'M073' => 1,  'M076' => 2,  // → M089
-            'M075' => 3,  'M078' => 4,  // → M090
-            'M074' => 5,  'M077' => 6,  // → M091
-            'M079' => 7,  'M080' => 8,  // → M092
-            'M083' => 9,  'M084' => 10, // → M093
-            'M081' => 11, 'M082' => 12, // → M094
-            'M086' => 13, 'M088' => 14, // → M095
-            'M085' => 15, 'M087' => 16, // → M096
-            // R16
-            'M089' => 1,  'M090' => 2,  // → M097
-            'M091' => 3,  'M092' => 4,  // → M098 (verify QF pairing)
-            'M093' => 5,  'M094' => 6,  // → M099
-            'M095' => 7,  'M096' => 8,  // → M100
-            // QF
-            'M097' => 1,  'M098' => 2,
-            'M099' => 3,  'M100' => 4,
-            // SF
-            'M101' => 1,  'M102' => 2,
-            // 3rd place & Final
-            'M103' => 1,
-            'M104' => 1,
+        $byId       = $matches->keyBy('id');
+        $byCode     = $matches->keyBy('match_code');
+
+        // Stage progression: child stage → parent stage
+        $stageChain = [
+            'ROUND_OF_32'   => 'ROUND_OF_16',
+            'ROUND_OF_16'   => 'QUARTER_FINAL',
+            'QUARTER_FINAL' => 'SEMI_FINAL',
+            'SEMI_FINAL'    => 'FINAL',
         ];
 
         $grouped = $matches->groupBy('stage');
 
+        // Build a team→match lookup for EVERY match (both home and away).
+        // Used to find which previous-round match a given team came from.
+        $teamToMatch = []; // teamName => match model
+        foreach ($matches as $m) {
+            if ($m->home_team) $teamToMatch[$m->home_team] = $m;
+            if ($m->away_team) $teamToMatch[$m->away_team] = $m;
+        }
+
+        // Build match_code number lookup: "73" => FootballMatch(M073)
+        $codeNumToMatch = [];
+        foreach ($matches as $m) {
+            if (preg_match('/M0*(\d+)/', $m->match_code, $x)) {
+                $codeNumToMatch[$x[1]] = $m;
+            }
+        }
+
+        // For each stage, compute visual sort positions by walking parent→child.
+        // We assign positions to the CHILD stage based on the parent stage's order.
+        $sortPositions = []; // match id => sort position
+
+        // Sort each parent stage by kickoff_at first, then infer child order
+        foreach ($stageChain as $childStage => $parentStage) {
+            if (!$grouped->has($parentStage)) continue;
+
+            $parentMatches = $grouped[$parentStage]->sortBy('kickoff_at')->values();
+            $pos = 1;
+            $assigned = [];
+
+            foreach ($parentMatches as $parent) {
+                // Find the two child matches that fed into this parent match
+                $feeders = $this->resolveFeeders($parent, $teamToMatch, $codeNumToMatch, $childStage);
+
+                foreach ($feeders as $feeder) {
+                    if ($feeder && !isset($assigned[$feeder->id])) {
+                        $sortPositions[$feeder->id] = $pos++;
+                        $assigned[$feeder->id] = true;
+                    }
+                }
+            }
+
+            // Remaining child matches with no parent link → append in kickoff_at order
+            if ($grouped->has($childStage)) {
+                $remaining = $grouped[$childStage]
+                    ->filter(fn ($m) => !isset($assigned[$m->id]))
+                    ->sortBy('kickoff_at');
+                foreach ($remaining as $m) {
+                    $sortPositions[$m->id] = $pos++;
+                }
+            }
+        }
+
+        // Apply computed sort positions; fallback to kickoff_at for stages with no parent
         foreach ($grouped as $stage => $stageMatches) {
-            $grouped[$stage] = $stageMatches->sortBy(function ($match) use ($displayOrder) {
-                return $displayOrder[$match->match_code] ?? 999;
+            $grouped[$stage] = $stageMatches->sortBy(function ($m) use ($sortPositions) {
+                return $sortPositions[$m->id] ?? $m->kickoff_at->timestamp;
             })->values();
         }
 
         return $grouped;
+    }
+
+    /**
+     * Given a parent-round match, find the two child-round matches that fed into it.
+     *
+     * Strategy:
+     *   1. If home_team is a real name (not placeholder) → look it up in teamToMatch
+     *      to find which child-stage match contained that team.
+     *   2. If home_team is "Match N winners" → parse N, look up by match_code.
+     */
+    private function resolveFeeders(
+        FootballMatch $parent,
+        array $teamToMatch,
+        array $codeNumToMatch,
+        string $childStage
+    ): array {
+        $feeders = [];
+
+        foreach ([$parent->home_team, $parent->away_team] as $teamField) {
+            if (!$teamField) continue;
+
+            // Case A: Placeholder "Match 73 winners" or "Match 73 winner"
+            if (preg_match('/Match\s+(\d+)\s+winner/i', $teamField, $m)) {
+                $num     = $m[1];
+                $feeder  = $codeNumToMatch[$num] ?? null;
+                $feeders[] = ($feeder && $feeder->stage === $childStage) ? $feeder : null;
+                continue;
+            }
+
+            // Case B: Real team name — find which child-stage match had this team
+            $candidate = $teamToMatch[$teamField] ?? null;
+            if ($candidate && $candidate->stage === $childStage) {
+                $feeders[] = $candidate;
+            } else {
+                $feeders[] = null;
+            }
+        }
+
+        return $feeders;
     }
 }
