@@ -132,18 +132,17 @@ class MatchListPage extends Page
         $byCode     = $matches->keyBy('match_code');
 
         // Stage progression: child stage → parent stage
+        // MUST BE ORDERED TOP-DOWN (Final down to R32) so parent is sorted before sorting its children
         $stageChain = [
-            'ROUND_OF_32'   => 'ROUND_OF_16',
-            'ROUND_OF_16'   => 'QUARTER_FINAL',
-            'QUARTER_FINAL' => 'SEMI_FINAL',
             'SEMI_FINAL'    => 'FINAL',
+            'QUARTER_FINAL' => 'SEMI_FINAL',
+            'ROUND_OF_16'   => 'QUARTER_FINAL',
+            'ROUND_OF_32'   => 'ROUND_OF_16',
         ];
 
         $grouped = $matches->groupBy('stage');
 
         // Build stage-aware team→match lookup: teamName → [stage → match]
-        // This prevents later stages from overwriting earlier entries
-        // (e.g., "Canada" exists in both V32 and V16)
         $teamToMatchByStage = []; // teamName => [stage => match]
         foreach ($matches as $m) {
             if ($m->home_team) {
@@ -166,11 +165,16 @@ class MatchListPage extends Page
         // We assign positions to the CHILD stage based on the parent stage's order.
         $sortPositions = []; // match id => sort position
 
-        // Sort each parent stage by kickoff_at first, then infer child order
+        // Process from FINAL down to ROUND_OF_32
         foreach ($stageChain as $childStage => $parentStage) {
             if (!$grouped->has($parentStage)) continue;
 
-            $parentMatches = $grouped[$parentStage]->sortBy('kickoff_at')->values();
+            // Sort parent matches: use their already-assigned sortPosition if available,
+            // otherwise fallback to kickoff_at
+            $parentMatches = $grouped[$parentStage]->sortBy(function ($m) use ($sortPositions) {
+                return $sortPositions[$m->id] ?? $m->kickoff_at->timestamp;
+            })->values();
+
             $pos = 1;
             $assigned = [];
 
