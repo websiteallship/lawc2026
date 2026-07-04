@@ -2,6 +2,7 @@
 
 namespace App\Domain\Match\Services;
 
+use App\Domain\Market\Services\ExtraTimeMarketGenerator;
 use App\Domain\Market\Services\MarketLockService;
 use App\Domain\Match\Data\ApiMatchDto;
 use App\Domain\Wallet\Services\WalletService;
@@ -539,25 +540,34 @@ class MatchSyncService
             $this->lockMarkets($match, ['SECOND_HALF'], 'Auto-locked due to 2H elapsed >= 55 or period ended');
         }
 
-        // 3. Kèo Hiệp phụ (EXTRA_TIME): 
-        // MỞ: Khi nghỉ hết 90 phút (HT/BT) hoặc kết thúc 90p hòa
+        // 3. Kèo Hiệp phụ (EXTRA_TIME):
+        // MỞ: Khi nghỉ hết 90 phút (FT/BT) và trận hòa → sinh kèo ET + mở
         if (in_array($statusShort, ['FT', 'BT']) && $isDraw) {
+            // Auto-generate ET markets nếu chưa có (idempotent)
+            app(ExtraTimeMarketGenerator::class)->generateExtraTimeMarkets($match);
             $this->openMarkets($match, ['EXTRA_TIME']);
         }
         // ĐÓNG: Sau 5 phút của hiệp phụ (elapsed >= 95) hoặc khi đã qua hiệp phụ
-        if (($statusShort === 'ET' && $elapsed >= 95) || in_array($statusShort, ['BT', 'P', 'FT', 'AET', 'PEN'])) {
+        if (($statusShort === 'ET' && $elapsed >= 95) || in_array($statusShort, ['P', 'PEN', 'AET'])) {
             $this->lockMarkets($match, ['EXTRA_TIME'], 'Auto-locked due to ET elapsed >= 95 or period ended');
         }
 
         // 4. Kèo Penalty (PENALTY):
-        // MỞ: Khi chuẩn bị sút penalty hoặc nghỉ hết hiệp phụ hòa
-        if (in_array($statusShort, ['BT', 'AET']) && $isDraw) {
+        // MỞ SỚM: Cùng lúc với kèo ET (ngay khi 90p hòa).
+        // User có ~35-40 phút đặt cược (suốt thời gian ET).
+        if (in_array($statusShort, ['FT', 'BT']) && $isDraw) {
+            // Auto-generate Penalty markets nếu chưa có (idempotent)
+            app(ExtraTimeMarketGenerator::class)->generatePenaltyMarkets($match);
             $this->openMarkets($match, ['PENALTY']);
         }
-        // ĐÓNG: Phút của Penalty không đếm bằng elapsed được, nên hệ thống sẽ tự khóa dựa vào cronjob close_at (mốc +150p)
-        // Tuy nhiên, ta vẫn khóa ngay lập tức nếu trận đấu đã báo kết thúc hoàn toàn.
-        if (in_array($statusShort, ['PEN', 'FT', 'AET'])) {
-            $this->lockMarkets($match, ['PENALTY'], 'Auto-locked due to match finished');
+        // ĐÓNG: Khóa ngay khi loạt sút penalty bắt đầu
+        if (in_array($statusShort, ['PEN'])) {
+            $this->lockMarkets($match, ['PENALTY'], 'Auto-locked due to penalty started');
+        }
+        // VOID: Nếu trận phân thắng bại trong ET (không cần penalty)
+        // → Hoàn lá cho tất cả user đã đặt kèo Penalty
+        if (in_array($statusShort, ['AET', 'FT']) && ! $isDraw) {
+            $this->voidPenaltyMarkets($match, 'Trận đã phân thắng bại trong hiệp phụ, không đá penalty');
         }
     }
 
@@ -587,6 +597,28 @@ class MatchSyncService
                 'open_at' => now(),
             ]);
             Log::info("Auto-opened {$market->period_type} market {$market->id} for match {$match->id}");
+        }
+    }
+
+    /**
+     * Void tất cả kèo Penalty đang OPEN/LOCKED cho trận đấu.
+     * Dùng khi trận phân thắng bại trong hiệp phụ (không cần đá penalty).
+     * MarketLockService::transition(VOIDED) sẽ tự hoàn lá cho tất cả bet PENDING.
+     */
+    private function voidPenaltyMarkets(FootballMatch $match, string $reason): void
+    {
+        $markets = Market::where('match_id', $match->id)
+            ->where('period_type', 'PENALTY')
+            ->whereIn('status', [MarketStatus::OPEN->value, MarketStatus::LOCKED->value, MarketStatus::DRAFT->value])
+            ->get();
+
+        foreach ($markets as $market) {
+            try {
+                $this->marketLockService->transition($market, MarketStatus::VOIDED, $reason);
+                Log::info("Auto-voided PENALTY market {$market->id} for match {$match->id}: {$reason}");
+            } catch (\Throwable $e) {
+                Log::warning("Failed to void PENALTY market {$market->id}: {$e->getMessage()}");
+            }
         }
     }
 }
