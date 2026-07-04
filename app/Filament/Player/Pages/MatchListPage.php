@@ -141,12 +141,17 @@ class MatchListPage extends Page
 
         $grouped = $matches->groupBy('stage');
 
-        // Build a team→match lookup for EVERY match (both home and away).
-        // Used to find which previous-round match a given team came from.
-        $teamToMatch = []; // teamName => match model
+        // Build stage-aware team→match lookup: teamName → [stage → match]
+        // This prevents later stages from overwriting earlier entries
+        // (e.g., "Canada" exists in both V32 and V16)
+        $teamToMatchByStage = []; // teamName => [stage => match]
         foreach ($matches as $m) {
-            if ($m->home_team) $teamToMatch[$m->home_team] = $m;
-            if ($m->away_team) $teamToMatch[$m->away_team] = $m;
+            if ($m->home_team) {
+                $teamToMatchByStage[$m->home_team][$m->stage] = $m;
+            }
+            if ($m->away_team) {
+                $teamToMatchByStage[$m->away_team][$m->stage] = $m;
+            }
         }
 
         // Build match_code number lookup: "73" => FootballMatch(M073)
@@ -171,7 +176,7 @@ class MatchListPage extends Page
 
             foreach ($parentMatches as $parent) {
                 // Find the two child matches that fed into this parent match
-                $feeders = $this->resolveFeeders($parent, $teamToMatch, $codeNumToMatch, $childStage);
+                $feeders = $this->resolveFeeders($parent, $teamToMatchByStage, $codeNumToMatch, $childStage);
 
                 foreach ($feeders as $feeder) {
                     if ($feeder && !isset($assigned[$feeder->id])) {
@@ -206,13 +211,13 @@ class MatchListPage extends Page
      * Given a parent-round match, find the two child-round matches that fed into it.
      *
      * Strategy:
-     *   1. If home_team is a real name (not placeholder) → look it up in teamToMatch
+     *   1. If home_team is a real name (not placeholder) → look it up in teamToMatchByStage
      *      to find which child-stage match contained that team.
      *   2. If home_team is "Match N winners" → parse N, look up by match_code.
      */
     private function resolveFeeders(
         FootballMatch $parent,
-        array $teamToMatch,
+        array $teamToMatchByStage,
         array $codeNumToMatch,
         string $childStage
     ): array {
@@ -229,9 +234,10 @@ class MatchListPage extends Page
                 continue;
             }
 
-            // Case B: Real team name — find which child-stage match had this team
-            $candidate = $teamToMatch[$teamField] ?? null;
-            if ($candidate && $candidate->stage === $childStage) {
+            // Case B: Real team name — find the child-stage match that had this team
+            $stageMatches = $teamToMatchByStage[$teamField] ?? [];
+            $candidate = $stageMatches[$childStage] ?? null;
+            if ($candidate) {
                 $feeders[] = $candidate;
             } else {
                 $feeders[] = null;
