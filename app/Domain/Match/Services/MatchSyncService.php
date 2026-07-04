@@ -341,14 +341,23 @@ class MatchSyncService
 
     private function autoPopulatePeriodResults(FootballMatch $match, ApiMatchDto $apiMatch): void
     {
-        if ($apiMatch->fullTime) {
+        // FULL_TIME period result: PHẢI dùng regulationFullTime (tỉ số 90 phút, KHÔNG bao gồm hiệp phụ).
+        // regulationFullTime = score.fulltime từ RapidAPI = kết quả sau 90' + bù giờ.
+        // fullTime = data.goals = tổng tỉ số hiện tại (BAO GỒM hiệp phụ) — chỉ dùng cho display.
+        $regulationScore = $apiMatch->regulationFullTime ?? $apiMatch->fullTime;
+        
+        if ($regulationScore) {
+            // Nếu có extraTime, regulationFullTime chính xác hơn.
+            // Nếu không có extraTime, regulationFullTime == fullTime (trận kết thúc trong 90').
             MatchPeriodResult::updateOrCreate(
                 ['match_id' => $match->id, 'period_type' => 'FULL_TIME'],
                 [
-                    'home_score' => $apiMatch->fullTime->home,
-                    'away_score' => $apiMatch->fullTime->away,
+                    'home_score' => $regulationScore->home,
+                    'away_score' => $regulationScore->away,
                     'status' => 'CONFIRMED',
-                    'source_note' => 'Auto-populated from API',
+                    'source_note' => $apiMatch->extraTime
+                        ? 'Auto-populated from API (regulation 90min, excludes ET)'
+                        : 'Auto-populated from API',
                 ]
             );
         }
@@ -364,19 +373,18 @@ class MatchSyncService
                 ]
             );
 
-            // Tính điểm hiệp 2 (Full Time - Half Time) nếu không có hiệp phụ/penalty trong tỉ số Full Time.
-            // API Football-Data thông thường fullTime ĐÃ BAO GỒM Extra Time, cần lưu ý.
-            // Tuy nhiên, basic formula:
-            if ($apiMatch->fullTime) {
-                $homeSecondHalf = max(0, $apiMatch->fullTime->home - $apiMatch->halfTime->home);
-                $awaySecondHalf = max(0, $apiMatch->fullTime->away - $apiMatch->halfTime->away);
+            // Tính điểm hiệp 2 = regulation FULL_TIME - FIRST_HALF
+            // Dùng regulationScore (90 phút) để đảm bảo SECOND_HALF không bị lẫn bàn thắng hiệp phụ.
+            if ($regulationScore) {
+                $homeSecondHalf = max(0, $regulationScore->home - $apiMatch->halfTime->home);
+                $awaySecondHalf = max(0, $regulationScore->away - $apiMatch->halfTime->away);
                 MatchPeriodResult::updateOrCreate(
                     ['match_id' => $match->id, 'period_type' => 'SECOND_HALF'],
                     [
                         'home_score' => $homeSecondHalf,
                         'away_score' => $awaySecondHalf,
                         'status' => 'CONFIRMED',
-                        'source_note' => 'Calculated (Full - Half)',
+                        'source_note' => 'Calculated (Regulation Full - Half)',
                     ]
                 );
             }

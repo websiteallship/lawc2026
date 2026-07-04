@@ -52,4 +52,9 @@ class Settlement extends Model
     {
         return $this->belongsTo(User::class, 'executed_by');
     }
+
+    public function corrections(): HasMany
+    {
+        return $this->hasMany(SettlementCorrection::class);
+    }
 }

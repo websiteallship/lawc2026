@@ -16,6 +16,8 @@ class ApiMatchDto
         public readonly ?ApiScoreDto $halfTime,
         public readonly ?ApiScoreDto $extraTime,
         public readonly ?ApiScoreDto $penalties,
+        /** Tỉ số 90 phút chính thức (không bao gồm hiệp phụ). Dùng cho settlement FULL_TIME. */
+        public readonly ?ApiScoreDto $regulationFullTime = null,
         public readonly array $goals = [],
         public readonly array $bookings = [],
         public readonly array $substitutions = [],
@@ -54,6 +56,8 @@ class ApiMatchDto
             halfTime: ApiScoreDto::fromArray($data['score']['halfTime'] ?? null),
             extraTime: ApiScoreDto::fromArray($data['score']['extraTime'] ?? null),
             penalties: ApiScoreDto::fromArray($data['score']['penalties'] ?? null),
+            // Football-Data API: score.regularTime = 90 phút (nếu có), fallback fullTime
+            regulationFullTime: ApiScoreDto::fromArray($data['score']['regularTime'] ?? $data['score']['fullTime'] ?? null),
             goals: $data['goals'] ?? [],
             bookings: $data['bookings'] ?? [],
             substitutions: $data['substitutions'] ?? [],
@@ -135,12 +139,19 @@ class ApiMatchDto
             default => 'SCHEDULED',
         };
 
-        // For LIVE score, rapidAPI puts current score in $data['goals'] instead of fullTime. We'll map $data['goals'] to fullTime so it matches Football-Data logic.
+        // $data['goals'] = tỉ số hiện tại (bao gồm cả hiệp phụ khi đang live hoặc kết thúc)
+        // $score['fulltime'] = tỉ số kết thúc 90 phút (KHÔNG bao gồm hiệp phụ) — đúng theo RapidAPI docs
         $goalsData = $data['goals'] ?? [];
+
+        // fullTime: dùng goals (tổng tỉ số) cho live tracking & display
         $fullTimeScore = [
             'home' => $goalsData['home'] ?? $score['fulltime']['home'] ?? null,
             'away' => $goalsData['away'] ?? $score['fulltime']['away'] ?? null,
         ];
+
+        // regulationFullTime: tỉ số 90 phút chính thức (chỉ dùng score.fulltime, KHÔNG dùng goals)
+        // Theo RapidAPI: score.fulltime = kết quả sau 90 phút + bù giờ, KHÔNG bao gồm hiệp phụ
+        $regulationFullTimeScore = $score['fulltime'] ?? null;
 
         $apiRound = $data['league']['round'] ?? null;
 
@@ -154,6 +165,7 @@ class ApiMatchDto
             halfTime: ApiScoreDto::fromArray($score['halftime'] ?? null),
             extraTime: ApiScoreDto::fromArray($score['extratime'] ?? null),
             penalties: ApiScoreDto::fromArray($score['penalty'] ?? null),
+            regulationFullTime: ApiScoreDto::fromArray($regulationFullTimeScore),
             goals: $goals,
             bookings: $bookings,
             substitutions: $substitutions,
