@@ -530,14 +530,14 @@ class MatchSyncService
         $isDraw = $apiMatch->getCurrentHomeScore() === $apiMatch->getCurrentAwayScore();
         $elapsed = $apiMatch->elapsed ?? 0;
 
-        // 1. Kèo Hiệp 1 & Cả trận: Đóng sau 10 phút (elapsed >= 10) hoặc khi đã qua hiệp 1
-        if (($statusShort === '1H' && $elapsed >= 10) || in_array($statusShort, ['HT', '2H', 'ET', 'BT', 'P', 'FT', 'AET', 'PEN'])) {
-            $this->lockMarkets($match, ['FIRST_HALF', 'FULL_TIME'], 'Auto-locked due to elapsed >= 10 or period ended');
+        // 1. Kèo Hiệp 1 & Cả trận: Đóng ngay khi hiệp 1 bắt đầu
+        if ($statusShort === '1H' || in_array($statusShort, ['HT', '2H', 'ET', 'BT', 'P', 'FT', 'AET', 'PEN'])) {
+            $this->lockMarkets($match, ['FIRST_HALF', 'FULL_TIME'], 'Auto-locked due to match started');
         }
 
-        // 2. Kèo Hiệp 2: Đóng sau 10 phút của hiệp 2 (elapsed >= 55) hoặc khi đã qua hiệp 2
-        if (($statusShort === '2H' && $elapsed >= 55) || in_array($statusShort, ['ET', 'BT', 'P', 'FT', 'AET', 'PEN'])) {
-            $this->lockMarkets($match, ['SECOND_HALF'], 'Auto-locked due to 2H elapsed >= 55 or period ended');
+        // 2. Kèo Hiệp 2: Đóng ngay khi hiệp 2 bắt đầu
+        if ($statusShort === '2H' || in_array($statusShort, ['ET', 'BT', 'P', 'FT', 'AET', 'PEN'])) {
+            $this->lockMarkets($match, ['SECOND_HALF'], 'Auto-locked due to 2H started');
         }
 
         // 3. Kèo Hiệp phụ (EXTRA_TIME):
