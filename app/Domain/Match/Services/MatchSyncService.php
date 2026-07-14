@@ -231,7 +231,10 @@ class MatchSyncService
      */
     public function syncAllMatchDetailsInChunks(): void
     {
-        $matches = FootballMatch::whereNotNull('api_id')->get();
+        $matches = FootballMatch::whereNotNull('api_id')
+            ->whereNotIn('status', ['FINISHED', 'SETTLED', 'CANCELLED', 'POSTPONED'])
+            ->get();
+
         if ($matches->isEmpty()) {
             return;
         }
