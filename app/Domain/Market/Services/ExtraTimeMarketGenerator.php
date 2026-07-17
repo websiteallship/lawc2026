@@ -44,7 +44,7 @@ class ExtraTimeMarketGenerator
         $ahOdds = $this->strengthToOdds($strength['score']);
         $ouOdds = $this->calculateAdaptiveEtOuOdds($totalGoals90);
 
-        $closeAt = $match->kickoff_at->clone()->addMinutes(140);
+        $closeAt = $match->kickoff_at->clone()->addMinutes(112);
 
         DB::transaction(function () use ($match, $ahOdds, $ouOdds, $closeAt, $strength) {
             // 1. Asian Handicap ET (line 0)
@@ -148,7 +148,7 @@ class ExtraTimeMarketGenerator
         $ahOdds = $this->strengthToOdds($strength['score']);
         $ouOdds = $this->calculatePenaltyOuOdds($totalGoals90);
 
-        $closeAt = $match->kickoff_at->clone()->addMinutes(180);
+        $closeAt = $match->kickoff_at->clone()->addMinutes(148);
 
         DB::transaction(function () use ($match, $ahOdds, $ouOdds, $closeAt, $strength) {
             // 1. Asian Handicap Penalty (line 0) — đội mạnh ăn ít, đội yếu ăn nhiều
