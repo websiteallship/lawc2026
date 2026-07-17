@@ -25,7 +25,19 @@ class ExactScoreSettlementCalculator extends AbstractSettlementCalculator
         $outcome = $bet->outcome;
 
         if ($outcome->selection_side === 'OTHER' || $outcome->label === 'Tỉ số khác') {
-            $isWin = ($result->homeScore > 4 || $result->awayScore > 4);
+            // "OTHER" thắng nếu tỉ số thực tế KHÔNG có trong danh sách các tỉ số được niêm yết
+            $explicitOutcomes = $outcome->market->outcomes()
+                ->whereNotNull('score_home')
+                ->whereNotNull('score_away')
+                ->get();
+                
+            $isWin = true;
+            foreach ($explicitOutcomes as $eo) {
+                if ((int)$eo->score_home === $result->homeScore && (int)$eo->score_away === $result->awayScore) {
+                    $isWin = false; // Đã có tỉ số cụ thể, "OTHER" thua
+                    break;
+                }
+            }
             $predictedHome = 'Khác';
             $predictedAway = 'Khác';
             $predictedText = 'Tỉ số khác';
